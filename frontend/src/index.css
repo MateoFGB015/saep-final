@@ -1,0 +1,9 @@
+/*aqui se definen unos estilos que siempre se van a aplicar*/
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Para evitar scroll no deseado */
+  }

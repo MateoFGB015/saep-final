@@ -1,0 +1,1 @@
+//se supone aqui se define un llamado general de un iconos para ser importados con un solo nombre
