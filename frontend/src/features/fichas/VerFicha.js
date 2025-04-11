@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import UserInfoModal from '../../components/ui/UserInfoModal';
-import ConfirmDialog from '../../components/ui/ModalConfirmacion'; // ✅ Modal de confirmación
+import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import { useParams } from 'react-router-dom';
 import {
@@ -25,8 +25,8 @@ const FichaDetalle = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openUserModal, setOpenUserModal] = useState(false);
 
-  const [openConfirm, setOpenConfirm] = useState(false); // ✅ Modal confirmación
-  const [aprendizAEliminar, setAprendizAEliminar] = useState(null); // ✅ Aprendiz a eliminar
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [aprendizAEliminar, setAprendizAEliminar] = useState(null);
 
   const handleVerUsuario = (usuario) => {
     setSelectedUser(usuario);
@@ -40,14 +40,13 @@ const FichaDetalle = () => {
 
   const eliminarAprendiz = async () => {
     try {
-      await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz`, {
+      await axios.delete(`http://localhost:3000/ficha-aprendiz/eliminar`, {
         data: {
           id_usuario: aprendizAEliminar.id_usuario,
           id_ficha: id,
         },
       });
 
-      // Eliminar del estado local
       setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
       setOpenConfirm(false);
       setAprendizAEliminar(null);
@@ -80,17 +79,21 @@ const FichaDetalle = () => {
         flexGrow: 1,
         padding: '20px',
         minHeight: 'calc(100vh - 64px)',
-        backgroundColor: '#f5f5f5',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center'
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        borderRadius: '30px',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
       }}
     >
       {/* Información de la ficha */}
-      <Box sx={{ width: '100%', maxWidth: 900, mb: 4 }}>
+      <Box sx={{ width: '100%', maxWidth: 900, mb: 4, overflowX: 'auto',borderRadius: '10px', textAlign: 'center' }}>
         <TableContainer component={Paper} elevation={3}>
-          <Table>
+          <Table sx={{ minWidth: 600 }}>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
                 <TableCell><Typography fontWeight="bold">Nombre del programa</Typography></TableCell>
@@ -120,10 +123,10 @@ const FichaDetalle = () => {
       </Box>
 
       {/* Tabla de aprendices */}
-      <Box sx={{ width: '100%', maxWidth: 900 }}>
+      <Box sx={{ width: '100%', maxWidth: 900, overflowX: 'auto', borderRadius: '10px' }}>
         {aprendices.length > 0 ? (
           <TableContainer component={Paper} elevation={3}>
-            <Table>
+            <Table sx={{ minWidth: 600 }}>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#e0e0e0' }}>
                   <TableCell><Typography fontWeight="bold">Nombre</Typography></TableCell>
