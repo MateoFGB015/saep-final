@@ -54,6 +54,7 @@ const eventStyleGetter = (event) => {
 };
 
 const Calendario = () => {
+  
   const { eventos } = useContext(EventosContext);
   const [modalOpen, setModalOpen] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);

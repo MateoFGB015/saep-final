@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
+import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
 import { useAuthActions } from "../../api/useAuthActions";
 import {
   AppBar,
@@ -33,6 +34,7 @@ const drawerWidth = 250;
 
 const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
+  const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
   const { user } = useAuth();
   const { logout } = useAuthActions();
   const theme = useTheme();
@@ -92,13 +94,16 @@ const Navbar = ({ children }) => {
           <IconButton color="inherit">
             <AccountCircleIcon />
           </IconButton>
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
             <NotificationsIcon />
           </IconButton>
           <IconButton color="inherit" onClick={logout}>
             <LogoutIcon />
           </IconButton>
         </Toolbar>
+        {mostrarNotificaciones && (
+          <NotificacionesFlotantes onClose={() => setMostrarNotificaciones(false)} />
+        )}
       </AppBar>
 
       <Drawer
