@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
-import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
-import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
 import {
   AppBar,
   Toolbar,
@@ -24,9 +22,11 @@ import {
   People as PeopleIcon,
   CalendarToday as CalendarIcon,
   Assignment as AssignmentIcon,
+  Equalizer as EqualizerIcon, // ✅ Aquí está la importación correcta
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
+  ChecklistRtl as ChecklistRtlIcon,
 } from "@mui/icons-material";
 
 const drawerWidth = 250;
@@ -35,33 +35,25 @@ const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { logout } = useAuthActions();
-  const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
   const theme = useTheme();
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [openUserModal, setOpenUserModal] = useState(false);
 
-  const handleVerUsuario = (usuario) => {
-    setSelectedUser(usuario);
-    setOpenUserModal(true);
-  };
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
-  // 🔐 Opciones del menú por rol
   const menuItems = [
     { text: "Inicio", icon: <HomeIcon />, route: "/inicio", roles: ["Administrador", "Instructor", "Aprendiz"] },
     { text: "Usuarios", icon: <PeopleIcon />, route: "/usuarios", roles: ["Administrador"] },
     { text: "Fichas", icon: <AssignmentIcon />, route: "/fichas", roles: ["Administrador", "Instructor"] },
     { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos", roles: ["Administrador", "Instructor", "aprendiz"] },
-    { text: "Seguimiento y control", icon: <AssignmentIcon />, route: "/seguimiento", roles: ["Administrador", "Instructor", "aprendiz"] },
+    { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["Administrador", "Instructor", "aprendiz"] },
+    { text: "Reporte", icon:<ChecklistRtlIcon/>, route:"/reporte", roles:["Administrador", "Instructor"],}
   ];
 
   return (
     <Box sx={{ display: "flex", width: "100%" }}>
       <CssBaseline />
 
-      {/* 🔹 Barra Superior */}
       <AppBar
         position="fixed"
         sx={{
@@ -76,10 +68,7 @@ const Navbar = ({ children }) => {
             edge="start"
             color="inherit"
             onClick={toggleDrawer}
-            sx={{
-              position: "relative",
-              zIndex: theme.zIndex.drawer + 2,
-            }}
+            sx={{ position: "relative", zIndex: theme.zIndex.drawer + 2 }}
           >
             <MenuIcon />
           </IconButton>
@@ -100,22 +89,18 @@ const Navbar = ({ children }) => {
             {user?.nombre || "Nombre de usuario"}
           </Typography>
 
-          <IconButton color="inherit" onClick={() => handleVerUsuario(user)}>
-            <AccountCircleIcon  />
+          <IconButton color="inherit">
+            <AccountCircleIcon />
           </IconButton>
-          <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
+          <IconButton color="inherit">
             <NotificationsIcon />
           </IconButton>
           <IconButton color="inherit" onClick={logout}>
             <LogoutIcon />
           </IconButton>
         </Toolbar>
-        {mostrarNotificaciones && (
-          <NotificacionesFlotantes onClose={() => setMostrarNotificaciones(false)} />
-        )}
       </AppBar>
 
-      {/* 🔹 Sidebar (Drawer) */}
       <Drawer
         variant="temporary"
         open={open}
@@ -160,7 +145,6 @@ const Navbar = ({ children }) => {
             </Typography>
           </Box>
 
-          {/* 🔹 Menú filtrado por rol */}
           <List>
             {menuItems
               .filter((item) => item.roles.includes(user?.rol))
@@ -174,8 +158,6 @@ const Navbar = ({ children }) => {
         </Box>
       </Drawer>
 
-
-      {/* 🔹 Contenido Principal */}
       <Box
         component="main"
         sx={{
@@ -188,12 +170,6 @@ const Navbar = ({ children }) => {
       >
         {children}
       </Box>
-
-            <UserInfoModal
-              open={openUserModal}
-              onClose={() => setOpenUserModal(false)}
-              user={selectedUser}
-            />
     </Box>
   );
 };
