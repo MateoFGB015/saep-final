@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
+import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
 import {
   AppBar,
@@ -38,6 +39,15 @@ const Navbar = ({ children }) => {
   const { user } = useAuth();
   const { logout } = useAuthActions();
   const theme = useTheme();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [openUserModal, setOpenUserModal] = useState(false);
+
+  const handleVerUsuario = (usuario) => {
+    setSelectedUser(usuario);
+    setOpenUserModal(true);
+  };
+  
+
 
   const toggleDrawer = () => {
     setOpen(!open);
@@ -91,7 +101,7 @@ const Navbar = ({ children }) => {
             {user?.nombre || "Nombre de usuario"}
           </Typography>
 
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={() => handleVerUsuario(user)}>
             <AccountCircleIcon />
           </IconButton>
           <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
@@ -175,6 +185,12 @@ const Navbar = ({ children }) => {
       >
         {children}
       </Box>
+      <UserInfoModal
+       open={openUserModal}
+       onClose={() => setOpenUserModal(false)}
+       user={selectedUser}
+      />
+
     </Box>
   );
 };
