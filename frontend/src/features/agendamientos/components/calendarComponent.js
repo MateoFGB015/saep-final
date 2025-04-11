@@ -30,6 +30,7 @@ const messages = {
   showMore: (total) => `(+${total}) visitas`,
 };
 
+
 const eventStyleGetter = (event) => {
   let borderColor = "#3788d8";
   if (event.estado === "pendiente") borderColor = "#f39c12";
@@ -78,12 +79,13 @@ const Calendario = () => {
   const eventosDelDia = eventos.filter((evento) =>
     isSameDay(new Date(evento.start), diaSeleccionado)
   );
+  
 
   return (
     <>
       <div style={{ display: "flex", gap: "20px" }}>
         {/* Calendario */}
-        <div style={{ height: "80vh", width: isDesktop ? "80%" : "100%" }}>
+        <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
           <Calendar
             localizer={localizer}
             events={eventos}
@@ -106,7 +108,7 @@ const Calendario = () => {
         {isDesktop && (
           <Box
             sx={{
-              width: "30%",
+              width: "25%",
               padding: 2,
               border: "1px solid #ccc",
               borderRadius: "8px",
@@ -139,7 +141,7 @@ const Calendario = () => {
                   const borderColor = style.borderLeft.split(" ")[2];
 
                   return (
-                    <div key={index}>
+                    <div key={evento.id_agendamiento || index}>
                       <ListItem
                         button
                         onClick={() => {
