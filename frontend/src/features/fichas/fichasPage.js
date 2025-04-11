@@ -119,6 +119,21 @@ const FichasTable = () => {
     }
   };
 
+  const [instructores, setInstructores] = useState([]);
+
+   useEffect(() => {
+    const fetchInstructores = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/usuarios/instructores");
+      setInstructores(response.data);
+    } catch (error) {
+      console.error("Error al obtener instructores:", error);
+    }
+  };
+
+  fetchInstructores();
+}, []);
+
   return (
     <div>
   <TextField
@@ -160,7 +175,7 @@ const FichasTable = () => {
           <TableBody sx={{ "& .MuiTableCell-root": { textAlign: "center" } }}>
   {fichas.map((ficha, index) => (
     <TableRow 
-      key={ficha.id_fichas} 
+      key={ficha.id_ficha} 
       sx={{ backgroundColor: index % 2 === 0 ? "white" : "#f2f2f2" }} // Alterna colores
     >
       <TableCell>{ficha.nombre_programa}</TableCell>
@@ -306,16 +321,27 @@ const FichasTable = () => {
       }}
     />
 
-    <TextField placeholder="ID del Instructor" name="id_instructor" value={formData.id_instructor} onChange={handleChange} fullWidth margin="dense"
-      sx={{ 
-        "& .MuiOutlinedInput-root": {
-          borderRadius: "12px",
-          borderColor: "#bdbdbd",
-          "&:hover fieldset": { borderColor: "#9c27b0" },
-          "&.Mui-focused fieldset": { borderColor: "#9c27b0" },
-        }
-      }}
-    />
+<Select
+  name="id_instructor"
+  value={formData.id_instructor}
+  onChange={handleChange}
+  fullWidth
+  displayEmpty
+  sx={{
+    borderRadius: "12px",
+    mt: 2,
+    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#9c27b0" },
+    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#9c27b0" }
+  }}
+>
+  <MenuItem value="" disabled>Selecciona un instructor</MenuItem>
+  {instructores.map((inst) => (
+    <MenuItem key={inst.id_usuario} value={inst.id_usuario}>
+      {inst.nombre} {inst.apellido}
+    </MenuItem>
+  ))}
+</Select>
+
   </DialogContent>
 
   <DialogActions sx={{ padding: "16px", justifyContent: "center" }}>

@@ -3,6 +3,7 @@ const modeloUsuario = require('../models/usuario');
 const { Op } = require('sequelize');
 
 
+
 // Crear usuario
 const crearUsuario = async (req, res) => {
     try {
@@ -60,6 +61,20 @@ const verPorId = async (req, res) => {
     }
 };
 
+// ver instructores
+const obtenerInstructores = async (req, res) => {
+    try {
+      const instructores = await modeloUsuario.findAll({
+        where: { rol: "Instructor", estado_usuario: 1 },
+        attributes: ["id_usuario", "nombre", "apellido"]
+      });
+  
+      res.json(instructores);
+    } catch (error) {
+      console.error("Error al obtener instructores:", error);
+      res.status(500).json({ mensaje: "Error al obtener instructores", error });
+    }
+  };
 // Modificar usuario
 const modificarUsuario = async (req, res) => {
     try {
@@ -148,4 +163,4 @@ const obtenerUsuarioAutenticado = async (req, res) => {
 
 
 
-module.exports = { crearUsuario,verUsuarios, verPorId, modificarUsuario, eliminarUsuario,obtenerUsuarioAutenticado };
+module.exports = { crearUsuario,verUsuarios, verPorId, modificarUsuario, obtenerInstructores, eliminarUsuario,obtenerUsuarioAutenticado };

@@ -10,7 +10,7 @@ import SolicitarRestablecimiento from "./features/auth/RecuperarContrasenia";
 import RestablecerContrasenia from "./features/auth/RestablecerContrasenia";
 
 // pagina inicio
-
+import PagInicio from "./features/inicio_pagina/incio";
 // 🔹 Paginas usuarios
 import UsersPage from "./features/usuarios/UsersPage";
 
@@ -46,7 +46,7 @@ function App() {
                     path="/Inicio"
                     element={
                       <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']} >
-                        <pagInicio />
+                        <PagInicio />
                       </ProtectedRoute>
                     }
                     />
