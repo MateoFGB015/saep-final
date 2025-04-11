@@ -9,6 +9,8 @@ import IniciarSesion from "./features/auth/Login";
 import SolicitarRestablecimiento from "./features/auth/RecuperarContrasenia";
 import RestablecerContrasenia from "./features/auth/RestablecerContrasenia";
 
+// pagina inicio
+
 // 🔹 Paginas usuarios
 import UsersPage from "./features/usuarios/UsersPage";
 
@@ -29,7 +31,7 @@ function App() {
         <Router>
           <Routes>
             {/* Rutas públicas */}
-            <Route path="/" element={<IniciarSesion />} />
+            <Route path="/" element={  <IniciarSesion />} />
             <Route path="/solicitar-restablecimiento" element={<SolicitarRestablecimiento />} />
             <Route path="/restablecer-contrasenia/:token" element={<RestablecerContrasenia />} />
             <Route path="/no-autorizado" element={<NoAutorizado />} />
@@ -40,6 +42,14 @@ function App() {
               element={
                 <Navbar>
                   <Routes>
+                    <Route 
+                    path="/Inicio"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']} >
+                        <pagInicio />
+                      </ProtectedRoute>
+                    }
+                    />
                     <Route
                       path="/usuarios"
                       element={
