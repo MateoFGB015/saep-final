@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
+import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
+import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
 import {
   AppBar,
@@ -33,9 +35,19 @@ const drawerWidth = 250;
 
 const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
+  const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
   const { user } = useAuth();
   const { logout } = useAuthActions();
   const theme = useTheme();
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [openUserModal, setOpenUserModal] = useState(false);
+
+  const handleVerUsuario = (usuario) => {
+    setSelectedUser(usuario);
+    setOpenUserModal(true);
+  };
+  
+
 
   const toggleDrawer = () => {
     setOpen(!open);
@@ -89,16 +101,19 @@ const Navbar = ({ children }) => {
             {user?.nombre || "Nombre de usuario"}
           </Typography>
 
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={() => handleVerUsuario(user)}>
             <AccountCircleIcon />
           </IconButton>
-          <IconButton color="inherit">
+          <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
             <NotificationsIcon />
           </IconButton>
           <IconButton color="inherit" onClick={logout}>
             <LogoutIcon />
           </IconButton>
         </Toolbar>
+        {mostrarNotificaciones && (
+          <NotificacionesFlotantes onClose={() => setMostrarNotificaciones(false)} />
+        )}
       </AppBar>
 
       <Drawer
@@ -170,6 +185,12 @@ const Navbar = ({ children }) => {
       >
         {children}
       </Box>
+      <UserInfoModal
+       open={openUserModal}
+       onClose={() => setOpenUserModal(false)}
+       user={selectedUser}
+      />
+
     </Box>
   );
 };
