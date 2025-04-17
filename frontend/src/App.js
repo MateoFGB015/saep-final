@@ -24,6 +24,9 @@ import Calendario from "./features/agendamientos/components/calendarComponent";
 // 🔹 Página no autorizada
 import NoAutorizado from "./components/NoAutorizado";
 
+// 🔹 Página de seguimiento
+import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin";
+
 function App() {
   return (
     <AuthProvider>
@@ -82,6 +85,15 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/seguimiento"
+                      element={
+                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}>
+                          <BitacoraDocumentosApp />
+                        </ProtectedRoute>
+                      }
+                      />
+                    
                   </Routes>
                 </Navbar>
               }
