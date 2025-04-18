@@ -27,6 +27,9 @@ import NoAutorizado from "./components/NoAutorizado";
 // 🔹 Página de seguimiento
 import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin";
 
+//🔹 Página de creacion del aprendiz
+import FormularioAprendiz from "./features/Registro/Aprendiz";
+
 function App() {
   return (
     <AuthProvider>
@@ -93,6 +96,16 @@ function App() {
                         </ProtectedRoute>
                       }
                       />
+
+                    <Route
+                      path="/registro/Aprendiz"
+                      element={
+                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}>
+                          <FormularioAprendiz />
+                        </ProtectedRoute>
+                      }
+                      />
+
                     
                   </Routes>
                 </Navbar>
