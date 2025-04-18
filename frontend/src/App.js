@@ -97,14 +97,15 @@ function App() {
                       }
                       />
 
-                    <Route
-                      path="/registro/Aprendiz"
-                      element={
+                      <Route
+                       path="/aprendiz"
+                       element={
                         <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}>
                           <FormularioAprendiz />
                         </ProtectedRoute>
-                      }
+                      } 
                       />
+
 
                     
                   </Routes>

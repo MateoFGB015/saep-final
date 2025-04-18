@@ -5,13 +5,14 @@ import {
   Button,
   MenuItem,
   Typography,
-  Checkbox,
-  FormControlLabel,
-  Snackbar,
   Paper,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
-import { motion } from "framer-motion";
+import ReCAPTCHA from "react-google-recaptcha";
 
 function FormularioAprendiz() {
   const navigate = useNavigate();
@@ -25,13 +26,13 @@ function FormularioAprendiz() {
     correo: "",
     contrasena: "",
     confirmarContrasena: "",
-    noSoyRobot: false,
+    captcha: false,
   });
-  const [alerta, setAlerta] = useState(false);
+
   const [programas, setProgramas] = useState([]);
+  const [modalAbierto, setModalAbierto] = useState(false);
 
   useEffect(() => {
-    // Simulación de petición de programas disponibles
     setProgramas([
       "Diseño de modas",
       "Confección industrial",
@@ -52,8 +53,8 @@ function FormularioAprendiz() {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (Object.values(form).some((val) => val === "" || val === false)) {
-      alert("Todos los campos son obligatorios y debes confirmar que no eres un robot");
+    if (Object.values(form).some((val) => val === "")) {
+      alert("Todos los campos son obligatorios");
       return;
     }
 
@@ -62,66 +63,96 @@ function FormularioAprendiz() {
       return;
     }
 
-    setAlerta(true);
-    setTimeout(() => navigate("/login"), 2000);
+    if (!form.captcha) {
+      alert("Debes verificar que no eres un robot");
+      return;
+    }
+
+    setModalAbierto(true);
   };
 
   return (
     <Box
       sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
+        minHeight: "90vh", 
+        width: "100%",
+        margin: 0,
+        padding: 0,
+        display: "flex", 
         justifyContent: "center",
-        backgroundImage: "url('/fondo-textil.jpg')",
+        alignItems: "center",
+        backgroundImage: "url('https://es.pinterest.com/pin/575194183661910947/')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        position: "relative", 
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          backdropFilter: "blur(5px)",
+          zIndex: 0,
+        }
       }}
     >
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <Paper elevation={6} sx={{ p: 4, bgcolor: "rgba(255,255,255,0.95)", borderRadius: 4 }}>
-          <Typography variant="h5" align="center" gutterBottom>
-            Registro de Aprendiz
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            {[{
-              label: "Nombre del aprendiz",
-              name: "nombre",
-            }, {
-              label: "Apellido del aprendiz",
-              name: "apellido",
-            }, {
-              label: "Número de documento",
-              name: "numeroDocumento",
-            }, {
-              label: "Ficha",
-              name: "ficha",
-            }, {
-              label: "Correo electrónico",
-              name: "correo",
-              type: "email",
-            }, {
-              label: "Contraseña",
-              name: "contrasena",
-              type: "password",
-            }, {
-              label: "Confirmar contraseña",
-              name: "confirmarContrasena",
-              type: "password",
-            }].map(({ label, name, type = "text" }) => (
-              <TextField
-                key={name}
-                label={label}
-                name={name}
-                value={form[name]}
-                onChange={handleChange}
-                type={type}
-                fullWidth
-                required
-                margin="normal"
-              />
-            ))}
+      <Paper
+        elevation={5}
+        sx={{
+          width: "100%",
+          maxWidth: 500,
+          padding: 4,
+          borderRadius: 2,
+          backgroundColor: "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+          position: "relative",
+          zIndex: 1,
+          my: 4, // Add margin top and bottom
+        }}
+      >
+        <Typography 
+          variant="h4" 
+          align="center" 
+          sx={{ 
+            color: "#5E35B1",
+            fontWeight: "600",
+            mb: 4,
+            fontSize: "1.75rem"
+          }}
+        >
+          Registro de Aprendiz
+        </Typography>
 
+        <form onSubmit={handleSubmit}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Nombre del aprendiz"
+              name="nombre"
+              value={form.nombre}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{ flex: 1 }}
+            />
+            <TextField
+              label="Apellido del aprendiz"
+              name="apellido"
+              value={form.apellido}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{ flex: 1 }}
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <TextField
               select
               label="Tipo de documento"
@@ -130,52 +161,137 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
-              margin="normal"
+              variant="outlined"
+              sx={{ flex: 1 }}
             >
               <MenuItem value="CC">Cédula</MenuItem>
               <MenuItem value="TI">Tarjeta de Identidad</MenuItem>
               <MenuItem value="CE">Cédula de Extranjería</MenuItem>
             </TextField>
-
             <TextField
-              label="Programa de formación"
-              name="programa"
-              value={form.programa}
+              label="Número de documento"
+              name="numeroDocumento"
+              value={form.numeroDocumento}
               onChange={handleChange}
               fullWidth
               required
-              margin="normal"
-              list="programas"
+              variant="outlined"
+              sx={{ flex: 1 }}
             />
-            <datalist id="programas">
-              {programas.map((p) => (
-                <option key={p} value={p} />
-              ))}
-            </datalist>
+          </Box>
 
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={form.noSoyRobot}
-                  onChange={handleChange}
-                  name="noSoyRobot"
-                  required
-                />
-              }
-              label="No soy un robot"
+          <TextField
+            select
+            label="Programa de formación"
+            name="programa"
+            value={form.programa}
+            onChange={handleChange}
+            fullWidth
+            required
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            {programas.map((p) => (
+              <MenuItem key={p} value={p}>{p}</MenuItem>
+            ))}
+          </TextField>
+
+          <TextField
+            label="Ficha"
+            name="ficha"
+            value={form.ficha}
+            onChange={handleChange}
+            fullWidth
+            required
+            variant="outlined"
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            label="Correo electrónico"
+            name="correo"
+            type="email"
+            value={form.correo}
+            onChange={handleChange}
+            fullWidth
+            required
+            variant="outlined"
+            sx={{ mb: 2 }}
+          />
+
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+            <TextField
+              label="Contraseña"
+              name="contrasena"
+              type="password"
+              value={form.contrasena}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{ flex: 1 }}
             />
+            <TextField
+              label="Confirmar contraseña"
+              name="confirmarContrasena"
+              type="password"
+              value={form.confirmarContrasena}
+              onChange={handleChange}
+              fullWidth
+              required
+              variant="outlined"
+              sx={{ flex: 1 }}
+            />
+          </Box>
 
-            <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>
-              Registrarse
-            </Button>
-          </form>
-        </Paper>
-        <Snackbar
-          open={alerta}
-          message="¡Registro exitoso! Redirigiendo al login..."
-          autoHideDuration={2000}
-        />
-      </motion.div>
+          <Box sx={{ my: 3, display: "flex", justifyContent: "center" }}>
+            <ReCAPTCHA
+              sitekey="TU_CLAVE_REAL"
+              onChange={() => setForm((prev) => ({ ...prev, captcha: true }))}
+            />
+          </Box>
+
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            sx={{
+              py: 1.5,
+              bgcolor: "#5E35B1",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "1rem",
+              "&:hover": { bgcolor: "#4527A0" },
+              borderRadius: 1,
+              mt: 2,
+              mb: 1,
+            }}
+          >
+            REGISTRARSE
+          </Button>
+        </form>
+      </Paper>
+
+      <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)}>
+        <DialogTitle sx={{ bgcolor: "#5E35B1", color: "white" }}>
+          ¡Felicidades!
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography>Tu registro ha sido exitoso.</Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={() => navigate("/login")} 
+            variant="contained"
+            sx={{ 
+              bgcolor: "#5E35B1",
+              "&:hover": { bgcolor: "#4527A0" }
+            }}
+          >
+            Ir al login
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
