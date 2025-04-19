@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import backgroundImage from "../../assets/imgs/confeccion.jpg";
+
 import {
   TextField,
   Button,
@@ -71,22 +73,31 @@ function FormularioAprendiz() {
     setModalAbierto(true);
   };
 
+  const purpleFocusStyle = {
+    '& .MuiOutlinedInput-root.Mui-focused fieldset': {
+      borderColor: '#5E35B1',
+    },
+    '& label.Mui-focused': {
+      color: '#5E35B1',
+    },
+  };
+
   return (
     <Box
       sx={{
-        minHeight: "90vh", 
+        minHeight: "100vh",
         width: "100%",
         margin: 0,
         padding: 0,
-        display: "flex", 
+        display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        backgroundImage: "url('https://es.pinterest.com/pin/575194183661910947/')",
+        backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
-        position: "relative", 
+        position: "relative",
         "&::before": {
           content: '""',
           position: "absolute",
@@ -112,13 +123,13 @@ function FormularioAprendiz() {
           boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
           position: "relative",
           zIndex: 1,
-          my: 4, // Add margin top and bottom
+          my: 4,
         }}
       >
-        <Typography 
-          variant="h4" 
-          align="center" 
-          sx={{ 
+        <Typography
+          variant="h4"
+          align="center"
+          sx={{
             color: "#5E35B1",
             fontWeight: "600",
             mb: 4,
@@ -138,7 +149,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             />
             <TextField
               label="Apellido del aprendiz"
@@ -148,7 +159,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             />
           </Box>
 
@@ -162,7 +173,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             >
               <MenuItem value="CC">Cédula</MenuItem>
               <MenuItem value="TI">Tarjeta de Identidad</MenuItem>
@@ -176,7 +187,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             />
           </Box>
 
@@ -189,7 +200,7 @@ function FormularioAprendiz() {
             fullWidth
             required
             variant="outlined"
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, ...purpleFocusStyle }}
           >
             {programas.map((p) => (
               <MenuItem key={p} value={p}>{p}</MenuItem>
@@ -204,7 +215,7 @@ function FormularioAprendiz() {
             fullWidth
             required
             variant="outlined"
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, ...purpleFocusStyle }}
           />
 
           <TextField
@@ -216,7 +227,7 @@ function FormularioAprendiz() {
             fullWidth
             required
             variant="outlined"
-            sx={{ mb: 2 }}
+            sx={{ mb: 2, ...purpleFocusStyle }}
           />
 
           <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
@@ -229,7 +240,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             />
             <TextField
               label="Confirmar contraseña"
@@ -240,7 +251,7 @@ function FormularioAprendiz() {
               fullWidth
               required
               variant="outlined"
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...purpleFocusStyle }}
             />
           </Box>
 
@@ -280,10 +291,10 @@ function FormularioAprendiz() {
           <Typography>Tu registro ha sido exitoso.</Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={() => navigate("/login")} 
+          <Button
+            onClick={() => navigate("/login")}
             variant="contained"
-            sx={{ 
+            sx={{
               bgcolor: "#5E35B1",
               "&:hover": { bgcolor: "#4527A0" }
             }}
