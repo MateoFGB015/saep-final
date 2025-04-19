@@ -16,11 +16,13 @@
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dayjs": "^1.11.13",
+    "framer-motion": "^12.7.4",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.48",
     "react": "^18.3.1",
     "react-big-calendar": "^1.18.0",
     "react-dom": "^18.3.1",
+    "react-google-recaptcha": "^3.1.0",
     "react-router-dom": "^6.27.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
