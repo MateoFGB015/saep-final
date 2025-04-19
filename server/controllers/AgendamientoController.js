@@ -5,82 +5,119 @@ const modeloAprendiz = require('../models/Aprendiz');
 const modeloEmpresa = require('../models/Empresa');
 const modeloFicha = require('../models/fichas');
 
-
-//Obtener todos los agendamientos con detalles
-exports.obtenerAgendamientos = async (req, res) => {
+// Agendamientos del instructor autenticado
+exports.obtenerAgendamientosInstructor = async (req, res) => {
   try {
+    const instructorId = req.usuario.id;
+
     const agendamientos = await modeloAgendamiento.findAll({
+      where: { id_instructor: instructorId },
       include: [
-        { model: modeloUsuario, as: 'instructor' }, // Incluir el instructor
-        { 
-          model: FichaAprendiz, 
+        { model: modeloUsuario, as: 'instructor' },
+        {
+          model: FichaAprendiz,
           as: 'ficha_aprendiz',
-          include: [{ 
-            model: modeloUsuario, 
-            as: 'aprendiz', 
-            include: [{ 
-              model: modeloAprendiz, 
-              as: 'detalle_aprendiz', 
-              include: [{ model: modeloEmpresa, as: 'empresa' }] 
-            }]
+          include: [{
+            model: modeloUsuario,
+            as: 'aprendiz',
+            include: [{ model: modeloAprendiz, as: 'detalle_aprendiz' }]
           }]
         }
       ]
     });
 
-    if (!agendamientos || agendamientos.length === 0) {
-      return res.status(404).json({ mensaje: 'No se encontraron agendamientos.' });
-    }
+    res.json(agendamientos);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener agendamientos del instructor', error });
+  }
+};
+
+// ✅ Controlador - Obtener agendamientos del aprendiz autenticado
+exports.obtenerAgendamientosAprendiz = async (req, res) => {
+  try {
+    const aprendizId = req.usuario.id;
+
+    // Buscar las relaciones ficha-aprendiz para ese usuario
+    const fichasAprendiz = await FichaAprendiz.findAll({
+      where: { id_usuario: aprendizId },
+      include: [{
+        model: modeloAgendamiento,
+        as: 'agendamientos', // alias correcto según la relación en los modelos
+        include: [
+          {
+            model: modeloUsuario,
+            as: 'instructor'
+          },
+          {
+            model: FichaAprendiz,
+            as: 'ficha_aprendiz',
+            include: [
+              {
+                model: modeloUsuario,
+                as: 'aprendiz',
+                include: [{
+                  model: modeloAprendiz,
+                  as: 'detalle_aprendiz',
+                  include: [{ model: modeloEmpresa, as: 'empresa' }]
+                }]
+              }
+            ]
+          }
+        ]
+      }]
+    });
+
+    // Extraer solo los agendamientos de las relaciones encontradas
+    const agendamientos = fichasAprendiz.flatMap(fa => fa.agendamientos);
 
     res.json(agendamientos);
   } catch (error) {
-    console.error("Error al obtener agendamientos:", error);
-
-    if (error.name === 'SequelizeEagerLoadingError') {
-      return res.status(500).json({
-        mensaje: 'Error en la carga de relaciones. Verifica las asociaciones en Sequelize.',
-        error: error.message
-      });
-    } 
-    res.status(500).json({
-      mensaje: 'Error interno del servidor al obtener los agendamientos.',
-      error: error.message
-    });
+    console.error("Error al obtener agendamientos del aprendiz:", error);
+    res.status(500).json({ mensaje: 'Error al obtener agendamientos del aprendiz', error });
   }
 };
 
-/*------------------------------------------------------------------------------------------------------------------------------------*/
-
-// Obtener un agendamiento por ID con detalles
-exports.obtenerAgendamientoPorId = async (req, res) => {
+exports.obtenerAgendamientosPorInstructor = async (req, res) => {
   try {
     const { id } = req.params;
-    const agendamiento = await modeloAgendamiento.findOne({
-      where: { id_agendamiento: id },
+    const usuario = req.usuario; // Ya viene del token gracias a tu middleware
+
+    if (usuario.rol !== 'Administrador') {
+      return res.status(403).json({ mensaje: 'No tienes permiso para ver los agendamientos de otro instructor' });
+    }
+
+    const agendamientos = await modeloAgendamiento.findAll({
+      where: { id_instructor: id },
       include: [
-        { model: Usuario, as: 'instructor' }, 
-        { model: FichaAprendiz, as: 'ficha_aprendiz' }
+        { model: modeloUsuario, as: 'instructor' },
+        {
+          model: FichaAprendiz,
+          as: 'ficha_aprendiz',
+          include: [
+            {
+              model: modeloUsuario,
+              as: 'aprendiz',
+              include: [{ model: modeloAprendiz, as: 'detalle_aprendiz' }]
+            }
+          ]
+        }
       ]
     });
 
-    if (!agendamiento) {
-      return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
-    }
-
-    res.json(agendamiento);
+    res.json(agendamientos);
   } catch (error) {
-    res.status(500).json({ mensaje: 'Error al obtener el agendamiento', error });
+    res.status(500).json({ mensaje: 'Error al obtener los agendamientos', error });
   }
 };
 
-/*------------------------------------------------------------------------------------------------------------------------------------*/
 
-// Crear un nuevo agendamiento con validaciones
+// Crear agendamiento (solo para el instructor autenticado)
 exports.crearAgendamiento = async (req, res) => {
   try {
+    const instructorId = req.usuario.id;
+
     const {
       id_ficha_aprendiz,
-      id_instructor,
       herramienta_reunion,
       enlace_reunion,
       fecha_inicio,
@@ -90,33 +127,29 @@ exports.crearAgendamiento = async (req, res) => {
       numero_visita
     } = req.body;
 
-    // Validar que todos los campos obligatorios estén presentes
-    if (!id_ficha_aprendiz || !id_instructor || !herramienta_reunion || !enlace_reunion ||
-        !fecha_inicio || !fecha_fin || !estado_visita || !tipo_visita || numero_visita === undefined) {
+    if (!id_ficha_aprendiz || !herramienta_reunion || !enlace_reunion ||
+        !fecha_inicio || !fecha_fin || !tipo_visita || numero_visita === undefined) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
-    // Verificar que id_ficha_aprendiz existe
     const fichaAprendiz = await FichaAprendiz.findByPk(id_ficha_aprendiz);
     if (!fichaAprendiz) {
       return res.status(404).json({ mensaje: "FichaAprendiz no encontrada" });
     }
 
-    // Verificar que id_instructor existe
-    const instructor = await modeloUsuario.findByPk(id_instructor);
-    if (!instructor) {
-      return res.status(404).json({ mensaje: "Instructor no encontrado" });
+    const visitasExistentes = await modeloAgendamiento.count({
+      where: {
+        id_ficha_aprendiz
+      }
+    });
+
+    if (visitasExistentes >= 3) {
+      return res.status(400).json({ mensaje: "Este aprendiz ya tiene 3 visitas agendadas" });
     }
 
-    // Validar que numero_visita sea un número entre 1 y 3
-    if (typeof numero_visita !== 'number' || numero_visita < 1 || numero_visita > 3) {
-      return res.status(400).json({ mensaje: "El número de visita debe estar entre 1 y 3" });
-    }
-
-    // Crear el agendamiento con todos los datos validados
     const nuevoAgendamiento = await modeloAgendamiento.create({
       id_ficha_aprendiz,
-      id_instructor,
+      id_instructor: instructorId,
       herramienta_reunion,
       enlace_reunion,
       fecha_inicio,
@@ -129,34 +162,11 @@ exports.crearAgendamiento = async (req, res) => {
     res.status(201).json(nuevoAgendamiento);
   } catch (error) {
     console.error("Error al crear el agendamiento:", error);
-
-    // Manejo de errores específicos de Sequelize
-    if (error.name === "SequelizeValidationError") {
-      return res.status(400).json({ mensaje: "Error de validación", errores: error.errors });
-    }
-
     res.status(500).json({ mensaje: "Error interno del servidor", error: error.message });
   }
 };
 
-
-/*------------------------------------------------------------------------------------------------------------------------------------*/
-
-//esto se usa para que al abrir el modal de crear agendamiento en el select me obtenga las fichas que ya existen, ya que obviamente no se crea una nueva ficha.
-exports.obtenerFichas = async (req, res) => {
-  try {
-    const fichas = await modeloFicha.findAll({
-      attributes: ["id_ficha", "numero_ficha", "nombre_programa"], // Solo los datos necesarios
-      where: { archivar: false }, // No mostrar fichas archivadas
-    });
-    
-    res.json(fichas);
-  } catch (error) {
-    res.status(500).json({ mensaje: "Error al obtener fichas", error });
-  }
-};
-
-//esto muestra los aprendices en el selecet del modal crear, se muestran los que existen en la ficha que se selecciono antes.
+// Obtener aprendices por ficha
 exports.obtenerAprendicesPorFicha = async (req, res) => {
   try {
     const { id_ficha } = req.params;
@@ -174,14 +184,12 @@ exports.obtenerAprendicesPorFicha = async (req, res) => {
       return res.status(404).json({ mensaje: "No hay aprendices en esta ficha" });
     }
 
-    // Formatear la respuesta correctamente
     const aprendices = fichaAprendices.map((fa) => ({
       id_aprendiz: fa.aprendiz.id_usuario,
       nombre: fa.aprendiz.nombre,
       apellido: fa.aprendiz.apellido,
-      id_ficha_aprendiz: fa.id_ficha_aprendiz, // <= Agrega esto
+      id_ficha_aprendiz: fa.id_ficha_aprendiz,
     }));
-    
 
     res.json(aprendices);
   } catch (error) {
@@ -190,33 +198,47 @@ exports.obtenerAprendicesPorFicha = async (req, res) => {
   }
 };
 
-/*------------------------------------------------------------------------------------------------------------------------------------*/
+// Obtener fichas activas
+exports.obtenerFichas = async (req, res) => {
+  try {
+    const fichas = await modeloFicha.findAll({
+      attributes: ["id_ficha", "numero_ficha", "nombre_programa"],
+      where: { archivar: false },
+    });
 
-// Modificar un agendamiento
+    res.json(fichas);
+  } catch (error) {
+    res.status(500).json({ mensaje: "Error al obtener fichas", error });
+  }
+};
+
+// Modificar agendamiento (solo si es del instructor autenticado)
 exports.modificarAgendamiento = async (req, res) => {
   try {
     const { id } = req.params;
+    const instructorId = req.usuario.id;
 
-    // Intentar actualizar el agendamiento
-    const [actualizado] = await modeloAgendamiento.update(req.body, {
-      where: { id_agendamiento: id }
-    });
-
-    if (!actualizado) {
+    const agendamiento = await modeloAgendamiento.findByPk(id);
+    if (!agendamiento) {
       return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
     }
 
-    // Obtener el agendamiento actualizado con todas las relaciones
-    const agendamientoActualizado = await modeloAgendamiento.findOne({
+    if (agendamiento.id_instructor !== instructorId) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para modificar este agendamiento' });
+    }
+
+    await agendamiento.update(req.body);
+
+    const actualizado = await modeloAgendamiento.findOne({
       where: { id_agendamiento: id },
       include: [
-        { model: modeloUsuario, as: 'instructor' }, // Incluir el instructor
+        { model: modeloUsuario, as: 'instructor' },
         { 
           model: FichaAprendiz, 
           as: 'ficha_aprendiz',
           include: [{ 
             model: modeloUsuario, 
-            as: 'aprendiz', 
+            as: 'aprendiz',
             include: [{ 
               model: modeloAprendiz, 
               as: 'detalle_aprendiz', 
@@ -227,25 +249,29 @@ exports.modificarAgendamiento = async (req, res) => {
       ]
     });
 
-    res.json(agendamientoActualizado);
+    res.json(actualizado);
   } catch (error) {
     console.error("Error al modificar el agendamiento:", error);
     res.status(500).json({ mensaje: 'Error al modificar el agendamiento', error });
   }
 };
 
-/*------------------------------------------------------------------------------------------------------------------------------------*/
-
-// Eliminar un agendamiento
+// Eliminar agendamiento (solo si es del instructor autenticado)
 exports.eliminarAgendamiento = async (req, res) => {
   try {
     const { id } = req.params;
-    const eliminado = await modeloAgendamiento.destroy({ where: { id_agendamiento: id } });
+    const instructorId = req.usuario.id;
 
-    if (!eliminado) {
+    const agendamiento = await modeloAgendamiento.findByPk(id);
+    if (!agendamiento) {
       return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
     }
 
+    if (agendamiento.id_instructor !== instructorId) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para eliminar este agendamiento' });
+    }
+
+    await agendamiento.destroy();
     res.json({ mensaje: 'Agendamiento eliminado correctamente' });
   } catch (error) {
     res.status(500).json({ mensaje: 'Error al eliminar el agendamiento', error });

@@ -21,6 +21,10 @@ import FichaDetalle from "./features/fichas/VerFicha";
 // 🔹 Calendario
 import Calendario from "./features/agendamientos/components/calendarComponent";
 
+// Seguimiento
+import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin"
+
+
 // 🔹 Página no autorizada
 import NoAutorizado from "./components/NoAutorizado";
 
@@ -63,6 +67,14 @@ function App() {
                       element={
                         <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']}>
                           <Calendario />
+                        </ProtectedRoute>
+                      }
+                    />
+                                        <Route
+                      path="/seguimiento"
+                      element={
+                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']}>
+                          < BitacoraDocumentosApp />
                         </ProtectedRoute>
                       }
                     />

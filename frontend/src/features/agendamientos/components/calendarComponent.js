@@ -6,7 +6,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import EventosContext from "../../../context/eventosProvider";
 import ModalModificar from "./modalModificar";
 import ModalCrear from "./ModalCrear";
-import { Box, Typography, List, ListItem, Divider } from "@mui/material";
+import { Box, Typography, List, ListItem, Divider, Button } from "@mui/material";
 import { isSameDay } from "date-fns";
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -30,36 +30,11 @@ const messages = {
   showMore: (total) => `(+${total}) visitas`,
 };
 
-
-const eventStyleGetter = (event) => {
-  let borderColor = "#3788d8";
-  if (event.estado === "pendiente") borderColor = "#f39c12";
-  else if (event.estado === "realizado") borderColor = "#2ecc71";
-  else if (event.estado === "cancelado") borderColor = "#e74c3c";
-
-  return {
-    style: {
-      borderLeft: `4px solid ${borderColor}`,
-      padding: "4px",
-      marginBottom: "2px",
-      color: "black",
-      backgroundColor: "transparent",
-      borderRadius: "0px",
-      borderTop: "none",
-      borderRight: "none",
-      borderBottom: "none",
-      fontSize: "12px",
-    },
-  };
-};
-
 const Calendario = () => {
-  
   const { eventos } = useContext(EventosContext);
   const [modalOpen, setModalOpen] = useState(false);
-  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date());
 
   const theme = useTheme();
@@ -68,44 +43,58 @@ const Calendario = () => {
   const handleSelectEvent = (evento) => {
     setEventoSeleccionado(evento);
     setModalOpen(true);
-    setDiaSeleccionado(new Date(evento.start));
   };
 
   const handleSelectSlot = (slotInfo) => {
-    setFechaSeleccionada(slotInfo.start);
     setDiaSeleccionado(slotInfo.start);
-    setModalCrearOpen(true);
   };
 
   const eventosDelDia = eventos.filter((evento) =>
     isSameDay(new Date(evento.start), diaSeleccionado)
   );
-  
 
+  
+  // Celdas del calendario coloreadas según visitas
+  const dateCellWrapper = ({ value, children }) => {
+    const fechaActual = new Date(value);
+    const hayEventos = eventos.some((evento) =>
+      isSameDay(new Date(evento.start), fechaActual)
+    );
+  
+    return (
+      <div
+        style={{
+          backgroundColor: hayEventos ? "#a084dc" : "transparent",
+          borderRadius: "6px",
+          padding: "2px",
+          minHeight: "100%", // para que ocupe bien la celda
+        }}
+      >
+        {children}
+      </div>
+    );
+  };
+  
   return (
     <>
       <div style={{ display: "flex", gap: "20px" }}>
-        {/* Calendario */}
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
           <Calendar
             localizer={localizer}
-            events={eventos}
+            events={[]} // no mostrar eventos dentro del calendario
             startAccessor="start"
             endAccessor="end"
-            titleAccessor="title"
-            messages={messages}
-            eventPropGetter={eventStyleGetter}
             selectable
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
-            views={{ month: true, week: true, agenda: true }}
+            messages={messages}
+            components={{ dateCellWrapper }}
+            views={{ month: true }}
             defaultView="month"
-            length={365}
             style={{ height: "100%", width: "100%" }}
           />
         </div>
 
-        {/* Agenda lateral solo en pc */}
         {isDesktop && (
           <Box
             sx={{
@@ -114,20 +103,12 @@ const Calendario = () => {
               border: "1px solid #ccc",
               borderRadius: "8px",
               height: "min-content",
-              maxHeight:"80vh",
+              maxHeight: "80vh",
               overflowY: "auto",
               backgroundColor: "#fafafa",
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                mb: 2,
-                textAlign: "center",
-                padding: 1,
-                borderBottom: "1px solid #ccc",
-              }}
-            >
+            <Typography variant="h6" textAlign="center" mb={2}>
               Visitas del {moment(diaSeleccionado).format("DD [de] MMMM")}
             </Typography>
 
@@ -137,42 +118,47 @@ const Calendario = () => {
               </Typography>
             ) : (
               <List>
-                {eventosDelDia.map((evento, index) => {
-                  const { style } = eventStyleGetter(evento);
-                  const borderColor = style.borderLeft.split(" ")[2];
-
-                  return (
-                    <div key={evento.id_agendamiento || index}>
-                      <ListItem
-                        button
-                        onClick={() => {
-                          setEventoSeleccionado(evento);
-                          setModalOpen(true);
-                        }}
-                      >
-                        <Box sx={{ borderLeft: `3px solid ${borderColor}`, p: 1 }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                            {evento.tipo_visita}
-                          </Typography>
-                          <Typography variant="body2">
-                            {moment(evento.start).format("HH:mm")} - {moment(evento.end).format("HH:mm")}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Aprendiz: {evento.nombreAprendiz}
-                          </Typography>
-                        </Box>
-                      </ListItem>
-                      <Divider />
-                    </div>
-                  );
-                })}
+                {eventosDelDia.map((evento, i) => (
+                  <div key={evento.id_agendamiento || i}>
+                    <ListItem
+                      button
+                      onClick={() => {
+                        setEventoSeleccionado(evento);
+                        setModalOpen(true);
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                          {evento.tipo_visita === "virtual" ? "🖥️ Virtual" : "🏢 Presencial"}
+                        </Typography>
+                        <Typography variant="body2">
+                          {moment(evento.start).format("hh:mm A")}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Aprendiz: {evento.nombreAprendiz}
+                        </Typography>
+                      </Box>
+                    </ListItem>
+                    <Divider />
+                  </div>
+                ))}
               </List>
             )}
+
+            <Box textAlign="center" mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setModalCrearOpen(true)}
+              >
+                Añadir visita
+              </Button>
+            </Box>
           </Box>
         )}
       </div>
 
-      {/* Modal de Modificación */}
+      {/* Modales */}
       {modalOpen && (
         <ModalModificar
           open={modalOpen}
@@ -181,12 +167,11 @@ const Calendario = () => {
         />
       )}
 
-      {/* Modal de Creación */}
       {modalCrearOpen && (
         <ModalCrear
           open={modalCrearOpen}
           onClose={() => setModalCrearOpen(false)}
-          fechaSeleccionada={fechaSeleccionada}
+          fechaSeleccionada={diaSeleccionado}
         />
       )}
     </>

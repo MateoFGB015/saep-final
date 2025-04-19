@@ -1,15 +1,31 @@
 const express = require('express');
+const router = express.Router();
+const authMiddleware = require('../middlewares/authMiddleware');
 const agendamientoController = require('../controllers/AgendamientoController');
 
 
-const router = express.Router();
+// Crear agendamiento (instructor autenticado)
+router.post('/crear', authMiddleware, agendamientoController.crearAgendamiento);
 
-router.get('/ver', agendamientoController.obtenerAgendamientos);
-router.get('/ver-fichas', agendamientoController.obtenerFichas);//esto es para que muestre las fichas que existen en el select
-router.get('/ver-aprendiz/:id_ficha', agendamientoController.obtenerAprendicesPorFicha); //muestra en un sleect los aprendices que hay en la ficha que seleccionamos antes
-router.get('/ver/:id', agendamientoController.obtenerAgendamientoPorId);
-router.post('/crear', agendamientoController.crearAgendamiento);
-router.put('/modificar/:id', agendamientoController.modificarAgendamiento);
-router.delete('/eliminar/:id', agendamientoController.eliminarAgendamiento);
+// Obtener agendamientos del instructor logueado
+router.get('/instructor', authMiddleware, agendamientoController.obtenerAgendamientosInstructor);
+
+// Modificar un agendamiento (solo si le pertenece al instructor logueado)
+router.put('/modificar/:id', authMiddleware, agendamientoController.modificarAgendamiento);
+
+// Eliminar agendamiento (solo si le pertenece al instructor logueado)
+router.delete('/eliminar/:id', authMiddleware, agendamientoController.eliminarAgendamiento);
+
+// Obtener fichas (solo activas)
+router.get('/fichas', authMiddleware, agendamientoController.obtenerFichas);
+
+// Obtener aprendices por ficha
+router.get('/aprendices/:id_ficha', authMiddleware, agendamientoController.obtenerAprendicesPorFicha);
+
+//obtener agendamientos por aprendiz
+router.get('/aprendiz', authMiddleware, agendamientoController.obtenerAgendamientosAprendiz);
+
+//obtener agendamientos de un instructor por id
+router.get('/instructor/:id', authMiddleware, agendamientoController.obtenerAgendamientosPorInstructor);
 
 module.exports = router;
