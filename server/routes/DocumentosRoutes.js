@@ -1,19 +1,41 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const upload = require('../middlewares/multerDocumento');
+const multer = require('../middlewares/multerDocumento');
 const documentoController = require('../controllers/DocumentoController');
 
-// Subir documento
-router.post('/subir', authMiddleware, upload.single('documento'), documentoController.subirDocumento);
+ router.post(
+    '/subir',
+    authMiddleware,
+    multer.single('documento'), // usarás un middleware multer similar al de bitácoras
+    documentoController.subirDocumento
+  );
 
-// Ver documentos (según rol y ficha)
-router.get('/ver', authMiddleware, documentoController.verDocumentos);
+  //subir documentos admin a un aprendiz seleccionado
 
-// Modificar documento
-router.put('/modificar/:id', authMiddleware, upload.single('documento'), documentoController.modificarDocumento);
+  router.post(
+    '/subir/admin/:id_aprendiz',
+    authMiddleware,
+    multer.single('documento'),
+    documentoController.subirDocumentoComoAdmin
+  );
 
-// Eliminar documento
-router.delete('/eliminar/:id', authMiddleware, documentoController.eliminarDocumento);
+  router.get(
+    '/ver/:id_aprendiz?',
+    authMiddleware,
+    documentoController.verDocumentos
+  );
 
+  router.put(
+    '/modificar/:id',
+    authMiddleware,
+    multer.single('documento'),
+    documentoController.modificarDocumento
+  );
+
+  router.delete(
+    '/eliminar/:id',
+    authMiddleware,
+    documentoController.eliminarDocumento
+  );
 module.exports = router;

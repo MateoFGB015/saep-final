@@ -10,7 +10,7 @@ const bitacoraRoutes = require('./routes/bitacoraRoutes');
 const notificacionRoutes = require('./routes/notificacionRoutes');
 const fichasaprendizRoutes = require('./routes/FichaAprendizRoutes');
 const ObservacionRoutes = require('./routes/ObservacionRoutes');
-// const DocumentosRoutes = require('./routes/DocumentosRoutes');
+const DocumentosRoutes = require('./routes/DocumentosRoutes');
 const programasRoutes = require('./routes/programas');
 
 
@@ -37,7 +37,7 @@ app.use('/bitacora', bitacoraRoutes );
 app.use('/notificacion', notificacionRoutes);
 app.use('/fichasAprendiz', fichasaprendizRoutes);
 app.use('/observacion', ObservacionRoutes);
-// app.use('/documentos', DocumentosRoutes);
+app.use('/documentos', DocumentosRoutes);
 app.use('/programas', programasRoutes);
 
 module.exports = app;
