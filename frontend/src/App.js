@@ -21,15 +21,12 @@ import FichaDetalle from "./features/fichas/VerFicha";
 // 🔹 Calendario
 import Calendario from "./features/agendamientos/components/calendarComponent";
 
-// Seguimiento
-// import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin"
-
 
 // 🔹 Página no autorizada
 import NoAutorizado from "./components/NoAutorizado";
 
 // 🔹 Página de seguimiento
-import BitacoraDocumentosApp from "./features/Seguimiento/Seguimient";
+import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
 // 🔹 Página de creación del aprendiz
 // import FormularioAprendiz from "./features/Registro/Aprendiz";
@@ -82,14 +79,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                                        {/* <Route
+                     <Route
                       path="/seguimiento"
                       element={
                         <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']}>
                           < BitacoraDocumentosApp />
                         </ProtectedRoute>
                       }
-                    /> */}
+                    />
                     <Route
                       path="/fichas"
                       element={
@@ -109,7 +106,7 @@ function App() {
                     <Route
                       path="/seguimiento"
                       element={
-                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}>
+                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'Aprendiz']}>
                           <BitacoraDocumentosApp />
                         </ProtectedRoute>
                       }

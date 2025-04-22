@@ -21,14 +21,36 @@ const BitacoraDocumentosApp = () => {
   const [paginaActual, setPaginaActual] = useState(1);
 
   const contentRef = useRef(null);
-  const datosPorPagina = 10;
 
-  const totalDatos = Array(50).fill({});
-  const totalPaginas = Math.ceil(totalDatos.length / datosPorPagina);
-  const datosPagina = totalDatos.slice(
+  const [bitacoras, setBitacoras] = useState([]);
+
+  useEffect(() => {
+    const fetchBitacoras = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/bitacora/ver_bitacoras', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+  
+        const data = await response.json();
+        setBitacoras(data.bitacoras || []); // suponiendo que el backend responde con { bitacoras: [...] }
+      } catch (error) {
+        console.error('Error al cargar bitácoras:', error);
+      }
+    };
+  
+    fetchBitacoras();
+  }, []);
+
+
+  const datosPorPagina = 3;
+  const totalPaginas = Math.ceil(bitacoras.length / datosPorPagina);
+  const datosPagina = bitacoras.slice(
     (paginaActual - 1) * datosPorPagina,
     paginaActual * datosPorPagina
   );
+  
 
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
@@ -83,7 +105,7 @@ const BitacoraDocumentosApp = () => {
     formData.append('bitacora', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:3000/Bitacora/subir', {
+      const response = await fetch('http://localhost:3000/bitacora/subir', {
         method: 'POST',
         body: formData,
         credentials: 'include'
@@ -149,39 +171,43 @@ const BitacoraDocumentosApp = () => {
       </Paper>
 
       <Box ref={contentRef} sx={scrollableStyle}>
-        {datosPagina.map((_, index) => {
-          const globalIndex = (paginaActual - 1) * datosPorPagina + index;
-          return (
-            <Paper
-              key={globalIndex}
-              elevation={3}
-              sx={{
-                p: 3, my: 2, borderRadius: 3, display: 'flex',
-                flexDirection: 'column', backgroundColor: 'white',
-                gap: 1, borderLeft: '6px solid #8e24aa'
-              }}
-            >
-              <Typography variant="h6" fontWeight={700} color="#6a1b9a">
-                {tab === 0 ? `Bitácora #${globalIndex + 1}` : `Documento #${globalIndex + 1}`}
-              </Typography>
-              {tab === 0 && observaciones[globalIndex] && (
-                <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
-                  {observaciones[globalIndex].fecha}: {observaciones[globalIndex].texto}
-                </Typography>
-              )}
-              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                <Button size="small" variant="outlined" color="secondary">Ver</Button>
-                <Button size="small" variant="outlined" color="secondary">Modificar</Button>
-                {tab === 0 && (
-                  <Button size="small" variant="outlined" color="secondary"
-                    onClick={() => handleOpenObservacionDialog(index)}>
-                    Observaciones
-                  </Button>
-                )}
-              </Box>
-            </Paper>
-          );
-        })}
+      {datosPagina.map((bitacora, index) => {
+  const globalIndex = (paginaActual - 1) * datosPorPagina + index;
+  return (
+    <Paper
+      key={bitacora.id_bitacora}
+      elevation={3}
+      sx={{
+        p: 3, my: 2, borderRadius: 3, display: 'flex',
+        flexDirection: 'column', backgroundColor: 'white',
+        gap: 1, borderLeft: '6px solid #8e24aa'
+      }}
+    >
+      <Typography variant="h6" fontWeight={700} color="#6a1b9a">
+        Bitácora #{bitacora.numero_bitacora}
+      </Typography>
+
+      {bitacora.observacion && (
+        <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
+          Observación: {bitacora.observacion}
+        </Typography>
+      )}
+
+      <Typography variant="body2">
+        Última actualización: {new Date(bitacora.fecha_ultima_actualizacion).toLocaleString()}
+      </Typography>
+
+      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+        <Button size="small" variant="outlined" color="secondary">Ver</Button>
+        <Button size="small" variant="outlined" color="secondary">Modificar</Button>
+        <Button size="small" variant="outlined" color="secondary"
+          onClick={() => handleOpenObservacionDialog(index)}>
+          Observaciones
+        </Button>
+      </Box>
+    </Paper>
+  );
+})}
 
         <Box sx={{
           display: 'flex',
