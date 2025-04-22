@@ -9,7 +9,7 @@ const fichasRoutes = require('./routes/fichasRoutes');
 const bitacoraRoutes = require('./routes/bitacoraRoutes');
 const notificacionRoutes = require('./routes/notificacionRoutes');
 const fichasaprendizRoutes = require('./routes/FichaAprendizRoutes');
-// const ObservacionRoutes = require('./routes/ObservacionRoutes');
+const ObservacionRoutes = require('./routes/ObservacionRoutes');
 // const DocumentosRoutes = require('./routes/DocumentosRoutes');
 const programasRoutes = require('./routes/programas');
 
@@ -36,7 +36,7 @@ app.use('/agendamiento',AgendamientoRoutes);
 app.use('/bitacora', bitacoraRoutes );
 app.use('/notificacion', notificacionRoutes);
 app.use('/fichasAprendiz', fichasaprendizRoutes);
-// app.use('/observacion', ObservacionRoutes);
+app.use('/observacion', ObservacionRoutes);
 // app.use('/documentos', DocumentosRoutes);
 app.use('/programas', programasRoutes);
 

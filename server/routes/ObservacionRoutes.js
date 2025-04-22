@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middlewares/authMiddleware');
-const observacionController = require('../controllers/observacionController');
+const observacionController = require('../controllers/ObservacionesController');
 
 router.post(
     '/bitacora/:id_bitacora',
