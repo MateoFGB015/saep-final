@@ -1,28 +1,31 @@
+const fs = require('fs');
+const path = require('path');
 const Bitacora = require('../models/Bitacora');
 const FichaAprendiz = require('../models/FichaAprendiz');
-
-// Verificar permisos según rol
-const verificarRol = (role, requiredRoles) => {
-  return requiredRoles.includes(role);
-};
 
 // Subir Bitácora
 exports.subirBitacora = async (req, res) => {
   try {
     const { id: id_usuario, rol } = req.usuario;
 
-    // Verificar si el usuario es un aprendiz
+    // ✅ Verificar que sea aprendiz o admin
+    if (rol !== 'aprendiz' && rol !== 'Administrador') {
+      return res.status(403).json({ mensaje: 'Solo el administrador o el aprendiz pueden subir bitácoras.' });
+    }
+
+    // Buscar relación en ficha_aprendiz
     const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
     if (!relacion) {
-      return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
+      return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al usuario.' });
     }
+
     const id_ficha_aprendiz = relacion.id_ficha_aprendiz;
 
     // Calcular número de bitácora
     const cantidad = await Bitacora.count({ where: { id_ficha_aprendiz } });
     const numero_bitacora = cantidad + 1;
 
-    // Validar archivo subido
+    // Validar que haya archivo
     if (!req.file) {
       return res.status(400).json({ mensaje: 'Debes subir un archivo.' });
     }
@@ -36,7 +39,7 @@ exports.subirBitacora = async (req, res) => {
     const nuevaBitacora = await Bitacora.create({
       numero_bitacora,
       observacion: 'Sin observaciones',
-      estado_bitacora: 1, // Asumiendo que 1 = pendiente
+      estado_bitacora: 1, // 1 = pendiente
       fecha_ultima_actualizacion: new Date(),
       bitacora: filename,
       id_ficha_aprendiz
@@ -50,93 +53,135 @@ exports.subirBitacora = async (req, res) => {
   }
 };
 
-// Ver Bitácoras
+
+//Ver bitacoras
+
 exports.verBitacorasSubidas = async (req, res) => {
   try {
     const { id: id_usuario, rol } = req.usuario;
+    const { id_usuario_aprendiz } = req.params;
 
-    const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
-    if (!relacion) {
-      return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
-    }
-    const id_ficha_aprendiz = relacion.id_ficha_aprendiz;
-
-    // Filtrar por rol
+    // Si es aprendiz: ver solo sus propias bitácoras
     if (rol === 'aprendiz') {
+      const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
+
+      if (!relacion) {
+        return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
+      }
+
       const bitacoras = await Bitacora.findAll({
-        where: { id_ficha_aprendiz },
+        where: { id_ficha_aprendiz: relacion.id_ficha_aprendiz },
         order: [['numero_bitacora', 'ASC']]
       });
-      res.status(200).json({ bitacoras });
-    } else if (rol === 'admin' || rol === 'instructor') {
-      const bitacoras = await Bitacora.findAll({
-        order: [['numero_bitacora', 'ASC']]
-      });
-      res.status(200).json({ bitacoras });
-    } else {
-      res.status(403).json({ mensaje: 'No tienes permisos para ver estas bitácoras.' });
+
+      return res.status(200).json({ bitacoras });
     }
+
+    // Si es admin o instructor: requiere ID del aprendiz
+    if ((rol === 'Administrador' || rol === 'Instructor') && id_usuario_aprendiz) {
+      const relacion = await FichaAprendiz.findOne({ where: { id_usuario: id_usuario_aprendiz } });
+
+      if (!relacion) {
+        return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
+      }
+
+      const bitacoras = await Bitacora.findAll({
+        where: { id_ficha_aprendiz: relacion.id_ficha_aprendiz },
+        order: [['numero_bitacora', 'ASC']]
+      });
+
+      return res.status(200).json({ bitacoras });
+    }
+
+    // ❌ Si es admin/instructor pero no manda ID
+    return res.status(400).json({ mensaje: 'Debes proporcionar el ID del aprendiz.' });
+
   } catch (error) {
     console.error('❌ Error al obtener bitácoras:', error);
     res.status(500).json({ mensaje: 'Error del servidor al obtener las bitácoras.', error });
   }
 };
 
+
 // Modificar Bitácora
 exports.modificarBitacora = async (req, res) => {
   try {
     const { id } = req.params;
-    const { observacion, estado } = req.body;
-    const { rol } = req.usuario;
+    const { id: id_usuario, rol } = req.usuario;
 
-    if (rol !== 'admin' && rol !== 'instructor') {
+    // ✅ Solo admin y aprendiz pueden modificar
+    if (rol !== 'admin' && rol !== 'aprendiz') {
       return res.status(403).json({ mensaje: 'No tienes permisos para modificar esta bitácora.' });
     }
 
-    const [actualizado] = await Bitacora.update(
-      {
-        observacion,
-        estado
-      },
-      {
-        where: { id_bitacora: id }
-      }
-    );
-
-    if (!actualizado) {
-      return res.status(404).json({ mensaje: 'Bitácora no encontrada' });
+    // Obtener la bitácora actual
+    const bitacora = await Bitacora.findByPk(id);
+    if (!bitacora) {
+      return res.status(404).json({ mensaje: 'Bitácora no encontrada.' });
     }
 
-    const bitacoraActualizada = await Bitacora.findByPk(id);
-    res.status(200).json({ mensaje: 'Bitácora actualizada', bitacoraActualizada });
+    // ✅ Si es aprendiz, verificar que la bitácora sea suya
+    if (rol === 'aprendiz') {
+      const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
+      if (!relacion || relacion.id_ficha_aprendiz !== bitacora.id_ficha_aprendiz) {
+        return res.status(403).json({ mensaje: 'No puedes modificar una bitácora que no te pertenece.' });
+      }
+    }
+
+    // ⚠️ Si hay nuevo archivo, eliminar el anterior
+    if (req.file) {
+      const rutaAnterior = path.join(__dirname, '..', 'uploads', 'bitacoras', bitacora.bitacora);
+      if (fs.existsSync(rutaAnterior)) {
+        fs.unlinkSync(rutaAnterior);
+      }
+      bitacora.bitacora = req.file.filename;
+    }
+
+    // Actualizar otros campos (si se envían)
+    bitacora.estado_bitacora = 1; // Opcional: siempre marcar como pendiente al modificar
+    bitacora.fecha_ultima_actualizacion = new Date();
+
+    await bitacora.save();
+
+    res.status(200).json({ mensaje: '✅ Bitácora modificada correctamente.', bitacora });
 
   } catch (error) {
-    console.error('❌ Error al actualizar bitácora:', error);
-    res.status(500).json({ mensaje: 'Error del servidor al actualizar la bitácora', error });
+    console.error('❌ Error al modificar bitácora:', error);
+    res.status(500).json({ mensaje: 'Error del servidor al modificar la bitácora.', error });
   }
 };
 
 // Eliminar Bitácora
+
 exports.eliminarBitacora = async (req, res) => {
   try {
     const { id } = req.params;
     const { rol } = req.usuario;
 
-    if (rol !== 'admin' && rol !== 'instructor') {
-      return res.status(403).json({ mensaje: 'No tienes permisos para eliminar esta bitácora.' });
+    // 🔐 Solo el ADMIN puede eliminar
+    if (rol !== 'admin') {
+      return res.status(403).json({ mensaje: 'Solo el administrador puede eliminar bitácoras.' });
     }
 
-    const eliminado = await Bitacora.destroy({
-      where: { id_bitacora: id }
-    });
-
-    if (!eliminado) {
-      return res.status(404).json({ mensaje: 'Bitácora no encontrada' });
+    // Buscar la bitácora
+    const bitacora = await Bitacora.findByPk(id);
+    if (!bitacora) {
+      return res.status(404).json({ mensaje: 'Bitácora no encontrada.' });
     }
-    res.status(200).json({ mensaje: 'Bitácora eliminada correctamente' });
+
+    // Eliminar archivo del sistema si existe
+    const rutaArchivo = path.join(__dirname, '..', 'uploads', 'bitacoras', bitacora.bitacora);
+    if (fs.existsSync(rutaArchivo)) {
+      fs.unlinkSync(rutaArchivo);
+    }
+
+    // Eliminar registro en la base de datos
+    await Bitacora.destroy({ where: { id_bitacora: id } });
+
+    res.status(200).json({ mensaje: '✅ Bitácora eliminada correctamente.' });
 
   } catch (error) {
     console.error('❌ Error al eliminar bitácora:', error);
-    res.status(500).json({ mensaje: 'Error del servidor al eliminar la bitácora', error });
+    res.status(500).json({ mensaje: 'Error del servidor al eliminar la bitácora.', error });
   }
 };

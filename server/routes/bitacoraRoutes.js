@@ -11,9 +11,26 @@ router.post(
     multer.single('bitacora'), 
     bitacoraController.subirBitacora);
 
-  router.get(
-    '/mis_bitacoras',
-    authMiddleware,
-    bitacoraController.verBitacorasSubidas);
+// Para aprendiz (sin parámetro) o admin/instructor (con parámetro)
+router.get(
+  '/ver_bitacoras/:id_usuario_aprendiz?', // ← el parámetro es opcional (solo lo usa admin/instructor)
+  authMiddleware,
+  bitacoraController.verBitacorasSubidas
+);
+
+router.put(
+  '/modificar/:id',
+  authMiddleware,
+  multer.single('bitacora'), // Si se reemplaza archivo
+  bitacoraController.modificarBitacora
+);
+
+router.delete(
+  '/eliminar/:id',
+  authMiddleware,
+  bitacoraController.eliminarBitacora
+);
+
+
 
 module.exports = router;

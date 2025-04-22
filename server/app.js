@@ -33,7 +33,7 @@ app.use('/inicio', autenticacionRoutes);
 app.use('/usuarios', usuariosRoutes);
 app.use('/fichas', fichasRoutes);
 app.use('/agendamiento',AgendamientoRoutes);
-app.use('/Bitacora', bitacoraRoutes );
+app.use('/bitacora', bitacoraRoutes );
 app.use('/notificacion', notificacionRoutes);
 app.use('/fichasAprendiz', fichasaprendizRoutes);
 // app.use('/observacion', ObservacionRoutes);
