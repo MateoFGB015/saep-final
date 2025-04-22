@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import ReCAPTCHA from "react-google-recaptcha";
+// import ReCAPTCHA from "react-google-recaptcha";
 
 function FormularioAprendiz() {
   const navigate = useNavigate();

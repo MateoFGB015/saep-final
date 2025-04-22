@@ -22,17 +22,17 @@ import FichaDetalle from "./features/fichas/VerFicha";
 import Calendario from "./features/agendamientos/components/calendarComponent";
 
 // Seguimiento
-import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin"
+// import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin"
 
 
 // 🔹 Página no autorizada
 import NoAutorizado from "./components/NoAutorizado";
 
 // 🔹 Página de seguimiento
-import BitacoraDocumentosApp from "./features/Seguimiento/SeguimientoAdmin";
+import BitacoraDocumentosApp from "./features/Seguimiento/Seguimient";
 
 // 🔹 Página de creación del aprendiz
-import FormularioAprendiz from "./features/Registro/Aprendiz";
+// import FormularioAprendiz from "./features/Registro/Aprendiz";
 
 function App() {
   return (
@@ -47,14 +47,10 @@ function App() {
             <Route path="/no-autorizado" element={<NoAutorizado />} />
 
             {/* Ruta sin Navbar para el formulario de aprendiz */}
-            <Route
+            {/* <Route
               path="/aprendiz"
-              element={
-                <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}>
-                  <FormularioAprendiz />
-                </ProtectedRoute>
-              }
-            />
+              element={<FormularioAprendiz />}
+            /> */}
 
             {/* Rutas protegidas con Navbar */}
             <Route
@@ -86,14 +82,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                                        <Route
+                                        {/* <Route
                       path="/seguimiento"
                       element={
                         <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']}>
                           < BitacoraDocumentosApp />
                         </ProtectedRoute>
                       }
-                    />
+                    /> */}
                     <Route
                       path="/fichas"
                       element={
