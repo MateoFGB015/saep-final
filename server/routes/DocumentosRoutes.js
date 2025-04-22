@@ -7,7 +7,7 @@ const documentoController = require('../controllers/DocumentoController');
  router.post(
     '/subir',
     authMiddleware,
-    multer.single('documento'), // usarás un middleware multer similar al de bitácoras
+    multer.single('documento'), 
     documentoController.subirDocumento
   );
 
