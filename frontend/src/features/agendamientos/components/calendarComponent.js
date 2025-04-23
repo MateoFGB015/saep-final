@@ -1,16 +1,16 @@
-import { useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
-import { obtenerEventos} from "../../../api/AgendamientoAPI";
+import { obtenerEventos } from "../../../api/AgendamientoAPI";
 import moment from "moment";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import EventosContext from "../../../context/eventosProvider";
+import { useAuth } from "../../../context/AuthProvider"; // ✅ usar el hook
 import ModalModificar from "./modalModificar";
 import ModalCrear from "./ModalCrear";
 import { Box, Typography, List, ListItem, Divider, Button } from "@mui/material";
 import { isSameDay } from "date-fns";
-import useMediaQuery from '@mui/material/useMediaQuery';
-import { useTheme } from '@mui/material/styles';
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { useTheme } from "@mui/material/styles";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
@@ -38,22 +38,24 @@ const Calendario = () => {
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date());
 
+  const { user } = useAuth(); // ✅ obtener usuario autenticado
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+
   useEffect(() => {
     const cargarEventos = async () => {
       try {
-        const datos = await obtenerEventos();
+        const datos = await obtenerEventos(); // ya usa token automáticamente
         setEventos(datos);
       } catch (error) {
         console.error("Error al cargar eventos:", error);
       }
     };
-  
-    cargarEventos();
-  }, []);
-  
 
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+    if (user?.rol) {
+      cargarEventos();
+    }
+  }, [user?.rol]);
 
   const handleSelectEvent = (evento) => {
     setEventoSeleccionado(evento);
@@ -64,39 +66,37 @@ const Calendario = () => {
     setDiaSeleccionado(slotInfo.start);
   };
 
-  const eventosDelDia = (eventos || []).filter((evento) =>
+  const eventosDelDia = eventos.filter((evento) =>
     isSameDay(new Date(evento.start), diaSeleccionado)
   );
 
-  
-  // Celdas del calendario coloreadas según visitas
   const dateCellWrapper = ({ value, children }) => {
     const fechaActual = new Date(value);
     const hayEventos = eventos.some((evento) =>
       isSameDay(new Date(evento.start), fechaActual)
     );
-  
+
     return (
       <div
         style={{
           backgroundColor: hayEventos ? "#a084dc" : "transparent",
           borderRadius: "6px",
           padding: "2px",
-          minHeight: "100%", // para que ocupe bien la celda
+          minHeight: "100%",
         }}
       >
         {children}
       </div>
     );
   };
-  
+
   return (
     <>
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
           <Calendar
             localizer={localizer}
-            events={[]} // no mostrar eventos dentro del calendario
+            events={[]} // Los eventos los muestra al lado
             startAccessor="start"
             endAccessor="end"
             selectable
@@ -134,7 +134,7 @@ const Calendario = () => {
             ) : (
               <List>
                 {eventosDelDia.map((evento, i) => (
-                  <div key={evento.id_agendamiento || i}>
+                  <div key={evento.id || i}>
                     <ListItem
                       button
                       onClick={() => {

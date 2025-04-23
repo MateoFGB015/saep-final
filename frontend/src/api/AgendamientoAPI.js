@@ -1,124 +1,105 @@
 import axiosInstance from './AxiosInstance';
+import authAPI from './AuthAPI';
 
 
-
-// esto es para seleccionar un aprendiz en el select con una ficha seleccionada tambien del select
+// 🔸 Obtener fichas activas
 export const obtenerFichas = async () => {
-  try {
-    const { data } = await axiosInstance.get("/agendamiento/fichas");
-    return data;
-  } catch (error) {
-    console.error("Error al obtener fichas:", error.response?.data || error.message);
-    return [];
-  }
-};
-
-// Obtener aprendices de una ficha específica
-export const obtenerAprendices = async (id_ficha) => {
-  try {
-    const { data } = await axiosInstance.get(`/agendamiento/aprendices/${id_ficha}`);
-    return data;
-  } catch (error) {
-    console.error("Error al obtener aprendices:", error.response?.data || error.message);
-    return [];
-  }
-};
-//-------------------------------------------------------------------------------------------------------
-
-
-// Crear un nuevo agendamiento (evento)
-export const crearEvento = async (nuevoEvento) => {
     try {
-        const { data } = await axiosInstance.post("/agendamiento/crear", nuevoEvento);
-
-        return {
-            title: `Hora: ${new Date(data.fecha_inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true })} - Tipo: ${data.tipo_visita}`,
-            nombreAprendiz: `${data.ficha_aprendiz?.aprendiz.nombre} ${data.ficha_aprendiz?.aprendiz.apellido}`,
-            telefonoAprendiz: data.ficha_aprendiz?.aprendiz.telefono || "N/A",
-            nombreEmpresa: data.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
-            direccion: data.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
-            tipo_visita: data.tipo_visita,
-            enlace_reunion: data.enlace_reunion,
-            start: new Date(data.fecha_inicio),
-            end: new Date(data.fecha_fin),
-            ficha: data.ficha_aprendiz?.id_ficha,
-            estado: data.estado_visita
-        };
+      const { data } = await axiosInstance.get('/agendamiento/fichas');
+      return data;
     } catch (error) {
-        console.error("Error al crear el evento:", error.response?.data || error.message);
-        throw error;
+      console.error("Error al obtener fichas:", error.response?.data || error.message);
+      return [];
     }
-};
-
-
-
-export const obtenerEventos = async () => {
+  };
+  
+  // 🔸 Obtener aprendices por ficha
+  export const obtenerAprendices = async (id_ficha) => {
     try {
-        const { data } = await axiosInstance.get("/agendamiento/instructor");
-
-        return data.map(evento => {
-            const fechaInicio = new Date(evento.fecha_inicio);
-            const horaInicio = fechaInicio.toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true, // AM Y PM
-            });
-
-            return {
-                id: evento.id_agendamiento,
-                title: ` Hora: ${horaInicio} - Tipo: ${evento.tipo_visita}`,
-                nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
-                telefonoAprendiz:`${evento.ficha_aprendiz?.aprendiz.telefono}`,
-                nombreEmpresa:`${evento.ficha_aprendiz?.aprendiz.detalle_aprendiz.empresa.razon_social}`,
-                direccion: `${evento.ficha_aprendiz?.aprendiz.detalle_aprendiz.empresa.direccion}`,
-                tipo_visita:evento.tipo_visita,
-                enlace_reunion: evento.enlace_reunion,
-                start: fechaInicio,
-                end: new Date(evento.fecha_fin),
-                // instructor: `${evento.instructor?.nombre} ${evento.instructor?.apellido}`,
-                ficha: evento.ficha_aprendiz?.id_ficha,
-                estado: evento.estado_visita
-            };
+      const { data } = await axiosInstance.get(`/agendamiento/aprendices/${id_ficha}`);
+      return data;
+    } catch (error) {
+      console.error("Error al obtener aprendices:", error.response?.data || error.message);
+      return [];
+    }
+  };
+  
+  // 🔸 Crear agendamiento
+  export const crearEvento = async (nuevoEvento) => {
+    try {
+      const { data } = await axiosInstance.post('/agendamiento/crear', nuevoEvento);
+      return data;
+    } catch (error) {
+      console.error("Error al crear agendamiento:", error.response?.data || error.message);
+      throw error;
+    }
+  };
+  
+  // 🔸 Obtener agendamientos según rol
+  export const obtenerEventos = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const usuario = await authAPI.getUserData(token); // Obtenemos el usuario autenticado
+  
+      let url = "";
+      if (usuario.rol === "Instructor") {
+        url = "/agendamiento/instructor";
+      } else if (usuario.rol === "Aprendiz") {
+        url = "/agendamiento/aprendiz";
+      } else {
+        // No cargar nada si no se tiene contexto válido
+        throw new Error("Rol no válido o falta ID de instructor");
+      }
+  
+      const { data } = await axiosInstance.get(url);
+  
+      return data.map(evento => {
+        const fechaInicio = new Date(evento.fecha_inicio);
+        const horaInicio = fechaInicio.toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
         });
-    } catch (error) {
-        console.error("Error al obtener eventos:", error.response?.data || error.message);
-        return [];
-    }
-};
-
-
-// Actualizar un agendamiento (evento)
-export const actualizarEvento = async (id, datosActualizados) => {
-    try {
-        const { data } = await axiosInstance.put(`/agendamiento/modificar/${id}`, datosActualizados);
-
+  
         return {
-            id: data.id_agendamiento,
-            title: `Hora: ${new Date(data.fecha_inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: true })} - Tipo: ${data.tipo_visita}`,
-            nombreAprendiz: `${data.ficha_aprendiz?.aprendiz.nombre} ${data.ficha_aprendiz?.aprendiz.apellido}`,
-            telefonoAprendiz: data.ficha_aprendiz?.aprendiz.telefono || "N/A",
-            nombreEmpresa: data.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
-            direccion: data.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
-            tipo_visita: data.tipo_visita,
-            enlace_reunion: data.enlace_reunion,
-            start: new Date(data.fecha_inicio),
-            end: new Date(data.fecha_fin),
-            ficha: data.ficha_aprendiz?.id_ficha,
-            estado: data.estado_visita
+          id: evento.id_agendamiento,
+          title: `Hora: ${horaInicio} - Tipo: ${evento.tipo_visita}`,
+          nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
+          telefonoAprendiz: evento.ficha_aprendiz?.aprendiz.telefono,
+          nombreEmpresa: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
+          direccion: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
+          tipo_visita: evento.tipo_visita,
+          enlace_reunion: evento.enlace_reunion,
+          start: new Date(evento.fecha_inicio),
+          end: new Date(evento.fecha_fin),
+          ficha: evento.ficha_aprendiz?.id_ficha,
+          estado: evento.estado_visita
         };
+      });
     } catch (error) {
-        console.error("Error al actualizar el evento:", error.response?.data || error.message);
-        throw error;
+      console.error("Error al obtener eventos:", error.response?.data || error.message);
+      return [];
     }
-};
-
-
-export const eliminarEvento = async (id) => {
+  };
+  
+  // 🔸 Modificar agendamiento
+  export const actualizarEvento = async (id, datosActualizados) => {
     try {
-        const { data } = await axiosInstance.delete(`/agendamiento/eliminar/${id}`);
-        return data;    
+      const { data } = await axiosInstance.put(`/agendamiento/modificar/${id}`, datosActualizados);
+      return data;
     } catch (error) {
-        console.error("Error al eliminar el evento:", error.response?.data || error.message);
-        throw error;
+      console.error("Error al actualizar evento:", error.response?.data || error.message);
+      throw error;
     }
-};
+  };
+  
+  // 🔸 Eliminar agendamiento
+  export const eliminarEvento = async (id) => {
+    try {
+      const { data } = await axiosInstance.delete(`/agendamiento/eliminar/${id}`);
+      return data;
+    } catch (error) {
+      console.error("Error al eliminar evento:", error.response?.data || error.message);
+      throw error;
+    }
+  };
