@@ -18,6 +18,7 @@ import CustomSnackbar from "../../../components/ui/Alert";
 import useAlert from "../../usuarios/hooks/UserAlert";
 import axiosInstance from "../../../api/AxiosInstance";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
+import { useAuth } from "../../../context/AuthProvider";
 
 const textFieldStyle = {
   "& label": { color: "gray" },
@@ -39,6 +40,8 @@ const textFieldStyle = {
 const ModalModificar = ({ open, onClose, evento }) => {
   const { alerta, closeAlert, showAlert } = useAlert();
   const { setEventos } = useContext(EventosContext);
+  const { user } = useAuth(); // ✅ Obtenemos el rol del usuario
+  const esAprendiz = user?.rol === "aprendiz" || user?.rol === "Aprendiz";
 
   const [formData, setFormData] = useState({
     nombreAprendiz: "",
@@ -87,29 +90,23 @@ const ModalModificar = ({ open, onClose, evento }) => {
       });
 
       showAlert("¡Datos actualizados exitosamente!.", "success");
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      setTimeout(() => window.location.reload(), 2000);
     } catch (error) {
       console.error("Error al actualizar el evento:", error);
-      showAlert("¡Hubo un error al actualizar el agendamiento!. Revisa los datos.", "error");
+      showAlert("¡Hubo un error al actualizar el agendamiento! Revisa los datos.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEliminar = () => {
-    setShowConfirmationModal(true);
-  };
+  const handleEliminar = () => setShowConfirmationModal(true);
 
   const handleConfirm = async () => {
     try {
       await axiosInstance.delete(`/agendamiento/eliminar/${evento.id}`);
-      showAlert("¡Agendamiento eliminado correctamente!.", "success");
+      showAlert("¡Agendamiento eliminado correctamente!", "success");
       setShowConfirmationModal(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error("Error al eliminar el agendamiento:", error);
       showAlert("¡Hubo un error al eliminar el agendamiento!.", "error");
@@ -119,9 +116,7 @@ const ModalModificar = ({ open, onClose, evento }) => {
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle
-          sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-        >
+        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ flexGrow: 1, textAlign: "center" }}>Información del agendamiento</span>
           <IconButton onClick={onClose} size="small" sx={{ color: "gray" }}>
             <CloseIcon />
@@ -130,13 +125,10 @@ const ModalModificar = ({ open, onClose, evento }) => {
 
         <DialogContent sx={{ height: "min-content" }}>
           <Grid container spacing={2} sx={{ mt: -1 }}>
-            {[
-              { label: "Aprendiz", name: "nombreAprendiz" },
+            {[{ label: "Aprendiz", name: "nombreAprendiz" },
               { label: "Teléfono", name: "telefonoAprendiz" },
-              { label: "Empresa", name: "empresa" },
-              { label: "Dirección", name: "direccion" },
-            ].map((field, index) => (
-              <Grid item xs={6} key={index}>
+            ].map((field, i) => (
+              <Grid item xs={6} key={i}>
                 <TextField
                   label={field.label}
                   name={field.name}
@@ -157,6 +149,7 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 onChange={handleChange}
                 fullWidth
                 sx={textFieldStyle}
+                InputProps={esAprendiz ? { readOnly: true } : {}}
               >
                 <MenuItem value="virtual">virtual</MenuItem>
                 <MenuItem value="presencial">presencial</MenuItem>
@@ -171,8 +164,10 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 onChange={handleChange}
                 fullWidth
                 sx={textFieldStyle}
+                InputProps={esAprendiz ? { readOnly: true } : {}}
               />
             </Grid>
+
             <Grid item xs={6}>
               <TextField
                 label="Fecha y Hora de Inicio"
@@ -183,8 +178,10 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 sx={textFieldStyle}
+                InputProps={esAprendiz ? { readOnly: true } : {}}
               />
             </Grid>
+
             <Grid item xs={6}>
               <TextField
                 label="Fecha y Hora de Fin"
@@ -195,8 +192,10 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 sx={textFieldStyle}
+                InputProps={esAprendiz ? { readOnly: true } : {}}
               />
             </Grid>
+
             <Grid item xs={12}>
               <TextField
                 select
@@ -206,38 +205,36 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 onChange={handleChange}
                 fullWidth
                 sx={textFieldStyle}
+                InputProps={esAprendiz ? { readOnly: true } : {}}
               >
                 <MenuItem value="pendiente">pendiente</MenuItem>
                 <MenuItem value="realizado">realizado</MenuItem>
-                <MenuItem value="cancelado">Cancelado</MenuItem>
+                <MenuItem value="cancelado">cancelado</MenuItem>
               </TextField>
             </Grid>
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ display: "flex", justifyContent: "center", mb: 1, ml: 2, mr: 2, gap: 1}}>
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ color: "white", backgroundColor: "#71277a", width: "100%" }}
-            onClick={handleSave}
-            disabled={loading}
-          >
-          {loading ? "Guardando..." : "Guardar cambios"}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={handleEliminar}
-            sx={{
-              width: "100%",
-              Color: "white",
-              backgroundColor: "red",
-              boxShadow: "none",
-            }}
-          >
-            Eliminar
-          </Button>
-        </DialogActions>
+        {!esAprendiz && (
+          <DialogActions sx={{ display: "flex", justifyContent: "center", mb: 1, ml: 2, mr: 2, gap: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ color: "white", backgroundColor: "#71277a", width: "100%" }}
+              onClick={handleSave}
+              disabled={loading}
+            >
+              {loading ? "Guardando..." : "Guardar cambios"}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleEliminar}
+              sx={{ width: "100%", backgroundColor: "red", color: "white" }}
+            >
+              Eliminar
+            </Button>
+          </DialogActions>
+        )}
       </Dialog>
 
       <ConfirmDialog

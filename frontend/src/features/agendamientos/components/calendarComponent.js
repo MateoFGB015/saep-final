@@ -4,7 +4,7 @@ import { obtenerEventos } from "../../../api/AgendamientoAPI";
 import moment from "moment";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useAuth } from "../../../context/AuthProvider"; // ✅ usar el hook
+import { useAuth } from "../../../context/AuthProvider";
 import ModalModificar from "./modalModificar";
 import ModalCrear from "./ModalCrear";
 import { Box, Typography, List, ListItem, Divider, Button } from "@mui/material";
@@ -37,24 +37,20 @@ const Calendario = () => {
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date());
-
-  const { user } = useAuth(); // ✅ obtener usuario autenticado
+  const { user } = useAuth();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
   useEffect(() => {
     const cargarEventos = async () => {
       try {
-        const datos = await obtenerEventos(); // ya usa token automáticamente
+        const datos = await obtenerEventos();
         setEventos(datos);
       } catch (error) {
         console.error("Error al cargar eventos:", error);
       }
     };
-
-    if (user?.rol) {
-      cargarEventos();
-    }
+    if (user?.rol) cargarEventos();
   }, [user?.rol]);
 
   const handleSelectEvent = (evento) => {
@@ -70,40 +66,19 @@ const Calendario = () => {
     isSameDay(new Date(evento.start), diaSeleccionado)
   );
 
-  const dateCellWrapper = ({ value, children }) => {
-    const fechaActual = new Date(value);
-    const hayEventos = eventos.some((evento) =>
-      isSameDay(new Date(evento.start), fechaActual)
-    );
-
-    return (
-      <div
-        style={{
-          backgroundColor: hayEventos ? "#a084dc" : "transparent",
-          borderRadius: "6px",
-          padding: "2px",
-          minHeight: "100%",
-        }}
-      >
-        {children}
-      </div>
-    );
-  };
-
   return (
     <>
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
           <Calendar
             localizer={localizer}
-            events={[]} // Los eventos los muestra al lado
+            events={eventos}
             startAccessor="start"
             endAccessor="end"
-            selectable
+            selectable={user?.rol === "Instructor"}
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent}
             messages={messages}
-            components={{ dateCellWrapper }}
             views={{ month: true }}
             defaultView="month"
             style={{ height: "100%", width: "100%" }}
@@ -135,15 +110,12 @@ const Calendario = () => {
               <List>
                 {eventosDelDia.map((evento, i) => (
                   <div key={evento.id || i}>
-                    <ListItem
-                      button
-                      onClick={() => {
-                        setEventoSeleccionado(evento);
-                        setModalOpen(true);
-                      }}
-                    >
+                    <ListItem button onClick={() => {
+                      setEventoSeleccionado(evento);
+                      setModalOpen(true);
+                    }}>
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                        <Typography variant="subtitle1" fontWeight="bold">
                           {evento.tipo_visita === "virtual" ? "🖥️ Virtual" : "🏢 Presencial"}
                         </Typography>
                         <Typography variant="body2">
@@ -160,20 +132,21 @@ const Calendario = () => {
               </List>
             )}
 
-            <Box textAlign="center" mt={2}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => setModalCrearOpen(true)}
-              >
-                Añadir visita
-              </Button>
-            </Box>
+            {user?.rol === "Instructor" && (
+              <Box textAlign="center" mt={2}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setModalCrearOpen(true)}
+                >
+                  Añadir visita
+                </Button>
+              </Box>
+            )}
           </Box>
         )}
       </div>
 
-      {/* Modales */}
       {modalOpen && (
         <ModalModificar
           open={modalOpen}

@@ -1,25 +1,18 @@
+
 import { useState, useContext, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  MenuItem,
-  Button,
-  DialogActions,
-  IconButton,
-  Grid,
+  Dialog, DialogTitle, DialogContent, TextField, MenuItem, Button,
+  DialogActions, IconButton, Grid
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import moment from "moment";
-import {
-  crearEvento,
-  obtenerFichas,
-  obtenerAprendices,
-} from "../../../api/AgendamientoAPI";
+import { actualizarEvento } from "../../../api/AgendamientoAPI";
 import EventosContext from "../../../context/eventosProvider";
 import CustomSnackbar from "../../../components/ui/Alert";
 import useAlert from "../../usuarios/hooks/UserAlert";
+import axiosInstance from "../../../api/AxiosInstance";
+import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
+import { useAuth } from "../../../context/AuthProvider";
 
 const textFieldStyle = {
   "& label": { color: "gray" },
@@ -30,113 +23,79 @@ const textFieldStyle = {
     "&.Mui-focused fieldset": { borderColor: "#71277a" },
     backgroundColor: "white !important",
   },
+  "& input": {
+    backgroundColor: "white !important",
+    color: "black",
+    caretColor: "#71277a",
+    WebkitBoxShadow: "0 0 0px 1000px white inset !important",
+  },
 };
 
-const ModalCrear = ({ open, onClose, fechaSeleccionada }) => {
-  const { alerta, showAlert, closeAlert } = useAlert();
-  const { eventos, setEventos } = useContext(EventosContext);
-  const [fichas, setFichas] = useState([]);
-  const [aprendices, setAprendices] = useState([]);
+const ModalModificar = ({ open, onClose, evento }) => {
+  const { alerta, closeAlert, showAlert } = useAlert();
+  const { setEventos } = useContext(EventosContext);
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
-    tipo: "",
-    enlace: "",
-    start: "",
-    end: "",
-    estado: "pendiente",
-    id_ficha: "",
-    id_aprendiz: "",
-    id_ficha_aprendiz: "",
-    id_instructor: "1",
-    herramienta_reunion: "",
-    numero_visita: "",
+    nombreAprendiz: "", telefonoAprendiz: "", empresa: "", direccion: "",
+    tipo: "", enlace: "", start: "", end: "", estado: ""
   });
+  const [loading, setLoading] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   useEffect(() => {
-    if (fechaSeleccionada) {
-      setFormData((prev) => ({
-        ...prev,
-        start: moment(fechaSeleccionada).format("YYYY-MM-DDTHH:mm"),
-      }));
+    if (evento) {
+      setFormData({
+        nombreAprendiz: evento.nombreAprendiz || "",
+        telefonoAprendiz: evento.telefonoAprendiz || "",
+        empresa: evento.nombreEmpresa || "",
+        direccion: evento.direccion || "",
+        tipo: evento.tipo_visita || "",
+        enlace: evento.enlace_reunion || "",
+        start: evento.start ? moment(evento.start).format("YYYY-MM-DDTHH:mm") : "",
+        end: evento.end ? moment(evento.end).format("YYYY-MM-DDTHH:mm") : "",
+        estado: evento.estado || "",
+      });
     }
-  }, [fechaSeleccionada]);
-
-  useEffect(() => {
-    const cargarFichas = async () => {
-      const data = await obtenerFichas();
-      setFichas(data);
-    };
-    cargarFichas();
-  }, []);
-
-  useEffect(() => {
-    if (formData.id_ficha) {
-      const cargarAprendices = async () => {
-        const data = await obtenerAprendices(formData.id_ficha);
-        setAprendices(data);
-      };
-      cargarAprendices();
-    } else {
-      setAprendices([]);
-    }
-  }, [formData.id_ficha]);
+  }, [evento]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Si se selecciona una ficha, reseteamos aprendiz
-    if (name === "id_ficha") {
-      setFormData((prev) => ({
-        ...prev,
-        id_ficha: value,
-        id_aprendiz: "",
-        id_ficha_aprendiz: "",
-      }));
-      return;
-    }
-
-    // Cuando se selecciona un aprendiz, también guardamos el id_ficha_aprendiz
-    if (name === "id_aprendiz") {
-      const aprendizSeleccionado = aprendices.find(
-        (a) => a.id_aprendiz === value
-      );
-
-      setFormData((prev) => ({
-        ...prev,
-        id_aprendiz: value,
-        id_ficha_aprendiz: aprendizSeleccionado?.id_ficha_aprendiz || "",
-      }));
-      return;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSave = async () => {
-    if (moment(formData.end).isBefore(moment(formData.start))) {
-      showAlert("¡La fecha de finalización debe ser posterior a la fecha de inicio!", "error");
-      return;
-    }
-
-    const payload = {
-      id_ficha_aprendiz: formData.id_ficha_aprendiz,
-      id_instructor: formData.id_instructor,
-      herramienta_reunion: formData.herramienta_reunion,
-      enlace_reunion: formData.enlace,
-      fecha_inicio: formData.start,
-      fecha_fin: formData.end,
-      estado_visita: formData.estado,
-      tipo_visita: formData.tipo,
-      numero_visita: formData.numero_visita,
-    };
-
+    setLoading(true);
     try {
-      const nuevoEvento = await crearEvento(payload);
-      setEventos((prev) => [...prev, nuevoEvento]);
-      showAlert("¡Agendamiento registrado exitosamente!", "success");
+      await actualizarEvento(evento.id, {
+        fecha_inicio: formData.start,
+        fecha_fin: formData.end,
+        tipo_visita: formData.tipo,
+        enlace_reunion: formData.enlace,
+        estado_visita: formData.estado,
+      });
+      showAlert("¡Datos actualizados exitosamente!.", "success");
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (error) {
+      console.error("Error al actualizar el evento:", error);
+      showAlert("¡Hubo un error al actualizar el agendamiento!", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEliminar = () => {
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirm = async () => {
+    try {
+      await axiosInstance.delete(`/agendamiento/eliminar/${evento.id}`);
+      showAlert("¡Agendamiento eliminado correctamente!", "success");
+      setShowConfirmationModal(false);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      console.error("Error al crear el evento:", error);
-      showAlert("¡Hubo un error al guardar el agendamiento! Revisa los datos.", "error");
+      console.error("Error al eliminar el agendamiento:", error);
+      showAlert("¡Hubo un error al eliminar el agendamiento!", "error");
     }
   };
 
@@ -144,155 +103,101 @@ const ModalCrear = ({ open, onClose, fechaSeleccionada }) => {
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
         <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span style={{ flexGrow: 1, textAlign: "center" }}>Crear Agendamiento</span>
+          <span style={{ flexGrow: 1, textAlign: "center" }}>Información del agendamiento</span>
           <IconButton onClick={onClose} size="small" sx={{ color: "gray" }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent sx={{ height: "min-content" }}>
           <Grid container spacing={2} sx={{ mt: -1 }}>
+            {[{ label: "Aprendiz", name: "nombreAprendiz" }, { label: "Teléfono", name: "telefonoAprendiz" },
+              { label: "Empresa", name: "empresa" }, { label: "Dirección", name: "direccion" }]
+              .map((field, index) => (
+                <Grid item xs={6} key={index}>
+                  <TextField
+                    label={field.label}
+                    name={field.name}
+                    value={formData[field.name]}
+                    fullWidth
+                    sx={textFieldStyle}
+                    InputProps={{ readOnly: true }}
+                  />
+                </Grid>
+              ))}
+
             <Grid item xs={6}>
               <TextField
-                select
-                label="Ficha"
-                name="id_ficha"
-                value={formData.id_ficha}
-                onChange={handleChange}
-                fullWidth
-                sx={textFieldStyle}
+                select label="Tipo" name="tipo" value={formData.tipo}
+                onChange={handleChange} fullWidth sx={textFieldStyle}
+                InputProps={{ readOnly: user?.rol === "Aprendiz" }}
               >
-                {fichas.map((ficha) => (
-                  <MenuItem key={ficha.id_ficha} value={ficha.id_ficha}>
-                    {ficha.numero_ficha} - {ficha.nombre_programa}
-                  </MenuItem>
-                ))}
+                <MenuItem value="virtual">virtual</MenuItem>
+                <MenuItem value="presencial">presencial</MenuItem>
               </TextField>
             </Grid>
 
             <Grid item xs={6}>
-              <TextField
-                select
-                label="Aprendiz"
-                name="id_aprendiz"
-                value={formData.id_aprendiz}
-                onChange={handleChange}
-                fullWidth
-                disabled={!formData.id_ficha}
-                sx={textFieldStyle}
+              <TextField label="Enlace" name="enlace" value={formData.enlace}
+                onChange={handleChange} fullWidth sx={textFieldStyle}
+                InputProps={{ readOnly: user?.rol === "Aprendiz" }} />
+            </Grid>
+
+            <Grid item xs={6}>
+              <TextField label="Fecha y Hora de Inicio" type="datetime-local" name="start"
+                value={formData.start} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }}
+                sx={textFieldStyle} InputProps={{ readOnly: user?.rol === "Aprendiz" }} />
+            </Grid>
+
+            <Grid item xs={6}>
+              <TextField label="Fecha y Hora de Fin" type="datetime-local" name="end"
+                value={formData.end} onChange={handleChange} fullWidth InputLabelProps={{ shrink: true }}
+                sx={textFieldStyle} InputProps={{ readOnly: user?.rol === "Aprendiz" }} />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField select label="Estado" name="estado" value={formData.estado}
+                onChange={handleChange} fullWidth sx={textFieldStyle}
+                InputProps={{ readOnly: user?.rol === "Aprendiz" }}
               >
-                {aprendices.map((aprendiz) => (
-                  <MenuItem key={aprendiz.id_aprendiz} value={aprendiz.id_aprendiz}>
-                    {aprendiz.nombre} {aprendiz.apellido}
-                  </MenuItem>
-                ))}
+                <MenuItem value="pendiente">pendiente</MenuItem>
+                <MenuItem value="realizado">realizado</MenuItem>
+                <MenuItem value="cancelado">Cancelado</MenuItem>
               </TextField>
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                select
-                label="Tipo"
-                name="tipo"
-                value={formData.tipo}
-                onChange={handleChange}
-                fullWidth
-                sx={textFieldStyle}
-              >
-                <MenuItem value="virtual">Virtual</MenuItem>
-                <MenuItem value="presencial">Presencial</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                select
-                label="Herramienta"
-                name="herramienta_reunion"
-                value={formData.herramienta_reunion}
-                onChange={handleChange}
-                fullWidth
-                sx={textFieldStyle}
-              >
-                <MenuItem value="Meet">Google Meet</MenuItem>
-                <MenuItem value="Teams">Microsoft Teams</MenuItem>
-                <MenuItem value="Zoom">Zoom</MenuItem>
-                <MenuItem value="otro">Otro</MenuItem>
-              </TextField>
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                select
-                label="Visita #"
-                name="numero_visita"
-                value={formData.numero_visita}
-                onChange={handleChange}
-                fullWidth
-                sx={textFieldStyle}
-              >
-                {[1, 2, 3].map((num) => (
-                  <MenuItem key={num} value={num}>
-                    {num}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                label="Enlace"
-                name="enlace"
-                value={formData.enlace}
-                onChange={handleChange}
-                fullWidth
-                sx={textFieldStyle}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                label="Fecha Inicio"
-                type="datetime-local"
-                name="start"
-                value={formData.start}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={textFieldStyle}
-              />
-            </Grid>
-
-            <Grid item xs={6}>
-              <TextField
-                label="Fecha Fin"
-                type="datetime-local"
-                name="end"
-                value={formData.end}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={textFieldStyle}
-              />
             </Grid>
           </Grid>
         </DialogContent>
 
-        <DialogActions sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            sx={{ color: "white", backgroundColor: "#71277a", width: "95%" }}
-            onClick={handleSave}
-          >
-            Guardar
-          </Button>
-        </DialogActions>
+        {user?.rol !== "Aprendiz" && (
+          <DialogActions sx={{ display: "flex", justifyContent: "center", mb: 1, ml: 2, mr: 2, gap: 1 }}>
+            <Button
+              variant="contained" color="primary"
+              sx={{ color: "white", backgroundColor: "#71277a", width: "100%" }}
+              onClick={handleSave} disabled={loading}
+            >
+              {loading ? "Guardando..." : "Guardar cambios"}
+            </Button>
+            <Button
+              variant="contained" onClick={handleEliminar}
+              sx={{ width: "100%", color: "white", backgroundColor: "red", boxShadow: "none" }}
+            >
+              Eliminar
+            </Button>
+          </DialogActions>
+        )}
       </Dialog>
 
-      <CustomSnackbar alerta={alerta} onClose={closeAlert} />
+      <ConfirmDialog
+        open={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirm}
+        title="¡Alerta!"
+        message="Esta acción eliminará el registro por completo. ¿Desea continuar?"
+      />
+
+      <CustomSnackbar alerta={alerta} closeAlert={closeAlert} />
     </>
   );
 };
 
-export default ModalCrear;
+export default ModalModificar;

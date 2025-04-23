@@ -38,17 +38,20 @@ export const obtenerFichas = async () => {
   // 🔸 Obtener agendamientos según rol
   export const obtenerEventos = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const usuario = await authAPI.getUserData(token); // Obtenemos el usuario autenticado
+      const usuario = await authAPI.getUserData();
   
       let url = "";
+  
       if (usuario.rol === "Instructor") {
         url = "/agendamiento/instructor";
-      } else if (usuario.rol === "Aprendiz") {
+      } else if (usuario.rol === "aprendiz") {
         url = "/agendamiento/aprendiz";
+      } else if (usuario.rol === "Administrador") {
+        // Aquí podrías manejar un instructor seleccionado
+        console.warn("Administrador necesita ID de instructor para ver agendamientos");
+        return [];
       } else {
-        // No cargar nada si no se tiene contexto válido
-        throw new Error("Rol no válido o falta ID de instructor");
+        throw new Error("Rol no válido para obtener agendamientos");
       }
   
       const { data } = await axiosInstance.get(url);
@@ -65,7 +68,41 @@ export const obtenerFichas = async () => {
           id: evento.id_agendamiento,
           title: `Hora: ${horaInicio} - Tipo: ${evento.tipo_visita}`,
           nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
-          telefonoAprendiz: evento.ficha_aprendiz?.aprendiz.telefono,
+          telefonoAprendiz: evento.ficha_aprendiz?.aprendiz.telefono || "N/A",
+          nombreEmpresa: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
+          direccion: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
+          tipo_visita: evento.tipo_visita,
+          enlace_reunion: evento.enlace_reunion,
+          start: new Date(evento.fecha_inicio),
+          end: new Date(evento.fecha_fin),
+          ficha: evento.ficha_aprendiz?.id_ficha,
+          estado: evento.estado_visita,
+        };
+      });
+  
+    } catch (error) {
+      console.error("Error al obtener eventos:", error.response?.data || error.message);
+      return [];
+    }
+  };
+
+  export const obtenerEventosPorInstructor = async (idInstructor) => {
+    try {
+      const { data } = await axiosInstance.get(`/agendamiento/instructor/${idInstructor}`);
+  
+      return data.map(evento => {
+        const fechaInicio = new Date(evento.fecha_inicio);
+        const horaInicio = fechaInicio.toLocaleTimeString("es-ES", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+  
+        return {
+          id: evento.id_agendamiento,
+          title: `Hora: ${horaInicio} - Tipo: ${evento.tipo_visita}`,
+          nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
+          telefonoAprendiz: evento.ficha_aprendiz?.aprendiz.telefono || "N/A",
           nombreEmpresa: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
           direccion: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
           tipo_visita: evento.tipo_visita,
@@ -77,7 +114,7 @@ export const obtenerFichas = async () => {
         };
       });
     } catch (error) {
-      console.error("Error al obtener eventos:", error.response?.data || error.message);
+      console.error("Error al obtener eventos del instructor seleccionado:", error.response?.data || error.message);
       return [];
     }
   };

@@ -19,6 +19,8 @@ import FichasTable from "./features/fichas/fichasPage";
 import FichaDetalle from "./features/fichas/VerFicha";
 
 // 🔹 Calendario
+import ListaInstructores from "./features/agendamientos/components/listaIntrcutores";
+import CalendarioInstructorSeleccionado from "./features/agendamientos/components/CalendarioInstructorSeleccionado";
 import Calendario from "./features/agendamientos/components/calendarComponent";
 
 
@@ -71,14 +73,31 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route
+                      <Route
                       path="/agendamientos"
                       element={
-                        <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'aprendiz']}>
+                        <ProtectedRoute allowedRoles={['Instructor', 'aprendiz']}>
                           <Calendario />
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/agendamientos/listaIntructores"
+                      element={
+                        <ProtectedRoute allowedRoles={['Administrador']}>
+                          < ListaInstructores />
+                        </ProtectedRoute>
+                      }
+                    />           
+                     <Route
+                    path="/agendamientos/instructor/:idInstructor"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrador']}>
+                        <CalendarioInstructorSeleccionado />
+                      </ProtectedRoute>
+                    }
+                  />
+
                      <Route
                       path="/seguimiento"
                       element={

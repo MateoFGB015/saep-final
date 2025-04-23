@@ -127,8 +127,10 @@ exports.crearAgendamiento = async (req, res) => {
       numero_visita
     } = req.body;
 
-    if (!id_ficha_aprendiz || !herramienta_reunion || !enlace_reunion ||
-        !fecha_inicio || !fecha_fin || !tipo_visita || numero_visita === undefined) {
+    if (
+      !id_ficha_aprendiz || !herramienta_reunion || !enlace_reunion ||
+      !fecha_inicio || !fecha_fin || !tipo_visita || numero_visita === undefined
+    ) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
@@ -137,16 +139,42 @@ exports.crearAgendamiento = async (req, res) => {
       return res.status(404).json({ mensaje: "FichaAprendiz no encontrada" });
     }
 
+    // ✅ Verificar que no tenga más de 3 visitas
     const visitasExistentes = await modeloAgendamiento.count({
-      where: {
-        id_ficha_aprendiz
-      }
+      where: { id_ficha_aprendiz }
     });
 
     if (visitasExistentes >= 3) {
       return res.status(400).json({ mensaje: "Este aprendiz ya tiene 3 visitas agendadas" });
     }
 
+    // ✅ Validar traslape de horarios
+    const { Op } = require('sequelize');
+    const traslape = await modeloAgendamiento.findOne({
+      where: {
+        id_ficha_aprendiz,
+        [Op.or]: [
+          {
+            fecha_inicio: { [Op.lte]: fecha_inicio },
+            fecha_fin: { [Op.gt]: fecha_inicio }
+          },
+          {
+            fecha_inicio: { [Op.lt]: fecha_fin },
+            fecha_fin: { [Op.gte]: fecha_fin }
+          },
+          {
+            fecha_inicio: { [Op.gte]: fecha_inicio },
+            fecha_fin: { [Op.lte]: fecha_fin }
+          }
+        ]
+      }
+    });
+
+    if (traslape) {
+      return res.status(400).json({ mensaje: "Ya existe una visita para este aprendiz en ese horario" });
+    }
+
+    // ✅ Crear agendamiento
     const nuevoAgendamiento = await modeloAgendamiento.create({
       id_ficha_aprendiz,
       id_instructor: instructorId,
