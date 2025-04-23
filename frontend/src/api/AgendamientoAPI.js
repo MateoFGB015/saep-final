@@ -5,7 +5,7 @@ import axiosInstance from './AxiosInstance';
 // esto es para seleccionar un aprendiz en el select con una ficha seleccionada tambien del select
 export const obtenerFichas = async () => {
   try {
-    const { data } = await axiosInstance.get("/agendamiento/ver-fichas");
+    const { data } = await axiosInstance.get("/agendamiento/fichas");
     return data;
   } catch (error) {
     console.error("Error al obtener fichas:", error.response?.data || error.message);
@@ -14,9 +14,9 @@ export const obtenerFichas = async () => {
 };
 
 // Obtener aprendices de una ficha específica
-export const obtenerAprendices = async (idFicha) => {
+export const obtenerAprendices = async (id_ficha) => {
   try {
-    const { data } = await axiosInstance.get(`/agendamiento/ver-aprendiz/${idFicha}`);
+    const { data } = await axiosInstance.get(`/agendamiento/aprendices/${id_ficha}`);
     return data;
   } catch (error) {
     console.error("Error al obtener aprendices:", error.response?.data || error.message);
@@ -54,7 +54,7 @@ export const crearEvento = async (nuevoEvento) => {
 
 export const obtenerEventos = async () => {
     try {
-        const { data } = await axiosInstance.get("/agendamiento/ver");
+        const { data } = await axiosInstance.get("/agendamiento/instructor");
 
         return data.map(evento => {
             const fechaInicio = new Date(evento.fecha_inicio);

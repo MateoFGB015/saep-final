@@ -1,5 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
+import { obtenerEventos} from "../../../api/AgendamientoAPI";
 import moment from "moment";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -31,11 +32,25 @@ const messages = {
 };
 
 const Calendario = () => {
-  const { eventos } = useContext(EventosContext);
+  const [eventos, setEventos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
   const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
   const [diaSeleccionado, setDiaSeleccionado] = useState(new Date());
+
+  useEffect(() => {
+    const cargarEventos = async () => {
+      try {
+        const datos = await obtenerEventos();
+        setEventos(datos);
+      } catch (error) {
+        console.error("Error al cargar eventos:", error);
+      }
+    };
+  
+    cargarEventos();
+  }, []);
+  
 
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -49,7 +64,7 @@ const Calendario = () => {
     setDiaSeleccionado(slotInfo.start);
   };
 
-  const eventosDelDia = eventos.filter((evento) =>
+  const eventosDelDia = (eventos || []).filter((evento) =>
     isSameDay(new Date(evento.start), diaSeleccionado)
   );
 
