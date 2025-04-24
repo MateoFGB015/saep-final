@@ -6,43 +6,54 @@ const FichaAprendiz = require('../models/FichaAprendiz');
 
 exports.subirDocumento = async (req, res) => {
   try {
+    console.log('=== SOLICITUD DE SUBIDA DE DOCUMENTO ===');
+    console.log('Usuario:', req.usuario);
+    console.log('Archivo recibido:', req.file);
+    console.log('Body:', req.body);
+    
     const { id: id_usuario, rol } = req.usuario;
-    const { tipo_documento, nombre_documento, descripcion } = req.body;
 
-    // Solo aprendiz puede subir
-    if (rol !== 'Aprendiz') {
+    if (rol !== 'aprendiz') {
+      console.log('Error: Rol no permitido -', rol);
       return res.status(403).json({ mensaje: 'Solo los aprendices pueden subir documentos.' });
     }
 
-    // Validar archivo
     if (!req.file) {
+      console.log('Error: No se recibió archivo');
       return res.status(400).json({ mensaje: 'Debes subir un archivo.' });
     }
 
-    // Obtener ficha_aprendiz asociada
+    // Buscar la relación ficha-aprendiz
     const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
     if (!relacion) {
-      return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
+      return res.status(404).json({ mensaje: 'No se encontró una ficha asociada a tu usuario.' });
     }
 
+    // Crear el documento
     const nuevoDocumento = await Documento.create({
       id_ficha_aprendiz: relacion.id_ficha_aprendiz,
-      tipo_documento,
-      nombre_documento,
-      descripcion,
+      tipo_documento: req.body.tipo_documento || 'Documento de certificación',
+      nombre_documento: req.body.nombre_documento || req.file.originalname,
+      descripcion: req.body.descripcion || 'Documento subido por el aprendiz',
       documento: req.file.filename,
       estado_documento: 1,
       fecha_ultima_actualizacion: new Date()
     });
 
-    res.status(201).json({ mensaje: '✅ Documento subido exitosamente.', data: nuevoDocumento });
-
+    res.status(201).json({ 
+      mensaje: '✅ Documento subido exitosamente.', 
+      data: nuevoDocumento 
+    });
+    
   } catch (error) {
-    console.error('❌ Error al subir documento:', error);
-    res.status(500).json({ mensaje: 'Error al subir el documento.', error });
+    console.error('❌ Error detallado al subir documento:', error);
+    res.status(500).json({ 
+      mensaje: 'Error al subir el documento.', 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 };
-
 exports.verDocumentos = async (req, res) => {
   try {
     const { rol, id: id_usuario } = req.usuario;
@@ -50,7 +61,7 @@ exports.verDocumentos = async (req, res) => {
 
     let documentos = [];
 
-    if (rol === 'Aprendiz') {
+    if (rol === 'aprendiz') {
       const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
       if (!relacion) return res.status(404).json({ mensaje: 'No se encontró relación con ficha.' });
 
@@ -157,7 +168,7 @@ exports.modificarDocumento = async (req, res) => {
 
     // Reemplazar archivo si se sube uno nuevo
     if (req.file) {
-      const rutaAnterior = path.join(__dirname, '../uploads/Documentos', documento.documento);
+      const rutaAnterior = path.join(__dirname, '../uploads/documentos', documento.documento);
       if (fs.existsSync(rutaAnterior)) {
         fs.unlinkSync(rutaAnterior);
       }

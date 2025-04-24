@@ -68,21 +68,43 @@ const BitacoraDocumentosApp = () => {
     }
   };
 
-  // Función para cargar documentos (implementar según API)
   const fetchDocumentos = async () => {
     setLoading(true);
     try {
-      // Implementa esta función según el endpoint correcto
-      // Por ahora dejamos un array vacío
-      setDocumentos([]);
+      console.log('Obteniendo documentos...');
+      const response = await fetch(`${API_URL}/documentos/ver`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${getToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
+  
+      console.log('Respuesta status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error respuesta:', response.status, errorText);
+        throw new Error(`Error al cargar documentos: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log("Datos recibidos:", data);
+      
+      if (data.documentos) {
+        setDocumentos(data.documentos);
+      } else {
+        console.warn("La respuesta no contiene documentos en el formato esperado:", data);
+        setDocumentos([]);
+      }
     } catch (error) {
       console.error('Error al cargar documentos:', error);
-      setError('No se pudieron cargar los documentos.');
+      setError('No se pudieron cargar los documentos: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
-
+  
   // Función para ver una bitácora específica
   const verBitacora = async (idBitacora) => {
     try {
@@ -186,11 +208,15 @@ const BitacoraDocumentosApp = () => {
   // Manejar selección de archivo
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+    if (file && file.size > 20 * 1024 * 1024) { // 20MB
+      alert('El archivo supera los 20 MB. Por favor, selecciona uno más liviano.');
+      return;
     }
+  
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
+  
 
   // Subir archivo al backend
   const handleUpload = async () => {
@@ -198,48 +224,45 @@ const BitacoraDocumentosApp = () => {
       alert('Por favor seleccione un archivo');
       return;
     }
-
+  
     const formData = new FormData();
-    formData.append('bitacora', selectedFile);
-
+    formData.append('documento', selectedFile);
+    
     try {
-      // Determinar la ruta según modalTipo
-      let endpoint = '/bitacora/subir';
-      
+      let endpoint = '';
       if (modalTipo === 'Subir Documento') {
-        endpoint = '/documentos/subir'; // Ajustar según tu API
-      } else if (modalTipo === 'Subir Firma') {
-        endpoint = '/firmas/subir'; // Ajustar según tu API
+        endpoint = '/documentos/subir';
+      } else if (modalTipo === 'Subir Bitácora') {
+        endpoint = '/bitacora/subir';
       }
-
+      
       setLoading(true);
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`
-          // No incluir Content-Type, se establece automáticamente con FormData
         },
         body: formData
       });
-
-      if (!response.ok) {
-        throw new Error('Error al subir el archivo');
-      }
-
-      const data = await response.json();
-      alert(data.mensaje || 'Archivo subido correctamente');
       
-      // Recargar datos según el tipo de archivo subido
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.mensaje || `Error ${response.status}`);
+      }
+      
+      const responseData = await response.json();
+      alert(responseData.mensaje || 'Archivo subido correctamente');
+      handleCloseModal();
+      
+      // Recargar los datos después de subir
       if (tab === 0) {
         fetchBitacoras();
       } else {
         fetchDocumentos();
       }
-      
-      handleCloseModal();
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al subir el archivo. Intente nuevamente.');
+      alert(`Error al subir el archivo: ${error.message}`);
     } finally {
       setLoading(false);
     }
