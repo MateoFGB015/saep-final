@@ -1,5 +1,6 @@
 const express = require('express');
-const {verUsuarios, verPorId, crearUsuario, modificarUsuario, eliminarUsuario,obtenerUsuarioAutenticado, obtenerInstructores} = require('../controllers/usuariosController');
+const {verUsuarios, verPorId, crearUsuario, modificarUsuario, eliminarUsuario,obtenerUsuarioAutenticado, obtenerInstructores,
+    crearAprendiz } = require('../controllers/usuariosController');
 const authMiddleware = require('../middlewares/authMiddleware')
 const router = express.Router();
 
@@ -9,6 +10,7 @@ const router = express.Router();
 
 //rutas que estan protegidas por token
 router.post('/crear',authMiddleware, crearUsuario);
+router.post('/registroAprendiz', crearAprendiz);
 router.get('/ver',authMiddleware, verUsuarios);
 router.get('/instructores', obtenerInstructores);
 router.get('/ver/:id', authMiddleware, verPorId);

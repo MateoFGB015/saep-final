@@ -54,13 +54,13 @@ const Navbar = ({ children }) => {
   };
 
   const menuItems = [
-    { text: "Inicio", icon: <HomeIcon />, route: "/inicio", roles: ["Administrador", "Instructor", "Aprendiz"] },
+    { text: "Inicio", icon: <HomeIcon />, route: "/inicio", roles: ["Administrador", "Instructor", "aprendiz"] },
     { text: "Usuarios", icon: <PeopleIcon />, route: "/usuarios", roles: ["Administrador"] },
     { text: "Fichas", icon: <AssignmentIcon />, route: "/fichas", roles: ["Administrador", "Instructor"] },
     { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos", roles: [ "Instructor", "aprendiz"] },
     { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos/listaIntructores", roles: [ "Administrador"] },
     { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["Administrador", "Instructor", "aprendiz"] },
-    { text: "Reporte", icon:<ChecklistRtlIcon/>, route:"/reporte", roles:["Administrador", "Instructor"],}
+    // { text: "Reporte", icon:<ChecklistRtlIcon/>, route:"/reporte", roles:["Administrador", "Instructor"],}
   ];
 
   return (
