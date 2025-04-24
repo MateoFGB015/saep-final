@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-  Tab, Tabs, Typography, TextField, SpeedDial, SpeedDialAction, SpeedDialIcon, Paper
+  Tab, Tabs, Typography, SpeedDial, SpeedDialAction, SpeedDialIcon, Paper
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
@@ -19,9 +19,7 @@ const BitacoraDocumentosApp = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
-
   const contentRef = useRef(null);
-
   const [bitacoras, setBitacoras] = useState([]);
 
   useEffect(() => {
@@ -32,17 +30,14 @@ const BitacoraDocumentosApp = () => {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-  
         const data = await response.json();
-        setBitacoras(data.bitacoras || []); // suponiendo que el backend responde con { bitacoras: [...] }
+        setBitacoras(data.bitacoras || []);
       } catch (error) {
         console.error('Error al cargar bitácoras:', error);
       }
     };
-  
     fetchBitacoras();
   }, []);
-
 
   const datosPorPagina = 3;
   const totalPaginas = Math.ceil(bitacoras.length / datosPorPagina);
@@ -50,7 +45,6 @@ const BitacoraDocumentosApp = () => {
     (paginaActual - 1) * datosPorPagina,
     paginaActual * datosPorPagina
   );
-  
 
   const handleTabChange = (e, newValue) => {
     setTab(newValue);
@@ -171,43 +165,43 @@ const BitacoraDocumentosApp = () => {
       </Paper>
 
       <Box ref={contentRef} sx={scrollableStyle}>
-      {datosPagina.map((bitacora, index) => {
-  const globalIndex = (paginaActual - 1) * datosPorPagina + index;
-  return (
-    <Paper
-      key={bitacora.id_bitacora}
-      elevation={3}
-      sx={{
-        p: 3, my: 2, borderRadius: 3, display: 'flex',
-        flexDirection: 'column', backgroundColor: 'white',
-        gap: 1, borderLeft: '6px solid #8e24aa'
-      }}
-    >
-      <Typography variant="h6" fontWeight={700} color="#6a1b9a">
-        Bitácora #{bitacora.numero_bitacora}
-      </Typography>
+        {datosPagina.map((bitacora, index) => {
+          const globalIndex = (paginaActual - 1) * datosPorPagina + index;
+          return (
+            <Paper
+              key={bitacora.id_bitacora}
+              elevation={3}
+              sx={{
+                p: 3, my: 2, borderRadius: 3, display: 'flex',
+                flexDirection: 'column', backgroundColor: 'white',
+                gap: 1, borderLeft: '6px solid #8e24aa'
+              }}
+            >
+              <Typography variant="h6" fontWeight={700} color="#6a1b9a">
+                Bitácora #{bitacora.numero_bitacora}
+              </Typography>
 
-      {bitacora.observacion && (
-        <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
-          Observación: {bitacora.observacion}
-        </Typography>
-      )}
+              {bitacora.observacion && (
+                <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
+                  Observación: {bitacora.observacion}
+                </Typography>
+              )}
 
-      <Typography variant="body2">
-        Última actualización: {new Date(bitacora.fecha_ultima_actualizacion).toLocaleString()}
-      </Typography>
+              <Typography variant="body2">
+                Última actualización: {new Date(bitacora.fecha_ultima_actualizacion).toLocaleString()}
+              </Typography>
 
-      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-        <Button size="small" variant="outlined" color="secondary">Ver</Button>
-        <Button size="small" variant="outlined" color="secondary">Modificar</Button>
-        <Button size="small" variant="outlined" color="secondary"
-          onClick={() => handleOpenObservacionDialog(index)}>
-          Observaciones
-        </Button>
-      </Box>
-    </Paper>
-  );
-})}
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Button size="small" variant="outlined" color="secondary">Ver</Button>
+                <Button size="small" variant="outlined" color="secondary">Modificar</Button>
+                <Button size="small" variant="outlined" color="secondary"
+                  onClick={() => handleOpenObservacionDialog(index)}>
+                  Observaciones
+                </Button>
+              </Box>
+            </Paper>
+          );
+        })}
 
         <Box sx={{
           display: 'flex',
@@ -241,7 +235,6 @@ const BitacoraDocumentosApp = () => {
         </Box>
       </Box>
 
-      {/* SpeedDial con color morado */}
       <SpeedDial
         ariaLabel="Acciones"
         sx={{
@@ -274,6 +267,100 @@ const BitacoraDocumentosApp = () => {
           />
         ))}
       </SpeedDial>
+
+      {/* MODAL MEJORADO */}
+      <Dialog
+  open={modalOpen}
+  onClose={handleCloseModal}
+  fullWidth
+  maxWidth="sm"
+  PaperProps={{
+    sx: {
+      borderRadius: '20px'  // Bordes del contenedor del modal
+    }
+  }}
+>
+  <DialogTitle
+    sx={{
+      textAlign: 'center',
+      fontWeight: 'bold',
+      fontSize: '1.25rem',
+      pb: 0
+    }}
+  >
+    {modalTipo}
+  </DialogTitle>
+
+  <DialogContent
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      textAlign: 'center',
+      gap: 2,
+      py: 4
+    }}
+  >
+    <Typography variant="body1" sx={{ color: '#555' }}>
+      Por favor, selecciona un archivo para subir.
+    </Typography>
+
+    <Button
+      variant="outlined"
+      component="label"
+      sx={{
+        textTransform: 'none',
+        borderRadius: '16px',
+        px: 4,
+        py: 1,
+        fontWeight: 500,
+        borderColor: '#6a1b9a',
+        color: '#6a1b9a',
+        '&:hover': {
+          backgroundColor: '#f3e5f5',
+          borderColor: '#6a1b9a'
+        }
+      }}
+    >
+      Seleccionar archivo
+      <input type="file" hidden onChange={handleFileChange} />
+    </Button>
+
+    {selectedFile && (
+      <Typography variant="caption" sx={{ color: '#777' }}>
+        Archivo: {selectedFile.name}
+      </Typography>
+    )}
+  </DialogContent>
+
+  <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
+    <Button
+      onClick={handleUpload}
+      variant="contained"
+      sx={{
+        backgroundColor: '#6a1b9a',
+        borderRadius: '16px',
+        textTransform: 'none',
+        px: 4,
+        '&:hover': {
+          backgroundColor: '#4a0072'
+        }
+      }}
+    >
+      Subir
+    </Button>
+    <Button
+      onClick={handleCloseModal}
+      sx={{
+        textTransform: 'none',
+        color: '#6a1b9a',
+        borderRadius: '16px'
+      }}
+    >
+      Cancelar
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 };
