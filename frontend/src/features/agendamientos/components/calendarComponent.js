@@ -79,7 +79,7 @@ const Calendario = () => {
             onSelectSlot={(slot) => setDiaSeleccionado(slot.start)}
             onSelectEvent={handleSelectEvent}
             selectable
-            views={{ month: true }}
+            views={{ month: true, week: true, day: true, agenda: true }}
             defaultView="month"
             style={{ height: "100%", width: "100%" }}
             eventPropGetter={(event) => {

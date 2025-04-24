@@ -31,7 +31,7 @@ import NoAutorizado from "./components/NoAutorizado";
 import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
 // 🔹 Página de creación del aprendiz
-// import FormularioAprendiz from "./features/Registro/Aprendiz";
+import FormularioAprendiz from "./features/Registro/Aprendiz";
 
 function App() {
   return (
@@ -46,10 +46,7 @@ function App() {
             <Route path="/no-autorizado" element={<NoAutorizado />} />
 
             {/* Ruta sin Navbar para el formulario de aprendiz */}
-            {/* <Route
-              path="/aprendiz"
-              element={<FormularioAprendiz />}
-            /> */}
+            <Route path="/aprendiz" element={<FormularioAprendiz />} />
 
             {/* Rutas protegidas con Navbar */}
             <Route

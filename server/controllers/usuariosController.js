@@ -1,5 +1,7 @@
 const bcrypt = require('bcryptjs');
 const modeloUsuario = require('../models/usuario');
+const Ficha = require('../models/fichas');
+const FichaAprendiz = require('../models/FichaAprendiz');
 const { Op } = require('sequelize');
 
 
@@ -159,8 +161,64 @@ const obtenerUsuarioAutenticado = async (req, res) => {
         console.error("Error obteniendo usuario autenticado:", error);
         res.status(500).json({ message: 'Error interno del servidor' });
     }
+
 };
 
 
+//Crear aprendiz
+const crearAprendiz = async (req, res) => {
+    try {
+      const {
+        tipo_documento,
+        numero_documento,
+        nombre,
+        apellido,
+        telefono,
+        correo_electronico,
+        password,
+        numero_ficha // ahora el frontend debe enviar este dato
+      } = req.body;
+  
+      if (!numero_ficha) {
+        return res.status(400).json({ mensaje: "El número de ficha es obligatorio" });
+      }
+  
+      const ficha = await Ficha.findOne({ where: { numero_ficha } });
+      if (!ficha) {
+        return res.status(404).json({ mensaje: "Ficha no encontrada con ese número" });
+      }
+  
+      const correoExistente = await modeloUsuario.findOne({ where: { correo_electronico } });
+      if (correoExistente) {
+        return res.status(400).json({ mensaje: "El correo ya está en uso" });
+      }
+  
+      const hash = await bcrypt.hash(password, 10);
+  
+      const nuevoAprendiz = await modeloUsuario.create({
+        tipo_documento,
+        numero_documento,
+        nombre,
+        apellido,
+        telefono,
+        correo_electronico,
+        password: hash,
+        rol: "aprendiz",
+        estado_usuario: 1
+      });
+  
+      await FichaAprendiz.create({
+        id_usuario: nuevoAprendiz.id_usuario,
+        id_ficha: ficha.id_ficha
+      });
+  
+      res.status(201).json({ mensaje: "Aprendiz creado y asignado a ficha", aprendiz: nuevoAprendiz });
+    } catch (error) {
+      console.error("Error al crear aprendiz:", error);
+      res.status(500).json({ mensaje: "Error interno del servidor", error: error.message });
+    }
+  };
 
-module.exports = { crearUsuario,verUsuarios, verPorId, modificarUsuario, obtenerInstructores, eliminarUsuario,obtenerUsuarioAutenticado };
+
+
+module.exports = { crearUsuario,verUsuarios, verPorId, modificarUsuario, obtenerInstructores, eliminarUsuario,obtenerUsuarioAutenticado, crearAprendiz };

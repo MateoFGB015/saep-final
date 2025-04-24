@@ -10,7 +10,7 @@ exports.subirDocumento = async (req, res) => {
     const { tipo_documento, nombre_documento, descripcion } = req.body;
 
     // Solo aprendiz puede subir
-    if (rol !== 'Aprendiz') {
+    if (rol !== 'aprendiz') {
       return res.status(403).json({ mensaje: 'Solo los aprendices pueden subir documentos.' });
     }
 
@@ -50,7 +50,7 @@ exports.verDocumentos = async (req, res) => {
 
     let documentos = [];
 
-    if (rol === 'Aprendiz') {
+    if (rol === 'aprendiz') {
       const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
       if (!relacion) return res.status(404).json({ mensaje: 'No se encontró relación con ficha.' });
 
@@ -148,7 +148,7 @@ exports.modificarDocumento = async (req, res) => {
       return res.status(404).json({ mensaje: 'Relación ficha-aprendiz no encontrada.' });
     }
 
-    const esDueño = rol === 'Aprendiz' && relacion.id_usuario === id_usuario;
+    const esDueño = rol === 'aprendiz' && relacion.id_usuario === id_usuario;
     const esAdmin = rol === 'Administrador';
 
     if (!esDueño && !esAdmin) {

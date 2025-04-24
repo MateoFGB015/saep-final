@@ -5,13 +5,12 @@ import {
   Container,
   Paper,
   Grid,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
   Card,
   CardContent,
 } from '@mui/material';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 const tendencias = [
   {
@@ -28,6 +27,18 @@ const tendencias = [
   },
 ];
 
+// Configuración del slider
+const sliderSettings = {
+  dots: true,
+  infinite: true,
+  speed: 500,
+  slidesToShow: 1,
+  slidesToScroll: 1,
+  arrows: false,
+  autoplay: true,
+  autoplaySpeed: 4000,
+};
+
 const Inicio = () => {
   return (
     <Box
@@ -41,44 +52,117 @@ const Inicio = () => {
       }}
     >
       <Container maxWidth="lg" sx={{ py: 5 }}>
-        {/* Encabezado */}
-        <Paper elevation={3} sx={{ p: 4, backgroundColor: '#e3f2fd', mb: 4 }}>
-          <Typography variant="h3" color="primary" gutterBottom align="center">
-            Bienvenid@ a tu Plataforma de Seguimiento de Aprendices
-          </Typography>
-          <Typography variant="h6" align="center">
-            Una herramienta para gestionar, monitorear y acompañar tu proceso formativo.
-          </Typography>
+        {/* Slider en vez de bienvenida */}
+        <Paper elevation={3} sx={{ mb: 4 }}>
+          <Slider {...sliderSettings}>
+            <Box
+              component="img"
+              src="/slider/slider1.png"
+              alt="Confección 1"
+              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
+            />
+            <Box
+              component="img"
+              src="/slider/slider2.png"
+              alt="Confección 2"
+              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
+            />
+            <Box
+              component="img"
+              src="/slider/slider3.png"
+              alt="Confección 3"
+              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
+            />
+          </Slider>
         </Paper>
 
-        {/* Instrucciones */}
+        
         <Paper elevation={2} sx={{ p: 3, mb: 5 }}>
           <Typography variant="h5" color="secondary" gutterBottom>
-            ¿Cómo usar la plataforma?
+            Accesos Rápidos
           </Typography>
-          <List>
-            <ListItem>
-              <ListItemText
-                primary="🔹 Instructores"
-                secondary="Pueden registrar fichas, asignar aprendices y hacer seguimiento individual o grupal."
-              />
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemText
-                primary="🔹 Aprendices"
-                secondary="Visualizan su ficha, verifican asistencia, seguimiento académico y observaciones realizadas."
-              />
-            </ListItem>
-            <Divider />
-            <ListItem>
-              <ListItemText
-                primary="🔹 Administradores"
-                secondary="Gestionan usuarios, roles, fichas y control general del sistema."
-              />
-            </ListItem>
-          </List>
+          <Grid container spacing={3}>
+            {[
+              {
+                titulo: 'Fichas',
+                instrucciones: [
+                  'Registrar nuevas fichas de formación.',
+                  'Asociar aprendices a una ficha.',
+                  'Consultar historial de fichas.',
+                ],
+              },
+              {
+                titulo: 'Agendamientos',
+                instrucciones: [
+                  'Ver y programar visitas de seguimiento.',
+                  'Reprogramar sesiones según disponibilidad.',
+                  'Notificar cambios a los aprendices.',
+                ],
+              },
+              {
+                titulo: 'Usuarios',
+                instrucciones: [
+                  'Registrar instructores o aprendices.',
+                  'Modificar información de usuario.',
+                  'Asignar roles y permisos.',
+                ],
+              },
+              {
+                titulo: 'Bitácoras',
+                instrucciones: [
+                  'Cargar seguimiento diario o semanal.',
+                  'Adjuntar archivos y observaciones.',
+                  'Visualizar aportes anteriores.',
+                ],
+              },
+            ].map((item, i) => (
+              <Grid item xs={12} sm={6} md={3} key={i}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 2,
+                    textAlign: 'center',
+                    transition: '0.3s',
+                    '&:hover': {
+                      backgroundColor: '#e3f2fd',
+                    },
+                    position: 'relative',
+                  }}
+                >
+                  <Typography variant="h6" color="primary">
+                    {item.titulo}
+                  </Typography>
+                  <Box
+                    sx={{
+                      mt: 1,
+                      display: 'none',
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      width: '100%',
+                      backgroundColor: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: 1,
+                      zIndex: 10,
+                      p: 1,
+                      '&:hover': {
+                        display: 'block',
+                      },
+                    }}
+                    className="hover-list"
+                  >
+                    {item.instrucciones.map((inst, idx) => (
+                      <Typography key={idx} variant="body2" sx={{ textAlign: 'left', py: 0.5 }}>
+                        • {inst}
+                      </Typography>
+                    ))}
+                  </Box>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
         </Paper>
+
 
         {/* Tendencias */}
         <Paper elevation={2} sx={{ p: 3, mb: 5 }}>
@@ -119,7 +203,7 @@ const Inicio = () => {
           </Grid>
         </Paper>
 
-        {/* Footer*/}
+        {/* Footer */}
         <Box sx={{ mt: 5, textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
             &copy; 2025 Sistema de Seguimiento de Aprendices – Todos los derechos reservados.

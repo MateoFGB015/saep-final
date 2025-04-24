@@ -9,7 +9,7 @@ exports.crearOActualizarObservacion = async (req, res) => {
     const { observacion, mostrar_observacion } = req.body;
 
     // Validar roles válidos
-    const rolesPermitidos = ['Administrador', 'Instructor', 'Aprendiz'];
+    const rolesPermitidos = ['Administrador', 'Instructor', 'aprendiz'];
     if (!rolesPermitidos.includes(rol_usuario)) {
       return res.status(403).json({ mensaje: 'No tienes permisos para dejar observaciones.' });
     }
@@ -63,7 +63,7 @@ exports.verObservacionesDeBitacora = async (req, res) => {
     const { id_bitacora } = req.params;
     const { rol } = req.usuario;
 
-    const rolesPermitidos = ['Administrador', 'Instructor', 'Aprendiz'];
+    const rolesPermitidos = ['Administrador', 'Instructor', 'aprendiz'];
     if (!rolesPermitidos.includes(rol)) {
       return res.status(403).json({ mensaje: 'No tienes permisos para ver observaciones.' });
     }
