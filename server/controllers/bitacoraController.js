@@ -110,7 +110,7 @@ exports.modificarBitacora = async (req, res) => {
     const { id: id_usuario, rol } = req.usuario;
 
     // ✅ Solo admin y aprendiz pueden modificar
-    if (rol !== 'admin' && rol !== 'aprendiz') {
+    if (rol !== 'Administrador' && rol !== 'aprendiz') {
       return res.status(403).json({ mensaje: 'No tienes permisos para modificar esta bitácora.' });
     }
 
@@ -159,7 +159,7 @@ exports.eliminarBitacora = async (req, res) => {
     const { rol } = req.usuario;
 
     // 🔐 Solo el ADMIN puede eliminar
-    if (rol !== 'admin') {
+    if (rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'Solo el administrador puede eliminar bitácoras.' });
     }
 
