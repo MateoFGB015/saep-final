@@ -40,7 +40,7 @@ const CalendarioInstructorSeleccionado = () => {
       try {
         const token = localStorage.getItem("token");
         const { data } = await axios.get(`http://localhost:3000/agendamiento/instructor/${idInstructor}`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const eventosFormateados = data.map((evento) => ({
@@ -49,6 +49,7 @@ const CalendarioInstructorSeleccionado = () => {
           nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
           start: new Date(evento.fecha_inicio),
           end: new Date(evento.fecha_fin),
+          estado: evento.estado_visita,
         }));
 
         setEventos(eventosFormateados);
@@ -66,7 +67,6 @@ const CalendarioInstructorSeleccionado = () => {
     setEventoSeleccionado(evento);
     setModalOpen(true);
   };
-  
 
   const eventosDelDia = eventos.filter((evento) =>
     isSameDay(new Date(evento.start), diaSeleccionado)
@@ -84,7 +84,24 @@ const CalendarioInstructorSeleccionado = () => {
           onSelectSlot={(slot) => setDiaSeleccionado(slot.start)}
           onSelectEvent={handleSelectEvent}
           selectable
+          views={{ month: true }}
+          defaultView="month"
           style={{ height: "80vh" }}
+          eventPropGetter={(event) => {
+            let backgroundColor = "#71277a";
+            if (event.estado === "cancelado") backgroundColor = "#d32f2f";
+            if (event.estado === "realizado") backgroundColor = "#388e3c";
+
+            return {
+              style: {
+                backgroundColor,
+                color: "white",
+                borderRadius: "8px",
+                padding: "4px",
+                border: "none",
+              },
+            };
+          }}
         />
       </Box>
 
@@ -109,11 +126,9 @@ const CalendarioInstructorSeleccionado = () => {
           <List>
             {eventosDelDia.map((evento, i) => (
               <div key={evento.id || i}>
-                <ListItem>
+                <ListItem button onClick={() => handleSelectEvent(evento)}>
                   <Box>
-                    <Typography fontWeight="bold">
-                      {evento.title}
-                    </Typography>
+                    <Typography fontWeight="bold">{evento.title}</Typography>
                     <Typography variant="body2" color="text.secondary">
                       Aprendiz: {evento.nombreAprendiz}
                     </Typography>
@@ -125,14 +140,15 @@ const CalendarioInstructorSeleccionado = () => {
           </List>
         )}
       </Box>
+
       {modalOpen && (
-  <ModalModificar
-    open={modalOpen}
-    onClose={() => setModalOpen(false)}
-    evento={eventoSeleccionado}
-    soloLectura={true} // Esto le indica al modal que solo muestre los datos
-  />
-)}
+        <ModalModificar
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          evento={eventoSeleccionado}
+          soloLectura={true} // ✅ Admin solo visualiza
+        />
+      )}
     </Box>
   );
 };

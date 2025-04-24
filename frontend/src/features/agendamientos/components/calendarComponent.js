@@ -75,13 +75,30 @@ const Calendario = () => {
             events={eventos}
             startAccessor="start"
             endAccessor="end"
-            selectable={user?.rol === "Instructor"}
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
             messages={messages}
+            onSelectSlot={(slot) => setDiaSeleccionado(slot.start)}
+            onSelectEvent={handleSelectEvent}
+            selectable
             views={{ month: true }}
             defaultView="month"
             style={{ height: "100%", width: "100%" }}
+            eventPropGetter={(event) => {
+              let backgroundColor = "#71277a"; // morado por defecto
+              if (event.estado === "cancelado") {
+                backgroundColor = "#d32f2f";
+              } else if (event.estado === "realizado") {
+                backgroundColor = "#388e3c";
+              }
+              return {
+                style: {
+                  backgroundColor,
+                  color: "white",
+                  borderRadius: "8px",
+                  padding: "4px",
+                  border: "none",
+                },
+              };
+            }}
           />
         </div>
 
@@ -110,10 +127,13 @@ const Calendario = () => {
               <List>
                 {eventosDelDia.map((evento, i) => (
                   <div key={evento.id || i}>
-                    <ListItem button onClick={() => {
-                      setEventoSeleccionado(evento);
-                      setModalOpen(true);
-                    }}>
+                    <ListItem
+                      button
+                      onClick={() => {
+                        setEventoSeleccionado(evento);
+                        setModalOpen(true);
+                      }}
+                    >
                       <Box>
                         <Typography variant="subtitle1" fontWeight="bold">
                           {evento.tipo_visita === "virtual" ? "🖥️ Virtual" : "🏢 Presencial"}
@@ -138,12 +158,52 @@ const Calendario = () => {
                   variant="contained"
                   color="primary"
                   onClick={() => setModalCrearOpen(true)}
+                  sx={{
+                    backgroundColor: "#71277a",
+                    "&:hover": {
+                      backgroundColor: "#5a1e61",
+                    },
+                    color: "white"
+                  }}
                 >
                   Añadir visita
                 </Button>
               </Box>
             )}
+
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 3,
+    mt: 2,
+    flexWrap: "wrap",
+  }}
+>
+  {[
+    { color: "white", label: "Sin visitas", border: "1px solid #ccc" },
+    { color: "#71277a", label: "Pendiente" },
+    { color: "#388e3c", label: "Realizada" },
+    { color: "#d32f2f", label: "Cancelada" },
+  ].map(({ color, label, border }) => (
+    <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <Box
+        sx={{
+          width: 20,
+          height: 20,
+          backgroundColor: color,
+          borderRadius: "4px",
+          border: border || "none",
+        }}
+      />
+      <Typography variant="body2">{label}</Typography>
+    </Box>
+  ))}
+</Box>
           </Box>
+
+          
         )}
       </div>
 
