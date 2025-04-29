@@ -34,6 +34,16 @@ const BitacoraDocumentosApp = () => {
   // Obtener token del almacenamiento local
   const getToken = () => localStorage.getItem('token');
 
+  const getUserRole = () => {
+    const token = getToken();
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.rol;
+  };
+  
+  const userRole = getUserRole();
+  
+
   // Cargar datos al iniciar el componente o cambiar tab
   useEffect(() => {
     if (tab === 0) {
@@ -434,72 +444,111 @@ const BitacoraDocumentosApp = () => {
                   
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Button 
-                    size="small" 
-                     variant="outlined" 
-                    color="secondary"
-                     onClick={() => {
-                  const archivo = tab === 0 ? item.bitacora : item.documento;
-                   const carpeta = tab === 0 ? 'bitacoras' : 'documentos';
-                 if (archivo) {
-                 window.open(`${API_URL}/uploads/${carpeta}/${archivo}`, '_blank');
-                  } else {
-                   alert('Archivo no disponible');
-                    }
-                    }}
-                    >
-                     Ver
-                    </Button>
+          size="small" 
+          variant="outlined" 
+          color="secondary"
+          onClick={() => {
+            const archivo = tab === 0 ? item.bitacora : item.documento;
+            const carpeta = tab === 0 ? 'bitacoras' : 'documentos';
+            if (archivo) {
+              window.open(`${API_URL}/uploads/${carpeta}/${archivo}`, '_blank');
+            } else {
+              alert('Archivo no disponible');
+            }
+          }}
+        >
+          Ver
+        </Button>
 
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      color="secondary"
-                      component="label"
-                    >
-                      Modificar
-                      <input 
-                        type="file" 
-                        hidden 
-                        onChange={async (e) => {
-                          const nuevoArchivo = e.target.files[0];
-                          if (!nuevoArchivo) return;
-                          const id = tab === 0 ? item.id_bitacora : item.id_documento;
-                          const endpoint = tab === 0 ? `/bitacora/modificar/${id}` : `/documentos/modificar/${id}`;
-                          const campo = tab === 0 ? 'bitacora' : 'documento';
-                          const formData = new FormData();
-                          formData.append(campo, nuevoArchivo);
+        {/* Modificar: solo aprendiz o admin */}
+        {(userRole === 'Administrador' || userRole === 'aprendiz') && (
+          <Button 
+            size="small" 
+            variant="outlined" 
+            color="secondary"
+            component="label"
+          >
+            Modificar
+            <input 
+              type="file" 
+              hidden 
+              onChange={async (e) => {
+                const nuevoArchivo = e.target.files[0];
+                if (!nuevoArchivo) return;
+                const id = tab === 0 ? item.id_bitacora : item.id_documento;
+                const endpoint = tab === 0 ? `/bitacora/modificar/${id}` : `/documentos/modificar/${id}`;
+                const campo = tab === 0 ? 'bitacora' : 'documento';
+                const formData = new FormData();
+                formData.append(campo, nuevoArchivo);
 
-                          try {
-                            setLoading(true);
-                            const response = await fetch(`${API_URL}${endpoint}`, {
-                              method: 'PUT',
-                              headers: { 'Authorization': `Bearer ${getToken()}` },
-                              body: formData
-                            });
+                try {
+                  setLoading(true);
+                  const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${getToken()}` },
+                    body: formData
+                  });
 
-                            const result = await response.json();
-                            if (!response.ok) throw new Error(result.mensaje || 'Error al modificar');
-                            if (tab === 0) fetchBitacoras();
-                            else fetchDocumentos();
-                            alert('Archivo modificado con éxito');
-                          } catch (err) {
-                            alert('Error al modificar el archivo: ' + err.message);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                      />
-                    </Button>
+                  const result = await response.json();
+                  if (!response.ok) throw new Error(result.mensaje || 'Error al modificar');
+                  if (tab === 0) fetchBitacoras();
+                  else fetchDocumentos();
+                  alert('Archivo modificado con éxito');
+                } catch (err) {
+                  alert('Error al modificar el archivo: ' + err.message);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </Button>
+        )}
 
-                    {tab === 0 && (
-                      <Button 
-                        size="small" 
-                        variant="outlined" 
-                        color="secondary"
-                        onClick={() => handleOpenObservacionDialog(index, item.id_bitacora)}
-                      >
-                        Observaciones
-                      </Button>
+        {/* Observaciones - según rol y estado */}
+        {tab === 0 && (
+          (userRole === 'Administrador' || userRole === 'Instructor' || 
+           (userRole === 'aprendiz' && item.estado_bitacora !== 1)) && (
+            <Button 
+              size="small" 
+              variant="outlined" 
+              color="secondary"
+              onClick={() => handleOpenObservacionDialog(index, item.id_bitacora)}
+            >
+              Observaciones
+            </Button>
+          )
+        )}
+
+        {/* Eliminar: solo admin */}
+        {userRole === 'Administrador' && tab === 0 && (
+          <Button 
+            size="small" 
+            variant="outlined" 
+            color="error"
+            onClick={async () => {
+              const confirmar = window.confirm('¿Estás seguro de que deseas eliminar esta bitácora?');
+              if (!confirmar) return;
+              try {
+                setLoading(true);
+                const response = await fetch(`${API_URL}/bitacora/eliminar/${item.id_bitacora}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${getToken()}`
+                  }
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.mensaje || 'Error al eliminar');
+                fetchBitacoras();
+                alert('Bitácora eliminada con éxito');
+              } catch (err) {
+                alert('Error al eliminar la bitácora: ' + err.message);
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            Eliminar
+          </Button>
                     )}
                   </Box>
                 </Paper>
