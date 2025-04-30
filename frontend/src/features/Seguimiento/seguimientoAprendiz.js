@@ -7,6 +7,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import { useParams } from 'react-router-dom';
+
 
 const BitacoraDocumentosApp = () => {
   const [tab, setTab] = useState(0);
@@ -41,7 +43,9 @@ const BitacoraDocumentosApp = () => {
     return payload.rol;
   };
   
+  const { id_usuario } = useParams();
   const userRole = getUserRole();
+  const isFiltrado = (userRole === 'Administrador' || userRole === 'Instructor') && id_usuario;  
   
 
   // Cargar datos al iniciar el componente o cambiar tab
@@ -58,18 +62,19 @@ const BitacoraDocumentosApp = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_URL}/bitacora/ver_bitacoras`, {
+      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const response = await fetch(`${API_URL}/bitacora/ver_bitacoras${query}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
         }
       });
-      
+  
       if (!response.ok) {
         throw new Error('No se pudieron cargar las bitácoras');
       }
-      
+  
       const data = await response.json();
       setBitacoras(data.bitacoras || []);
     } catch (error) {
@@ -79,13 +84,14 @@ const BitacoraDocumentosApp = () => {
       setLoading(false);
     }
   };
-
+  
+ // Función para cargar documentos
   const fetchDocumentos = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('Obteniendo documentos...');
-      const response = await fetch(`${API_URL}/documentos/ver`, {
+      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const response = await fetch(`${API_URL}/documentos/ver${query}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -93,23 +99,12 @@ const BitacoraDocumentosApp = () => {
         }
       });
   
-      console.log('Respuesta status:', response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error respuesta:', response.status, errorText);
-        throw new Error(`Error al cargar documentos: ${response.status}`);
+        throw new Error('No se pudieron cargar los documentos');
       }
   
       const data = await response.json();
-      console.log("Datos recibidos:", data);
-      
-      if (data.documentos) {
-        setDocumentos(data.documentos);
-      } else {
-        console.warn("La respuesta no contiene documentos en el formato esperado:", data);
-        setDocumentos([]);
-      }
+      setDocumentos(data.documentos || []);
     } catch (error) {
       console.error('Error al cargar documentos:', error);
       setError('No se pudieron cargar los documentos: ' + error.message);
@@ -117,6 +112,7 @@ const BitacoraDocumentosApp = () => {
       setLoading(false);
     }
   };
+  
   
   // Función para ver una bitácora específica
   const verBitacora = async (idBitacora) => {
