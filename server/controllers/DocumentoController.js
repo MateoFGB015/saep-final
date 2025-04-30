@@ -10,7 +10,7 @@ exports.subirDocumento = async (req, res) => {
     console.log('Usuario:', req.usuario);
     console.log('Archivo recibido:', req.file);
     console.log('Body:', req.body);
-    
+
     const { id: id_usuario, rol } = req.usuario;
 
     if (rol !== 'aprendiz') {
@@ -40,20 +40,21 @@ exports.subirDocumento = async (req, res) => {
       fecha_ultima_actualizacion: new Date()
     });
 
-    res.status(201).json({ 
-      mensaje: '✅ Documento subido exitosamente.', 
-      data: nuevoDocumento 
+    res.status(201).json({
+      mensaje: '✅ Documento subido exitosamente.',
+      data: nuevoDocumento
     });
-    
+
   } catch (error) {
     console.error('❌ Error detallado al subir documento:', error);
-    res.status(500).json({ 
-      mensaje: 'Error al subir el documento.', 
+    res.status(500).json({
+      mensaje: 'Error al subir el documento.',
       error: error.message,
-      stack: error.stack 
+      stack: error.stack
     });
   }
 };
+
 exports.verDocumentos = async (req, res) => {
   try {
     const { rol, id: id_usuario } = req.usuario;

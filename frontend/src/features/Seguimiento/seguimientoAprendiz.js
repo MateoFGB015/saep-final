@@ -7,6 +7,8 @@ import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import { useParams } from 'react-router-dom';
+
 
 const BitacoraDocumentosApp = () => {
   const [tab, setTab] = useState(0);
@@ -23,6 +25,7 @@ const BitacoraDocumentosApp = () => {
   const [bitacoras, setBitacoras] = useState([]);
   const [documentos, setDocumentos] = useState([]);
   const [currentBitacora, setCurrentBitacora] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState('');
   
   const contentRef = useRef(null);
   const datosPorPagina = 5;
@@ -32,6 +35,18 @@ const BitacoraDocumentosApp = () => {
   
   // Obtener token del almacenamiento local
   const getToken = () => localStorage.getItem('token');
+
+  const getUserRole = () => {
+    const token = getToken();
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.rol;
+  };
+  
+  const { id_usuario } = useParams();
+  const userRole = getUserRole();
+  const isFiltrado = (userRole === 'Administrador' || userRole === 'Instructor') && id_usuario;  
+  
 
   // Cargar datos al iniciar el componente o cambiar tab
   useEffect(() => {
@@ -45,19 +60,21 @@ const BitacoraDocumentosApp = () => {
   // Función para cargar bitácoras
   const fetchBitacoras = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const response = await fetch(`${API_URL}/bitacora/ver_bitacoras`, {
+      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const response = await fetch(`${API_URL}/bitacora/ver_bitacoras${query}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
         }
       });
-      
+  
       if (!response.ok) {
         throw new Error('No se pudieron cargar las bitácoras');
       }
-      
+  
       const data = await response.json();
       setBitacoras(data.bitacoras || []);
     } catch (error) {
@@ -67,12 +84,14 @@ const BitacoraDocumentosApp = () => {
       setLoading(false);
     }
   };
-
+  
+ // Función para cargar documentos
   const fetchDocumentos = async () => {
     setLoading(true);
+    setError(null);
     try {
-      console.log('Obteniendo documentos...');
-      const response = await fetch(`${API_URL}/documentos/ver`, {
+      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const response = await fetch(`${API_URL}/documentos/ver${query}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -80,23 +99,12 @@ const BitacoraDocumentosApp = () => {
         }
       });
   
-      console.log('Respuesta status:', response.status);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error respuesta:', response.status, errorText);
-        throw new Error(`Error al cargar documentos: ${response.status}`);
+        throw new Error('No se pudieron cargar los documentos');
       }
   
       const data = await response.json();
-      console.log("Datos recibidos:", data);
-      
-      if (data.documentos) {
-        setDocumentos(data.documentos);
-      } else {
-        console.warn("La respuesta no contiene documentos en el formato esperado:", data);
-        setDocumentos([]);
-      }
+      setDocumentos(data.documentos || []);
     } catch (error) {
       console.error('Error al cargar documentos:', error);
       setError('No se pudieron cargar los documentos: ' + error.message);
@@ -104,6 +112,7 @@ const BitacoraDocumentosApp = () => {
       setLoading(false);
     }
   };
+  
   
   // Función para ver una bitácora específica
   const verBitacora = async (idBitacora) => {
@@ -201,6 +210,8 @@ const BitacoraDocumentosApp = () => {
     setModalOpen(true);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setUploadStatus('');
+    setError(null);
   };
 
   const handleCloseModal = () => setModalOpen(false);
@@ -208,61 +219,101 @@ const BitacoraDocumentosApp = () => {
   // Manejar selección de archivo
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.size > 20 * 1024 * 1024) { // 20MB
-      alert('El archivo supera los 20 MB. Por favor, selecciona uno más liviano.');
+    if (!file) return;
+    
+    // Validar tamaño según tipo
+    const maxSize = modalTipo === 'Subir Bitácora' ? 5 * 1024 * 1024 : 20 * 1024 * 1024; // 5MB o 20MB
+    if (file && file.size > maxSize) { 
+      setError(`El archivo supera el límite de tamaño permitido (${maxSize/1024/1024} MB).`);
+      setSelectedFile(null);
       return;
+    }
+    
+    // Validar tipos de archivo
+    if (modalTipo === 'Subir Bitácora') {
+      const validTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (!validTypes.includes(ext)) {
+        setError('Tipo de archivo no permitido. Formatos aceptados: PDF, DOC, DOCX, XLS, XLSX');
+        setSelectedFile(null);
+        return;
+      }
     }
   
     setSelectedFile(file);
+    setError(null);
     setPreviewUrl(URL.createObjectURL(file));
   };
   
-
   // Subir archivo al backend
   const handleUpload = async () => {
     if (!selectedFile) {
-      alert('Por favor seleccione un archivo');
+      setError('Por favor seleccione un archivo');
       return;
     }
   
     const formData = new FormData();
-    formData.append('documento', selectedFile);
+    setUploadStatus('Subiendo archivo...');
     
     try {
       let endpoint = '';
-      if (modalTipo === 'Subir Documento') {
-        endpoint = '/documentos/subir';
-      } else if (modalTipo === 'Subir Bitácora') {
+      
+      if (modalTipo === 'Subir Bitácora') {
         endpoint = '/bitacora/subir';
+        formData.append('bitacora', selectedFile); // Nombre del campo debe coincidir con el esperado por multer en el backend
+      } else if (modalTipo === 'Subir Documento') {
+        endpoint = '/documentos/subir';
+        formData.append('documento', selectedFile); // Nombre del campo debe coincidir con el esperado por multer en el backend
+      } else if (modalTipo === 'Subir Firma') {
+        endpoint = '/firma/subir'; // Si tienes una ruta para subir firmas
+        formData.append('firma', selectedFile);
       }
       
+      // Si no hay endpoint válido, terminar
+      if (!endpoint) {
+        setError('Tipo de archivo no reconocido');
+        return;
+      }
+      
+      console.log(`Subiendo a: ${API_URL}${endpoint}`);
       setLoading(true);
+      
       const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`
+          // No incluir Content-Type con FormData, el navegador lo establece automáticamente con el boundary
         },
         body: formData
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.mensaje || `Error ${response.status}`);
-      }
+      // Log para depuración
+      console.log('Status de respuesta:', response.status);
       
       const responseData = await response.json();
-      alert(responseData.mensaje || 'Archivo subido correctamente');
-      handleCloseModal();
+      console.log('Respuesta del servidor:', responseData);
       
+      if (!response.ok) {
+        throw new Error(responseData.mensaje || `Error ${response.status}`);
+      }
+      
+      setUploadStatus('¡Archivo subido con éxito!');
       // Recargar los datos después de subir
-      if (tab === 0) {
+      if (modalTipo === 'Subir Bitácora') {
         fetchBitacoras();
-      } else {
+      } else if (modalTipo === 'Subir Documento') {
         fetchDocumentos();
       }
+      
+      // Cerrar modal después de un breve retraso
+      setTimeout(() => {
+        handleCloseModal();
+      }, 1500);
+      
     } catch (error) {
-      console.error('Error:', error);
-      alert(`Error al subir el archivo: ${error.message}`);
+      console.error('Error en la subida:', error);
+      setError(`Error al subir el archivo: ${error.message}`);
+      setUploadStatus('');
     } finally {
       setLoading(false);
     }
@@ -332,11 +383,11 @@ const BitacoraDocumentosApp = () => {
         </Tabs>
       </Paper>
 
-      {loading ? (
+      {loading && !modalOpen ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
           <CircularProgress sx={{ color: '#6a1b9a' }} />
         </Box>
-      ) : error ? (
+      ) : error && !modalOpen ? (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="error">{error}</Typography>
           <Button 
@@ -352,9 +403,11 @@ const BitacoraDocumentosApp = () => {
           {datosPagina.length > 0 ? (
             datosPagina.map((item, index) => {
               const globalIndex = (paginaActual - 1) * datosPorPagina + index;
+              const itemId = tab === 0 ? item.id_bitacora : item.id_documento || `doc-${globalIndex}`;
+              
               return (
                 <Paper
-                  key={tab === 0 ? item.id_bitacora : `doc-${globalIndex}`}
+                  key={itemId}
                   elevation={3}
                   sx={{
                     p: 3, my: 2, borderRadius: 3, display: 'flex',
@@ -365,7 +418,7 @@ const BitacoraDocumentosApp = () => {
                   <Typography variant="h6" fontWeight={700} color="#6a1b9a">
                     {tab === 0 
                       ? `Bitácora #${item.numero_bitacora}` 
-                      : `Documento #${globalIndex + 1}`
+                      : `Documento: ${item.nombre_documento || `Documento #${globalIndex + 1}`}`
                     }
                   </Typography>
                   
@@ -375,36 +428,123 @@ const BitacoraDocumentosApp = () => {
                     </Typography>
                   )}
                   
+                  {tab === 1 && item.descripcion && (
+                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
+                      Descripción: {item.descripcion}
+                    </Typography>
+                  )}
+                  
                   <Typography variant="body2" color="text.secondary">
                     Última actualización: {new Date(item.fecha_ultima_actualizacion).toLocaleString()}
                   </Typography>
                   
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      color="secondary"
-                      onClick={() => tab === 0 ? verBitacora(item.id_bitacora) : null}
-                    >
-                      Ver
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      color="secondary"
-                      onClick={() => tab === 0 ? modificarBitacora(item.id_bitacora) : null}
-                    >
-                      Modificar
-                    </Button>
-                    {tab === 0 && (
-                      <Button 
-                        size="small" 
-                        variant="outlined" 
-                        color="secondary"
-                        onClick={() => handleOpenObservacionDialog(index, item.id_bitacora)}
-                      >
-                        Observaciones
-                      </Button>
+                  <Button 
+          size="small" 
+          variant="outlined" 
+          color="secondary"
+          onClick={() => {
+            const archivo = tab === 0 ? item.bitacora : item.documento;
+            const carpeta = tab === 0 ? 'bitacoras' : 'documentos';
+            if (archivo) {
+              window.open(`${API_URL}/uploads/${carpeta}/${archivo}`, '_blank');
+            } else {
+              alert('Archivo no disponible');
+            }
+          }}
+        >
+          Ver
+        </Button>
+
+        {/* Modificar: solo aprendiz o admin */}
+        {(userRole === 'Administrador' || userRole === 'aprendiz') && (
+          <Button 
+            size="small" 
+            variant="outlined" 
+            color="secondary"
+            component="label"
+          >
+            Modificar
+            <input 
+              type="file" 
+              hidden 
+              onChange={async (e) => {
+                const nuevoArchivo = e.target.files[0];
+                if (!nuevoArchivo) return;
+                const id = tab === 0 ? item.id_bitacora : item.id_documento;
+                const endpoint = tab === 0 ? `/bitacora/modificar/${id}` : `/documentos/modificar/${id}`;
+                const campo = tab === 0 ? 'bitacora' : 'documento';
+                const formData = new FormData();
+                formData.append(campo, nuevoArchivo);
+
+                try {
+                  setLoading(true);
+                  const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${getToken()}` },
+                    body: formData
+                  });
+
+                  const result = await response.json();
+                  if (!response.ok) throw new Error(result.mensaje || 'Error al modificar');
+                  if (tab === 0) fetchBitacoras();
+                  else fetchDocumentos();
+                  alert('Archivo modificado con éxito');
+                } catch (err) {
+                  alert('Error al modificar el archivo: ' + err.message);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+            />
+          </Button>
+        )}
+
+        {/* Observaciones - según rol y estado */}
+        {tab === 0 && (
+          (userRole === 'Administrador' || userRole === 'Instructor' || 
+           (userRole === 'aprendiz' && item.estado_bitacora !== 1)) && (
+            <Button 
+              size="small" 
+              variant="outlined" 
+              color="secondary"
+              onClick={() => handleOpenObservacionDialog(index, item.id_bitacora)}
+            >
+              Observaciones
+            </Button>
+          )
+        )}
+
+        {/* Eliminar: solo admin */}
+        {userRole === 'Administrador' && tab === 0 && (
+          <Button 
+            size="small" 
+            variant="outlined" 
+            color="error"
+            onClick={async () => {
+              const confirmar = window.confirm('¿Estás seguro de que deseas eliminar esta bitácora?');
+              if (!confirmar) return;
+              try {
+                setLoading(true);
+                const response = await fetch(`${API_URL}/bitacora/eliminar/${item.id_bitacora}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${getToken()}`
+                  }
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.mensaje || 'Error al eliminar');
+                fetchBitacoras();
+                alert('Bitácora eliminada con éxito');
+              } catch (err) {
+                alert('Error al eliminar la bitácora: ' + err.message);
+              } finally {
+                setLoading(false);
+              }
+            }}
+          >
+            Eliminar
+          </Button>
                     )}
                   </Box>
                 </Paper>
@@ -418,15 +558,13 @@ const BitacoraDocumentosApp = () => {
                   : 'No hay documentos disponibles'
                 }
               </Typography>
-              {tab === 0 && (
-                <Button 
-                  variant="contained" 
-                  sx={{ mt: 2, backgroundColor: '#6a1b9a' }}
-                  onClick={() => handleOpenModal('Subir Bitácora')}
-                >
-                  Subir Bitácora
-                </Button>
-              )}
+              <Button 
+                variant="contained" 
+                sx={{ mt: 2, backgroundColor: '#6a1b9a' }}
+                onClick={() => handleOpenModal(tab === 0 ? 'Subir Bitácora' : 'Subir Documento')}
+              >
+                {tab === 0 ? 'Subir Bitácora' : 'Subir Documento'}
+              </Button>
             </Box>
           )}
 
@@ -521,7 +659,33 @@ const BitacoraDocumentosApp = () => {
         <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 2, py: 4 }}>
           <Typography variant="body1" sx={{ color: '#555' }}>
             Por favor, selecciona un archivo para subir.
+            {modalTipo === 'Subir Bitácora' && (
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX (máximo 5MB)
+              </Typography>
+            )}
+            {modalTipo === 'Subir Documento' && (
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                Máximo 20MB
+              </Typography>
+            )}
           </Typography>
+
+          {error && (
+            <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+              {error}
+            </Typography>
+          )}
+
+          {uploadStatus && (
+            <Typography 
+              variant="body2" 
+              color={uploadStatus.includes('éxito') ? 'success.main' : 'info.main'} 
+              sx={{ mt: 1 }}
+            >
+              {uploadStatus}
+            </Typography>
+          )}
 
           <Button
             variant="outlined"
@@ -541,12 +705,17 @@ const BitacoraDocumentosApp = () => {
             }}
           >
             Seleccionar archivo
-            <input type="file" hidden onChange={handleFileChange} />
+            <input 
+              type="file" 
+              hidden 
+              onChange={handleFileChange} 
+              accept={modalTipo === 'Subir Bitácora' ? '.pdf,.doc,.docx,.xls,.xlsx' : undefined}
+            />
           </Button>
 
           {selectedFile && (
             <Typography variant="caption" sx={{ color: '#777' }}>
-              Archivo: {selectedFile.name}
+              Archivo: {selectedFile.name} ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
             </Typography>
           )}
         </DialogContent>
