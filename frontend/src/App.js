@@ -127,6 +127,10 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+
+                    <Route 
+                  path="/seguimiento/:id_usuario" element={<BitacoraDocumentosApp />} />
+
                   </Routes>
                 </Navbar>
               }
