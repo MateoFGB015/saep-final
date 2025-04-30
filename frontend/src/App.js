@@ -33,6 +33,9 @@ import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 // 🔹 Página de creación del aprendiz
 import FormularioAprendiz from "./features/Registro/Aprendiz";
 
+
+
+
 function App() {
   return (
     <AuthProvider>
@@ -127,6 +130,9 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+
+                  <Route 
+                  path="/seguimiento/:id_usuario" element={<BitacoraDocumentosApp />} />
                   </Routes>
                 </Navbar>
               }
