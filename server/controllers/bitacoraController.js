@@ -59,7 +59,8 @@ exports.subirBitacora = async (req, res) => {
 exports.verBitacorasSubidas = async (req, res) => {
   try {
     const { id: id_usuario, rol } = req.usuario;
-    const { id_usuario_aprendiz } = req.params;
+    const { id_usuario: id_usuario_aprendiz } = req.params;
+
 
     // Si es aprendiz: ver solo sus propias bitácoras
     if (rol === 'aprendiz') {

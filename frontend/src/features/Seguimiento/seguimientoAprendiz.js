@@ -12,6 +12,10 @@ import { useParams } from 'react-router-dom';
 
 const BitacoraDocumentosApp = () => {
   const [tab, setTab] = useState(0);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [itemAEliminar, setItemAEliminar] = useState(null); // Guarda el item actual a eliminar
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalTipo, setModalTipo] = useState('');
   const [observacionDialog, setObservacionDialog] = useState(false);
@@ -62,7 +66,7 @@ const BitacoraDocumentosApp = () => {
     setLoading(true);
     setError(null);
     try {
-      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const query = isFiltrado ? `/${id_usuario}` : '';
       const response = await fetch(`${API_URL}/bitacora/ver_bitacoras${query}`, {
         method: 'GET',
         headers: {
@@ -90,7 +94,7 @@ const BitacoraDocumentosApp = () => {
     setLoading(true);
     setError(null);
     try {
-      const query = isFiltrado ? `?id_usuario=${id_usuario}` : '';
+      const query = isFiltrado ? `/${id_usuario}` : '';
       const response = await fetch(`${API_URL}/documentos/ver${query}`, {
         method: 'GET',
         headers: {
@@ -447,7 +451,7 @@ const BitacoraDocumentosApp = () => {
             const archivo = tab === 0 ? item.bitacora : item.documento;
             const carpeta = tab === 0 ? 'bitacoras' : 'documentos';
             if (archivo) {
-              window.open(`${API_URL}/uploads/${carpeta}/${archivo}`, '_blank');
+              window.open(`${API_URL}/uploads/${carpeta}/${encodeURIComponent(archivo)}`, '_blank');
             } else {
               alert('Archivo no disponible');
             }
@@ -516,35 +520,22 @@ const BitacoraDocumentosApp = () => {
         )}
 
         {/* Eliminar: solo admin */}
-        {userRole === 'Administrador' && tab === 0 && (
+        {userRole === 'Administrador' && (
           <Button 
-            size="small" 
-            variant="outlined" 
-            color="error"
-            onClick={async () => {
-              const confirmar = window.confirm('¿Estás seguro de que deseas eliminar esta bitácora?');
-              if (!confirmar) return;
-              try {
-                setLoading(true);
-                const response = await fetch(`${API_URL}/bitacora/eliminar/${item.id_bitacora}`, {
-                  method: 'DELETE',
-                  headers: {
-                    'Authorization': `Bearer ${getToken()}`
-                  }
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.mensaje || 'Error al eliminar');
-                fetchBitacoras();
-                alert('Bitácora eliminada con éxito');
-              } catch (err) {
-                alert('Error al eliminar la bitácora: ' + err.message);
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
-            Eliminar
-          </Button>
+          size="small" 
+          variant="outlined" 
+          color="error"
+          onClick={() => {
+            const esBitacora = tab === 0;
+            setItemAEliminar({
+              tipo: esBitacora ? 'bitácora' : 'documento',
+              id: esBitacora ? item.id_bitacora : item.id_documento
+            });
+            setConfirmDialogOpen(true);
+          }}
+        >
+          Eliminar
+        </Button>
                     )}
                   </Box>
                 </Paper>
@@ -552,20 +543,14 @@ const BitacoraDocumentosApp = () => {
             })
           ) : (
             <Box sx={{ textAlign: 'center', py: 5 }}>
-              <Typography variant="h6" color="text.secondary">
-                {tab === 0 
-                  ? 'No hay bitácoras disponibles' 
-                  : 'No hay documentos disponibles'
-                }
-              </Typography>
-              <Button 
-                variant="contained" 
-                sx={{ mt: 2, backgroundColor: '#6a1b9a' }}
-                onClick={() => handleOpenModal(tab === 0 ? 'Subir Bitácora' : 'Subir Documento')}
-              >
-                {tab === 0 ? 'Subir Bitácora' : 'Subir Documento'}
-              </Button>
-            </Box>
+          <Typography variant="h6" color="text.secondary">
+            {tab === 0 
+              ? 'No hay bitácoras disponibles' 
+              : 'No hay documentos disponibles'
+            }
+          </Typography>
+        </Box>
+
           )}
 
           {datos.length > datosPorPagina && (
@@ -820,6 +805,114 @@ const BitacoraDocumentosApp = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Dialog
+  open={confirmDialogOpen}
+  onClose={() => setConfirmDialogOpen(false)}
+  maxWidth="xs"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: 4,
+      p: 2,
+      textAlign: 'center'
+    }
+  }}
+>
+  <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.25rem', color: '#6a1b9a' }}>
+    Confirmar eliminación
+  </DialogTitle>
+
+  <DialogContent>
+    <Typography sx={{ mb: 2 }}>
+      ¿Estás seguro de que deseas eliminar esta <strong>{itemAEliminar?.tipo}</strong>? Esta acción no se puede deshacer.
+    </Typography>
+  </DialogContent>
+
+  <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 2 }}>
+    <Button
+      onClick={() => setConfirmDialogOpen(false)}
+      variant="outlined"
+      sx={{
+        textTransform: 'none',
+        borderRadius: '16px',
+        color: '#6a1b9a',
+        borderColor: '#6a1b9a',
+        '&:hover': {
+          backgroundColor: '#f3e5f5',
+          borderColor: '#6a1b9a'
+        }
+      }}
+    >
+      Cancelar
+    </Button>
+
+    <Button
+      onClick={async () => {
+        if (!itemAEliminar) return;
+        const endpoint = itemAEliminar.tipo === 'bitácora'
+          ? `/bitacora/eliminar/${itemAEliminar.id}`
+          : `/documentos/eliminar/${itemAEliminar.id}`;
+
+        try {
+          setLoading(true);
+          const response = await fetch(`${API_URL}${endpoint}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.mensaje || 'Error al eliminar');
+
+          itemAEliminar.tipo === 'bitácora' ? fetchBitacoras() : fetchDocumentos();
+
+          // Mostrar éxito
+          setMensajeExito(`${itemAEliminar.tipo.charAt(0).toUpperCase() + itemAEliminar.tipo.slice(1)} eliminad${itemAEliminar.tipo === 'bitácora' ? 'a' : 'o'} con éxito`);
+          setSuccessDialogOpen(true);
+          setTimeout(() => setSuccessDialogOpen(false), 2000);
+
+        } catch (err) {
+          alert('Error al eliminar: ' + err.message);
+        } finally {
+          setLoading(false);
+          setConfirmDialogOpen(false);
+        }
+      }}
+      variant="contained"
+      color="error"
+      sx={{
+        textTransform: 'none',
+        borderRadius: '16px',
+        px: 4
+      }}
+    >
+      Eliminar
+    </Button>
+  </DialogActions>
+</Dialog>
+
+<Dialog
+  open={successDialogOpen}
+  onClose={() => setSuccessDialogOpen(false)}
+  maxWidth="xs"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: 4,
+      textAlign: 'center',
+      py: 4,
+      px: 2
+    }
+  }}
+>
+  <DialogTitle sx={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'green' }}>
+    ¡Éxito!
+  </DialogTitle>
+  <DialogContent>
+    <Typography>{mensajeExito}</Typography>
+  </DialogContent>
+</Dialog>
+
+
     </Box>
   );
 };

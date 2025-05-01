@@ -3,7 +3,8 @@ const path = require('path');
 const fs = require('fs');
 
 // Definir la ruta de la carpeta y asegurar que sea consistente en toda la aplicación
-const uploadDir = path.join(__dirname, '../uploads/documentos'); // Elige uno: "documentos" o "Documentos"
+const uploadDir = path.join(__dirname, '../uploads/documentos');
+
 
 // Crear la carpeta si no existe
 if (!fs.existsSync(uploadDir)) {
@@ -16,10 +17,16 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
+    const ext = path.extname(file.originalname); // .pdf, .docx, etc.
+    const timestamp = Date.now();
+    const nombreFinal = `documento_${timestamp}${ext}`;
+  
+    console.log('📁 Documento será guardado como:', nombreFinal);
+  
+    cb(null, nombreFinal);
+  }  
 });
+
 
 const upload = multer({
   storage: storage,
