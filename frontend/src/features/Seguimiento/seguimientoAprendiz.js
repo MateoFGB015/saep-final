@@ -646,13 +646,13 @@ const BitacoraDocumentosApp = () => {
             Por favor, selecciona un archivo para subir.
             {modalTipo === 'Subir Bitácora' && (
               <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX (máximo 5MB)
+                Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX (máximo 20MB)
               </Typography>
             )}
             {modalTipo === 'Subir Documento' && (
-              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                Máximo 20MB
-              </Typography>
+             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+             Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX (máximo 20MB)
+           </Typography>
             )}
           </Typography>
 
