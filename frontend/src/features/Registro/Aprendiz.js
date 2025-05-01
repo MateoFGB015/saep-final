@@ -27,10 +27,13 @@ function FormularioAprendiz() {
     numero_documento: "",
     telefono: "",
     numero_ficha: "",
-    correo: "",
-    contrasena: "",
+    correo_electronico: "",
+    password: "",
     confirmarContrasena: ""
   });
+
+    // API URL base
+  const API_URL = 'http://localhost:3000';
 
   const purpleFocusStyle = {
     "& .MuiOutlinedInput-root.Mui-focused fieldset": {
@@ -44,7 +47,7 @@ function FormularioAprendiz() {
   useEffect(() => {
     const obtenerFichas = async () => {
       try {
-        const { data } = await axios.get("http://localhost:3000/fichas/ver");
+        const { data } = await axios.get(`${API_URL}/fichas/ver`);
         setFichas(data);
       } catch (error) {
         console.error("Error al obtener fichas:", error);
@@ -69,13 +72,13 @@ function FormularioAprendiz() {
       return;
     }
 
-    if (form.contrasena !== form.confirmarContrasena) {
+    if (form.password !== form.confirmarContrasena) {
       alert("Las contraseñas no coinciden");
       return;
     }
 
     try {
-      await axios.post("http://localhost:3000/usuarios/registroAprendiz", form);
+      await axios.post(`${API_URL}/usuarios/registroAprendiz`, form);
       setModalAbierto(true);
     } catch (error) {
       alert("Error al registrar aprendiz");
@@ -114,8 +117,8 @@ function FormularioAprendiz() {
         elevation={5}
         sx={{
           width: "100%",
-          maxWidth: 420, // 🟣 más compacto que antes
-          padding: 3,
+          maxWidth: 420, 
+          padding: 2,
           borderRadius: 2,
           backgroundColor: "rgba(255,255,255,0.9)",
           backdropFilter: "blur(10px)",
@@ -217,9 +220,9 @@ function FormularioAprendiz() {
 
           <TextField
             label="Correo electrónico"
-            name="correo"
+            name="correo_electronico"
             type="email"
-            value={form.correo}
+            value={form.correo_electronico}
             onChange={handleChange}
             fullWidth
             required
@@ -227,9 +230,9 @@ function FormularioAprendiz() {
           />
           <TextField
             label="Contraseña"
-            name="contrasena"
+            name="password"
             type="password"
-            value={form.contrasena}
+            value={form.password}
             onChange={handleChange}
             fullWidth
             required
@@ -275,7 +278,7 @@ function FormularioAprendiz() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/")}
             variant="contained"
             sx={{ bgcolor: "#5E35B1", "&:hover": { bgcolor: "#4527A0" } }}
           >
