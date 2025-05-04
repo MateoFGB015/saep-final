@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
-const UserInfoModal = ({ open, onClose, user }) => {
+const UserInfoModal = ({ open, onClose, user, mostrarBotonGFPI = false, onGenerarGFPI  }) => {
   if (!user) return null;
 
   // Función auxiliar para manejar valores vacíos
@@ -89,6 +89,26 @@ const UserInfoModal = ({ open, onClose, user }) => {
             InputProps={{ readOnly: true }}
             fullWidth
           />
+          {mostrarBotonGFPI && (
+  <Box sx={{ textAlign: 'center' }}>
+    <button
+      onClick={onGenerarGFPI}
+      style={{
+        backgroundColor: '#71277a',
+        color: 'white',
+        border: 'none',
+        borderRadius: '20px',
+        padding: '8px 16px',
+        marginTop: '12px',
+        cursor: 'pointer',
+        fontSize: '14px',
+      }}
+    >
+      Generar reporte GFPI
+    </button>
+  </Box>
+)}
+
         </Box>
       </Box>
     </Modal>

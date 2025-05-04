@@ -177,9 +177,11 @@ const FichaDetalle = () => {
 
       {/* Modal Info Usuario */}
       <UserInfoModal
-        open={openUserModal}
-        onClose={() => setOpenUserModal(false)}
-        user={selectedUser}
+       open={openUserModal}
+       onClose={() => setOpenUserModal(false)}
+       user={selectedUser}
+       onGenerarGFPI={() => console.log("Generar reporte GFPI de", selectedUser)}
+       mostrarBotonGFPI={true}
       />
 
       {/* Modal Confirmación */}
