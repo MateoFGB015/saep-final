@@ -79,7 +79,25 @@ const FichaDetalle = () => {
   }
 
   return (
-    <Box
+<Box
+  sx={{
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    p: 2,
+    backgroundColor: 'white',
+    borderRadius: 2,
+    boxShadow: 3,
+    scrollbarWidth: 'thin',
+    '&::-webkit-scrollbar': {
+      width: '6px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#ccc',
+      borderRadius: '10px',
+    },
+  }}
+>
+  {    <Box
       sx={{
         flexGrow: 1,
         padding: '20px',
@@ -217,7 +235,9 @@ const FichaDetalle = () => {
   <Add sx={{ fontSize: 30 }} />
 </Button>
 
-    </Box>
+    </Box>}
+</Box>
+
 
 
 
