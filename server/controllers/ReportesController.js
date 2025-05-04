@@ -53,7 +53,7 @@ exports.reporteAprendiz = async (req, res) => {
               {
                 model: Agendamiento,
                 as: 'agendamientos',
-                attributes: ['id_agendamiento', 'fecha_inicio', 'estado_visita']
+                attributes: ['id_agendamiento', 'fecha_inicio', 'estado_visita', 'numero_visita']
               }
             ]
           }

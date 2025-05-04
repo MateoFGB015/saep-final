@@ -160,7 +160,7 @@ const FichaDetalle = () => {
                         <Button onClick={() => handleConfirmarEliminar(aprendiz)} sx={{ backgroundColor: "red", p: 1, fontSize: "30px", color: "white", borderRadius: "5px" }}>
                           <ContentCutIcon />
                         </Button>
-                        <Button  onClick={() => console.log('Ver reporte del aprendiz')} sx={{  backgroundColor: '#71277a',  minWidth: '36px', height: '36px', borderRadius: '50%', padding: '6px', color: 'white', '&:hover': {backgroundColor: '#5e1b65'} 
+                        <Button  onClick={() => navigate(`/reporte/aprendiz/${aprendiz.id_usuario}`)} sx={{  backgroundColor: '#71277a',  minWidth: '36px', height: '36px', borderRadius: '50%', padding: '6px', color: 'white', '&:hover': {backgroundColor: '#5e1b65'} 
                           }}>
                          <InfoOutlinedIcon fontSize="small" />
                         </Button>

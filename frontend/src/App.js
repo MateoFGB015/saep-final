@@ -30,8 +30,10 @@ import NoAutorizado from "./components/NoAutorizado";
 // 🔹 Página de seguimiento
 import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
-// 🔹 Reportes
-import Reportes from "./features/Reportes/reportes";
+// 🔹 Reportes 
+import ReporteAprendiz from "./features/Reportes/tablas/ReportAprendiz";
+
+
 
 // 🔹 Página de creación del aprendiz
 import FormularioAprendiz from "./features/Registro/Aprendiz";
@@ -122,6 +124,8 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    <Route path="/reporte/aprendiz/:id" element={<ReporteAprendiz />} />
+
                     <Route
                       path="/seguimiento"
                       element={
