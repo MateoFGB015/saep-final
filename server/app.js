@@ -11,6 +11,7 @@ const notificacionRoutes = require('./routes/notificacionRoutes');
 const fichasaprendizRoutes = require('./routes/FichaAprendizRoutes');
 const ObservacionRoutes = require('./routes/ObservacionRoutes');
 const DocumentosRoutes = require('./routes/DocumentosRoutes');
+const ReportesRoutes = require('./routes/ReportesRoutes');
 const programasRoutes = require('./routes/programas');
 
 
@@ -38,6 +39,7 @@ app.use('/notificacion', notificacionRoutes);
 app.use('/fichasAprendiz', fichasaprendizRoutes);
 app.use('/observacion', ObservacionRoutes);
 app.use('/documentos', DocumentosRoutes);
+app.use('/reportes', ReportesRoutes);
 app.use('/programas', programasRoutes);
 
 module.exports = app;

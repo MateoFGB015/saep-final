@@ -24,6 +24,19 @@ Ficha.belongsToMany(Usuario, {
   as: 'aprendices'
 });
 
+
+// Relación FichaAprendiz → Ficha
+FichaAprendiz.belongsTo(Ficha, {
+  foreignKey: 'id_ficha',
+  as: 'ficha'
+});
+
+Ficha.hasMany(FichaAprendiz, {
+  foreignKey: 'id_ficha',
+  as: 'fichasAprendiz'
+});
+
+
 //⁡⁣⁢⁣​‌‌‍𝙍͟𝙚͟𝙡͟𝙖͟𝙘͟𝙞͟𝙤͟𝙣͟𝙚͟𝙨 𝘼͟𝙜͟𝙚͟𝙣͟𝙙͟𝙖͟𝙢͟𝙞͟𝙚͟𝙣͟𝙩͟𝙤͟𝙨​⁡
 
 
@@ -61,6 +74,12 @@ Usuario.hasMany(Agendamiento, {
 FichaAprendiz.belongsTo(Usuario, {
   foreignKey: 'id_usuario',
   as: 'aprendiz' // Alias para acceder al aprendiz desde FichaAprendiz
+});
+
+// Relación directa para poder incluir fichasAprendiz desde Usuario (reporteAprendiz)
+Usuario.hasMany(FichaAprendiz, {
+  foreignKey: 'id_usuario',
+  as: 'fichasAprendiz'
 });
 
 // Un usuario puede tener un aprendiz asociado
