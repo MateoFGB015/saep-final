@@ -13,7 +13,7 @@ router.post(
 
 // Para aprendiz (sin parámetro) o admin/instructor (con parámetro)
 router.get(
-  '/ver_bitacoras/:id_usuario_aprendiz?', // ← el parámetro es opcional (solo lo usa admin/instructor)
+  '/ver_bitacoras/:id_usuario?', // ← el parámetro es opcional (solo lo usa admin/instructor)
   authMiddleware,
   bitacoraController.verBitacorasSubidas
 );

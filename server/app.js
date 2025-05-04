@@ -13,6 +13,7 @@ const ObservacionRoutes = require('./routes/ObservacionRoutes');
 const DocumentosRoutes = require('./routes/DocumentosRoutes');
 const ReportesRoutes = require('./routes/ReportesRoutes');
 const programasRoutes = require('./routes/programas');
+const path = require('path');
 
 
 
@@ -41,5 +42,6 @@ app.use('/observacion', ObservacionRoutes);
 app.use('/documentos', DocumentosRoutes);
 app.use('/reportes', ReportesRoutes);
 app.use('/programas', programasRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 module.exports = app;

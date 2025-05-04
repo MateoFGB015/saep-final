@@ -209,7 +209,7 @@ exports.eliminarDocumento = async (req, res) => {
     }
 
     // Eliminar archivo del servidor
-    const rutaArchivo = path.join(__dirname, '../uploads/Documentos', documento.documento);
+    const rutaArchivo = path.join(__dirname, '../uploads/documentos', documento.documento);
     if (fs.existsSync(rutaArchivo)) {
       fs.unlinkSync(rutaArchivo);
     }
