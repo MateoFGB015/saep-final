@@ -16,7 +16,7 @@ exports.reporteAprendiz = async (req, res) => {
           id_usuario: id,
           rol: 'aprendiz'
         },
-        attributes: ['id_usuario', 'nombre', 'apellido', 'numero_documento', 'correo_electronico', 'telefono'],
+        attributes: ['id_usuario', 'nombre', 'apellido', 'numero_documento', 'correo_electronico', 'telefono', 'tipo_documento'],
         include: [
           {
             model: Aprendiz,
@@ -26,7 +26,7 @@ exports.reporteAprendiz = async (req, res) => {
               {
                 model: Empresa,
                 as: 'empresa',
-                attributes: ['razon_social', 'correo_electronico']
+                attributes: ['razon_social', 'correo_electronico', 'telefono']
               }
             ]
           },
