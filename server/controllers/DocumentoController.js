@@ -58,52 +58,49 @@ exports.subirDocumento = async (req, res) => {
 exports.verDocumentos = async (req, res) => {
   try {
     const { rol, id: id_usuario } = req.usuario;
-    const { id_aprendiz } = req.params; // Solo se usa por admin
+    const { id_usuario: id_aprendiz_param } = req.params;
 
-    let documentos = [];
-
+    // Si es aprendiz: solo ve sus propios documentos
     if (rol === 'aprendiz') {
       const relacion = await FichaAprendiz.findOne({ where: { id_usuario } });
-      if (!relacion) return res.status(404).json({ mensaje: 'No se encontró relación con ficha.' });
 
-      documentos = await Documento.findAll({
-        where: { id_ficha_aprendiz: relacion.id_ficha_aprendiz },
-        order: [['fecha_ultima_actualizacion', 'DESC']]
-      });
-
-    } else if (rol === 'Instructor') {
-      const fichasInstructor = await req.usuario.getFichas(); // asumiendo alias 'fichas' en Usuario.hasMany(Ficha)
-      const fichasIds = fichasInstructor.map(f => f.id_ficha);
-
-      const relaciones = await FichaAprendiz.findAll({ where: { id_ficha: fichasIds } });
-      const fichaAprendizIds = relaciones.map(r => r.id_ficha_aprendiz);
-
-      documentos = await Documento.findAll({
-        where: { id_ficha_aprendiz: fichaAprendizIds },
-        order: [['fecha_ultima_actualizacion', 'DESC']]
-      });
-
-    } else if (rol === 'Administrador') {
-      if (!id_aprendiz) {
-        return res.status(400).json({ mensaje: 'Debes enviar el ID del aprendiz.' });
+      if (!relacion) {
+        return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
       }
 
-      const relacion = await FichaAprendiz.findOne({ where: { id_usuario: id_aprendiz } });
-      if (!relacion) return res.status(404).json({ mensaje: 'No se encontró relación con ficha.' });
-
-      documentos = await Documento.findAll({
+      const documentos = await Documento.findAll({
         where: { id_ficha_aprendiz: relacion.id_ficha_aprendiz },
         order: [['fecha_ultima_actualizacion', 'DESC']]
       });
+
+      return res.status(200).json({ documentos });
     }
 
-    res.status(200).json({ documentos });
+    // Si es instructor o administrador: se necesita ID del aprendiz
+    if ((rol === 'Instructor' || rol === 'Administrador') && id_aprendiz_param) {
+      const relacion = await FichaAprendiz.findOne({ where: { id_usuario: id_aprendiz_param } });
+
+      if (!relacion) {
+        return res.status(404).json({ mensaje: 'No se encontró una ficha asociada al aprendiz.' });
+      }
+
+      const documentos = await Documento.findAll({
+        where: { id_ficha_aprendiz: relacion.id_ficha_aprendiz },
+        order: [['fecha_ultima_actualizacion', 'DESC']]
+      });
+
+      return res.status(200).json({ documentos });
+    }
+
+    // ❌ Si no se envió el ID del aprendiz
+    return res.status(400).json({ mensaje: 'Debes proporcionar el ID del aprendiz.' });
 
   } catch (error) {
     console.error('❌ Error al obtener documentos:', error);
     res.status(500).json({ mensaje: 'Error del servidor al obtener los documentos.', error });
   }
 };
+
 
 exports.subirDocumentoComoAdmin = async (req, res) => {
   try {

@@ -11,6 +11,7 @@ import { Box, Typography, List, ListItem, Divider, Button } from "@mui/material"
 import { isSameDay } from "date-fns";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 moment.locale("es");
 const localizer = momentLocalizer(moment);
@@ -32,6 +33,7 @@ const messages = {
 };
 
 const Calendario = () => {
+  const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
@@ -71,6 +73,7 @@ const Calendario = () => {
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
         <Button
+          onClick={() => navigate('/reporte/agendamientos')}
       variant="contained"
       sx={{
         backgroundColor: '#792382',  // morado similar al de la imagen

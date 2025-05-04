@@ -6,6 +6,7 @@ import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
+import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
 import {BorderColorOutlined, ContentCutOutlined, Add} from '@mui/icons-material';
 import {
   Box,
@@ -45,7 +46,7 @@ const FichaDetalle = () => {
 
   const eliminarAprendiz = async () => {
     try {
-      await axios.delete(`http://localhost:3000/ficha-aprendiz/eliminar`, {
+      await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz`, {
         data: {
           id_usuario: aprendizAEliminar.id_usuario,
           id_ficha: id,
@@ -97,6 +98,22 @@ const FichaDetalle = () => {
     },
   }}
 >
+  <Button
+  onClick={() => generarReporteFicha(fichas, aprendices)}
+        variant="contained"
+        sx={{
+          backgroundColor: '#792382',  // morado similar al de la imagen
+          borderRadius: '20px',        // bordes redondeados
+          textTransform: 'none',       // evitar mayúsculas automáticas
+          fontWeight: 'bold',
+          padding: '6px 16px',
+          '&:hover': {
+            backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+          },
+        }}
+      >
+        Generar reporte de ficha
+      </Button>
   {    <Box
       sx={{
         flexGrow: 1,

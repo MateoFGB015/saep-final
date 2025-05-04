@@ -92,7 +92,7 @@ exports.reporteAprendiz = async (req, res) => {
             include: [
               {
                 model: Usuario,
-                as: 'aprendiz', // 🔧 Este alias debe coincidir con el definido en asociaciones.js
+                as: 'aprendiz',
                 attributes: ['nombre', 'apellido', 'numero_documento']
               }
             ]

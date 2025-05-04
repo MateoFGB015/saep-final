@@ -32,6 +32,7 @@ import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
 // 🔹 Reportes 
 import ReporteAprendiz from "./features/Reportes/tablas/ReportAprendiz";
+import ReporteAgendamientos from './features/Reportes/tablas/ReportAgendamiento';
 
 
 
@@ -124,7 +125,10 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/reporte/aprendiz/:id" element={<ReporteAprendiz />} />
+                    <Route path="/reporte/aprendiz/:id" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}><ReporteAprendiz /></ProtectedRoute> } />
+
+                    <Route path="/reportes/agendamientos" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteAgendamientos /> </ProtectedRoute>} />
+
 
                     <Route
                       path="/seguimiento"
