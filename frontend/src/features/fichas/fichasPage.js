@@ -162,6 +162,23 @@ const FichasTable = () => {
     },
   }}
 />
+
+<Button
+      variant="contained"
+      sx={{
+        backgroundColor: '#792382',  // morado similar al de la imagen
+        borderRadius: '20px',        // bordes redondeados
+        textTransform: 'none',       // evitar mayúsculas automáticas
+        fontWeight: 'bold',
+        padding: '6px 16px',
+        '&:hover': {
+          backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+        },
+      }}
+    >
+      Generar reporte de ficha
+    </Button>
+    
       <TableContainer component={Paper}>
         <Table size="small">
           <TableHead sx={{ "& .MuiTableCell-root": { textAlign: "center" } }}>

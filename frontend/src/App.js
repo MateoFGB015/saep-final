@@ -30,6 +30,9 @@ import NoAutorizado from "./components/NoAutorizado";
 // 🔹 Página de seguimiento
 import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
+// 🔹 Reportes
+import Reportes from "./features/Reportes/reportes";
+
 // 🔹 Página de creación del aprendiz
 import FormularioAprendiz from "./features/Registro/Aprendiz";
 

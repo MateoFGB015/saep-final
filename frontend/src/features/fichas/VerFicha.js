@@ -3,6 +3,7 @@ import axios from 'axios';
 import UserInfoModal from '../../components/ui/UserInfoModal';
 import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import {
@@ -149,14 +150,18 @@ const FichaDetalle = () => {
                         <Button onClick={() => handleVerUsuario(aprendiz)} sx={{ border: "1px solid #71277a", color: "#71277a", fontSize: "10px", borderRadius: "5px" }}>
                           Ver usuario
                         </Button>
-                        <Button onClick={() => handleConfirmarEliminar(aprendiz)} sx={{ backgroundColor: "red", p: 1, fontSize: "30px", color: "white", borderRadius: "5px" }}>
-                          <ContentCutIcon />
-                        </Button>
                         <Button 
                           onClick={() => navigate(`/seguimiento/${aprendiz.id_usuario}`)} 
                           sx={{ border: "1px solid #71277a", color: "#71277a", fontSize: "10px", borderRadius: "5px" }}
                         >
-                          Ver seguimiento
+                          Hacer seguimiento
+                        </Button>
+                        <Button onClick={() => handleConfirmarEliminar(aprendiz)} sx={{ backgroundColor: "red", p: 1, fontSize: "30px", color: "white", borderRadius: "5px" }}>
+                          <ContentCutIcon />
+                        </Button>
+                        <Button  onClick={() => console.log('Ver reporte del aprendiz')} sx={{  backgroundColor: '#71277a',  minWidth: '36px', height: '36px', borderRadius: '50%', padding: '6px', color: 'white', '&:hover': {backgroundColor: '#5e1b65'} 
+                          }}>
+                         <InfoOutlinedIcon fontSize="small" />
                         </Button>
                       </Stack>
                     </TableCell>

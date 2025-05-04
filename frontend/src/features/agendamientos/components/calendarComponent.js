@@ -70,6 +70,21 @@ const Calendario = () => {
     <>
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
+        <Button
+      variant="contained"
+      sx={{
+        backgroundColor: '#792382',  // morado similar al de la imagen
+        borderRadius: '20px',        // bordes redondeados
+        textTransform: 'none',       // evitar mayúsculas automáticas
+        fontWeight: 'bold',
+        padding: '6px 16px',
+        '&:hover': {
+          backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+        },
+      }}
+    >
+      Generar reporte de Agendamiento
+    </Button>
           <Calendar
             localizer={localizer}
             events={eventos}

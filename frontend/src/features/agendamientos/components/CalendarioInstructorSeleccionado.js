@@ -13,7 +13,8 @@ import {
   ListItem,
   Divider,
   IconButton,
-  Stack
+  Stack,
+  Button
 } from "@mui/material";
 import { isSameDay } from "date-fns";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -105,6 +106,22 @@ const CalendarioInstructorSeleccionado = () => {
 
       <Box sx={{ display: "flex", gap: 2, flexDirection: "row", flexWrap: "wrap" }}>
         <Box sx={{ flex: 3, minWidth: "300px" }}>
+        <Button
+      variant="contained"
+      sx={{
+        backgroundColor: '#792382',  // morado similar al de la imagen
+        borderRadius: '20px',        // bordes redondeados
+        textTransform: 'none',       // evitar mayúsculas automáticas
+        fontWeight: 'bold',
+        padding: '6px 16px',
+        '&:hover': {
+          backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+        },
+      }}
+    >
+      Generar reporte Agendamiento
+    </Button>
+
           <Calendar
             localizer={localizer}
             events={eventos}
