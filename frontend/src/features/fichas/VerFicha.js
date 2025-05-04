@@ -6,6 +6,7 @@ import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
+import {BorderColorOutlined, ContentCutOutlined, Add} from '@mui/icons-material';
 import {
   Box,
   Typography,
@@ -192,7 +193,34 @@ const FichaDetalle = () => {
         title="¿Eliminar aprendiz?"
         message={`¿Estás seguro que deseas eliminar a ${aprendizAEliminar?.nombre} de esta ficha?`}
       />
+
+<Button
+  variant="contained"
+  // onClick={() => handleOpenModal()}
+  sx={{
+    position: "fixed",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#71277a",
+    color: "white",
+    "&:hover": { backgroundColor: "#5a1e61" }, // Color más oscuro al pasar el mouse
+    borderRadius: "50%", // Hace que el botón sea redondo
+    width: 56,
+    height: 56,
+    boxShadow: 3,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minWidth: "auto"
+  }}
+>
+  <Add sx={{ fontSize: 30 }} />
+</Button>
+
     </Box>
+
+
+
   );
 };
 
