@@ -64,21 +64,16 @@ const FichaDetalle = () => {
   };
 
   const eliminarAprendiz = async () => {
-    try {
-      await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz`, {
-        data: {
-          id_usuario: aprendizAEliminar.id_usuario,
-          id_ficha: id,
-        },
-      });
-  
-      setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
-      setOpenConfirm(false);
-      setAprendizAEliminar(null);
-    } catch (error) {
-      console.error('❌ Error al eliminar el aprendiz:', error);
-    }
-  };
+  try {
+    await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz/${id}/${aprendizAEliminar.id_usuario}`);
+
+    setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
+    setOpenConfirm(false);
+    setAprendizAEliminar(null);
+  } catch (error) {
+    console.error('❌ Error al eliminar el aprendiz:', error);
+  }
+};
 
   // Funciones para el formulario de registro
   const handleOpenRegistroModal = () => {

@@ -4,7 +4,7 @@ const Usuario = require('../models/usuario');
 
 // Elimina la relación entre un aprendiz y una ficha
 exports.eliminarAprendizDeFicha = async (req, res) => {
-    const { id_ficha, id_usuario } = req.body;
+  const { id_ficha, id_usuario } = req.params;
   
     try {
       const eliminado = await FichaAprendiz.destroy({
