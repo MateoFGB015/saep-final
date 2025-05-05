@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, List, ListItem, Divider } from '@mui/material';
-import axios from 'axios'; // Usamos axios directamente
+import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from '@mui/material';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const ListaInstructores = () => {
@@ -33,26 +33,32 @@ const ListaInstructores = () => {
       <Typography variant="h5" gutterBottom>
         Lista de Instructores
       </Typography>
-      <List>
-        {instructores.map((instructor) => (
-          <div key={instructor.id_usuario}>
-            <ListItem
-              secondaryAction={
-                <Button
-                  variant="contained"
-                  onClick={() => handleVerAgenda(instructor.id_usuario)}
-                  sx={{ backgroundColor: "#6a1b9a", "&:hover": { backgroundColor: "#4a0072" } }}
-                >
-                  Ver agenda
-                </Button>
-              }
-            >
-              {instructor.nombre} {instructor.apellido}
-            </ListItem>
-            <Divider />
-          </div>
-        ))}
-      </List>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead sx={{ backgroundColor: '#e0e0e0' }}>
+            <TableRow>
+              <TableCell><strong>Nombre Instructor</strong></TableCell>
+              <TableCell><strong>Acciones</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {instructores.map((instructor) => (
+              <TableRow key={instructor.id_usuario}>
+                <TableCell>{`${instructor.nombre} ${instructor.apellido}`}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleVerAgenda(instructor.id_usuario)}
+                    sx={{ backgroundColor: "#6a1b9a", color: "white", "&:hover": { backgroundColor: "#4a0072" } }}
+                  >
+                    Ver agenda
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 };
