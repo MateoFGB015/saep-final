@@ -173,7 +173,7 @@ const BitacoraDocumentosApp = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/bitacora/modificar/${currentBitacora.id_bitacora}`, {
+      const response = await fetch(`${API_URL}/bitacora/observacion/${currentBitacora.id_bitacora}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
@@ -181,7 +181,7 @@ const BitacoraDocumentosApp = () => {
         },
         body: JSON.stringify({ observacion: textoObservacion })
       });
-
+      
       if (!response.ok) {
         throw new Error('No se pudo guardar la observación');
       }
