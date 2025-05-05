@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
+import generarReporteAprendizPDF from '../pdfs/reporteAprendiz';
 import {
   Box,
   Typography,
@@ -217,7 +218,7 @@ const ReportAprendiz = () => {
               px: 3,
               textTransform: 'none'
             }}
-            onClick={() => console.log('Generar PDF')}
+            onClick={() => generarReporteAprendizPDF(data)}
           >
             Generar reporte del aprendiz
           </Button>
