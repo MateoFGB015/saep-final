@@ -4,6 +4,7 @@ const FichaAprendiz = require('../models/FichaAprendiz');
 const modeloAprendiz = require('../models/Aprendiz');
 const modeloEmpresa = require('../models/Empresa');
 const modeloFicha = require('../models/fichas');
+const { Op } = require('sequelize');
 
 // Agendamientos del instructor autenticado
 exports.obtenerAgendamientosInstructor = async (req, res) => {
@@ -305,3 +306,81 @@ exports.eliminarAgendamiento = async (req, res) => {
     res.status(500).json({ mensaje: 'Error al eliminar el agendamiento', error });
   }
 };
+
+
+exports.crearAgendamientoPorAdmin = async (req, res) => {
+  try {
+    // 1️⃣ Tomamos el id del instructor desde la URL
+    const idInstructor = parseInt(req.params.idInstructor, 10);
+
+    // 2️⃣ Campos esperados en el body
+    const {
+      id_ficha_aprendiz,
+      herramienta_reunion,
+      enlace_reunion,
+      fecha_inicio,
+      fecha_fin,
+      tipo_visita,
+      numero_visita
+    } = req.body;
+
+    // Validaciones
+    if (
+      !id_ficha_aprendiz ||
+      !herramienta_reunion ||
+      !enlace_reunion ||
+      !fecha_inicio ||
+      !fecha_fin ||
+      !tipo_visita ||
+      numero_visita == null
+    ) {
+      return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
+    }
+
+    // Verificar existencia de ficha-aprendiz
+    const fichaApr = await FichaAprendiz.findByPk(id_ficha_aprendiz);
+    if (!fichaApr) {
+      return res.status(404).json({ mensaje: 'FichaAprendiz no encontrada' });
+    }
+
+    // Máximo 3 visitas
+    const contador = await modeloAgendamiento.count({ where: { id_ficha_aprendiz } });
+    if (contador >= 3) {
+      return res.status(400).json({ mensaje: 'Ya tiene 3 visitas agendadas' });
+    }
+
+    // Verificar traslapes
+    const traslape = await modeloAgendamiento.findOne({
+      where: {
+        id_ficha_aprendiz,
+        [Op.or]: [
+          { fecha_inicio: { [Op.lte]: fecha_inicio }, fecha_fin: { [Op.gt]: fecha_inicio } },
+          { fecha_inicio: { [Op.lt]: fecha_fin },   fecha_fin: { [Op.gte]: fecha_fin } },
+          { fecha_inicio: { [Op.gte]: fecha_inicio }, fecha_fin: { [Op.lte]: fecha_fin } },
+        ]
+      }
+    });
+    if (traslape) {
+      return res.status(400).json({ mensaje: 'Hay una visita en ese horario' });
+    }
+
+    // Crear
+    const nuevo = await modeloAgendamiento.create({
+      id_instructor:      idInstructor,
+      id_ficha_aprendiz,
+      herramienta_reunion,
+      enlace_reunion,
+      fecha_inicio,
+      fecha_fin,
+      tipo_visita,
+      numero_visita,
+      estado_visita: 'pendiente'
+    });
+
+    res.status(201).json(nuevo);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
+  }
+};
+
