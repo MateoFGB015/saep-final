@@ -348,7 +348,6 @@ const BitacoraDocumentosApp = () => {
   const actions = [
     ...(tab === 0 ? [{ icon: <NoteAddIcon />, name: 'Subir Bitácora' }] : []),
     ...(tab === 1 ? [{ icon: <UploadFileIcon />, name: 'Subir Documento' }] : []),
-    { icon: <EditNoteIcon />, name: 'Subir Firma' }
   ];
 
   // Calcular datos para paginación
