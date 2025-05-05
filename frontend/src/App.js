@@ -32,8 +32,8 @@ import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
 // 🔹 Reportes 
 import ReporteAprendiz from "./features/Reportes/tablas/ReportAprendiz";
-import ReporteAgendamientos from './features/Reportes/tablas/ReportAgendamiento';
-
+// import ReporteAgendamientos from './features/Reportes/tablas/ReportAgendamiento';
+import ReporteGFPI from './features/Reportes/tablas/ReportGFPI';
 
 
 // 🔹 Página de creación del aprendiz
@@ -100,6 +100,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+               {/* <Route path="/reportes/agendamientos" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteAgendamientos /> </ProtectedRoute>} /> */}
 
                      <Route
                       path="/seguimiento"
@@ -127,7 +128,7 @@ function App() {
                     />
                     <Route path="/reporte/aprendiz/:id" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}><ReporteAprendiz /></ProtectedRoute> } />
 
-                    <Route path="/reportes/agendamientos" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteAgendamientos /> </ProtectedRoute>} />
+
 
 
                     <Route
@@ -141,6 +142,9 @@ function App() {
 
                     <Route 
                   path="/seguimiento/:id_usuario" element={<BitacoraDocumentosApp />} />
+
+                  
+                 <Route path="/reporte/gfpi/:id" element={ <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteGFPI /> </ProtectedRoute> } />
 
                   </Routes>
                 </Navbar>

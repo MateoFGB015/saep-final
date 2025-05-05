@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from 'react-router-dom';
 import {
   Modal,
   Box,
@@ -10,6 +11,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 
 const UserInfoModal = ({ open, onClose, user, mostrarBotonGFPI = false, onGenerarGFPI  }) => {
+  const navigate = useNavigate();
   if (!user) return null;
 
   // Función auxiliar para manejar valores vacíos
@@ -89,10 +91,11 @@ const UserInfoModal = ({ open, onClose, user, mostrarBotonGFPI = false, onGenera
             InputProps={{ readOnly: true }}
             fullWidth
           />
-          {mostrarBotonGFPI && (
+
+{mostrarBotonGFPI && (
   <Box sx={{ textAlign: 'center' }}>
     <button
-      onClick={onGenerarGFPI}
+      onClick={() => navigate(`/reporte/gfpi/${user.id_usuario}`)}
       style={{
         backgroundColor: '#71277a',
         color: 'white',
@@ -107,7 +110,7 @@ const UserInfoModal = ({ open, onClose, user, mostrarBotonGFPI = false, onGenera
       Generar reporte GFPI
     </button>
   </Box>
-)}
+)};
 
         </Box>
       </Box>

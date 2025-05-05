@@ -60,6 +60,7 @@ const Navbar = ({ children }) => {
     { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos", roles: [ "Instructor", "aprendiz"] },
     { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos/listaIntructores", roles: [ "Administrador"] },
    { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: [ "aprendiz"] },
+    { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["aprendiz"] },
     // { text: "Reporte", icon:<ChecklistRtlIcon/>, route:"/reporte", roles:["Administrador", "Instructor"],}
   ];
 
