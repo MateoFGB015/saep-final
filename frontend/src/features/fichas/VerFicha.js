@@ -7,7 +7,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
-import {BorderColorOutlined, ContentCutOutlined, Add} from '@mui/icons-material';
+import {BorderColorOutlined, ContentCutOutlined, Add, Close} from '@mui/icons-material';
 import {
   Box,
   Typography,
@@ -19,7 +19,14 @@ import {
   TableRow,
   Paper,
   Button,
-  Stack
+  Stack,
+  Modal,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton
 } from '@mui/material';
 
 const FichaDetalle = () => {
@@ -31,6 +38,18 @@ const FichaDetalle = () => {
 
   const [openConfirm, setOpenConfirm] = useState(false);
   const [aprendizAEliminar, setAprendizAEliminar] = useState(null);
+  
+  // Estados para el formulario de registro de aprendiz
+  const [openRegistroModal, setOpenRegistroModal] = useState(false);
+  const [nuevoAprendiz, setNuevoAprendiz] = useState({
+    nombre: '',
+    apellido: '',
+    tipo_documento: 'CC',
+    numero_documento: '',
+    correo_electronico: '', // Nombre correcto del campo según la API
+    telefono: ''
+  });
+  const [isLoading, setIsLoading] = useState(false); // Estado para manejar la carga
 
   const handleVerUsuario = (usuario) => {
     setSelectedUser(usuario);
@@ -52,12 +71,70 @@ const FichaDetalle = () => {
           id_ficha: id,
         },
       });
-
+  
       setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
       setOpenConfirm(false);
       setAprendizAEliminar(null);
     } catch (error) {
       console.error('❌ Error al eliminar el aprendiz:', error);
+    }
+  };
+
+  // Funciones para el formulario de registro
+  const handleOpenRegistroModal = () => {
+    setOpenRegistroModal(true);
+  };
+
+  const handleCloseRegistroModal = () => {
+    setOpenRegistroModal(false);
+    // Resetear el formulario
+    setNuevoAprendiz({
+      nombre: '',
+      apellido: '',
+      tipo_documento: 'CC',
+      numero_documento: '',
+      correo_electronico: '',
+      telefono: ''
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNuevoAprendiz({
+      ...nuevoAprendiz,
+      [name]: value
+    });
+  };
+
+  const handleRegistrarAprendiz = async (e) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      
+      // Paso 1: Registrar el aprendiz
+      const response = await axios.post('http://localhost:3000/usuarios/registroAprendiz', {
+        ...nuevoAprendiz,
+        password: nuevoAprendiz.numero_documento, // Usar "password" como espera el controlador
+        rol: 'aprendiz',
+        numero_ficha: fichas.numero_ficha // Agregar este campo que es obligatorio en el controlador
+      });
+      
+      if (response.data && response.data.aprendiz) {
+        const aprendizRegistrado = response.data.aprendiz;
+        
+        // Ya no es necesario hacer la asociación manual, el controlador ya lo hace
+        
+        // Actualizar la lista de aprendices en la UI
+        setAprendices([...aprendices, aprendizRegistrado]);
+        
+        handleCloseRegistroModal();
+      }
+    } catch (error) {
+      console.error('❌ Error al registrar el aprendiz:', error);
+      console.error('Detalles del error:', error.response?.data || error.message);
+      alert('Error al registrar el aprendiz: ' + (error.response?.data?.mensaje || error.message));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -229,35 +306,159 @@ const FichaDetalle = () => {
         message={`¿Estás seguro que deseas eliminar a ${aprendizAEliminar?.nombre} de esta ficha?`}
       />
 
-<Button
-  variant="contained"
-  // onClick={() => handleOpenModal()}
-  sx={{
-    position: "fixed",
-    bottom: 20,
-    right: 20,
-    backgroundColor: "#71277a",
-    color: "white",
-    "&:hover": { backgroundColor: "#5a1e61" }, // Color más oscuro al pasar el mouse
-    borderRadius: "50%", // Hace que el botón sea redondo
-    width: 56,
-    height: 56,
-    boxShadow: 3,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minWidth: "auto"
-  }}
->
-  <Add sx={{ fontSize: 30 }} />
-</Button>
+      {/* Modal para registrar nuevo aprendiz */}
+      <Modal
+        open={openRegistroModal}
+        onClose={handleCloseRegistroModal}
+        aria-labelledby="modal-registro-aprendiz"
+        aria-describedby="modal-para-registrar-nuevo-aprendiz"
+      >
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 400,
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 24,
+          p: 4,
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography id="modal-registro-aprendiz" variant="h6" component="h2">Registrar Nuevo Aprendiz</Typography>
+            <IconButton onClick={handleCloseRegistroModal}>
+              <Close />
+            </IconButton>
+          </Box>
+          
+          <form onSubmit={handleRegistrarAprendiz}>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Nombre"
+              name="nombre"
+              value={nuevoAprendiz.nombre}
+              onChange={handleInputChange}
+              required
+              variant="outlined"
+              size="small"
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Apellido"
+              name="apellido"
+              value={nuevoAprendiz.apellido}
+              onChange={handleInputChange}
+              required
+              variant="outlined"
+              size="small"
+            />
+            <FormControl fullWidth margin="normal" size="small">
+              <InputLabel id="tipo-documento-label">Tipo de Documento</InputLabel>
+              <Select
+                labelId="tipo-documento-label"
+                id="tipo-documento"
+                name="tipo_documento"
+                value={nuevoAprendiz.tipo_documento}
+                label="Tipo de Documento"
+                onChange={handleInputChange}
+              >
+                <MenuItem value="CC">Cédula de Ciudadanía</MenuItem>
+                <MenuItem value="TI">Tarjeta de Identidad</MenuItem>
+                <MenuItem value="CE">Cédula de Extranjería</MenuItem>
+                <MenuItem value="PAS">Pasaporte</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Número de Documento"
+              name="numero_documento"
+              value={nuevoAprendiz.numero_documento}
+              onChange={handleInputChange}
+              required
+              variant="outlined"
+              size="small"
+            />
+                          <TextField
+              fullWidth
+              margin="normal"
+              label="Correo Electrónico"
+              name="correo_electronico"
+              type="email"
+              value={nuevoAprendiz.correo_electronico}
+              onChange={handleInputChange}
+              required
+              variant="outlined"
+              size="small"
+            />
+            <TextField
+              fullWidth
+              margin="normal"
+              label="Teléfono"
+              name="telefono"
+              value={nuevoAprendiz.telefono}
+              onChange={handleInputChange}
+              variant="outlined"
+              size="small"
+            />
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+              <Button 
+                onClick={handleCloseRegistroModal} 
+                variant="outlined"
+                sx={{ 
+                  color: '#71277a',
+                  borderColor: '#71277a',
+                  '&:hover': { borderColor: '#5e1b65', color: '#5e1b65' }
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                variant="contained"
+                disabled={isLoading}
+                sx={{ 
+                  backgroundColor: '#71277a',
+                  '&:hover': { backgroundColor: '#5e1b65' }
+                }}
+              >
+                {isLoading ? 'Registrando...' : 'Registrar'}
+              </Button>
+            </Box>
+          </form>
+        </Box>
+      </Modal>
+
+      {/* Botón flotante para agregar aprendiz */}
+      <Button
+        variant="contained"
+        onClick={handleOpenRegistroModal}
+        sx={{
+          position: "fixed",
+          bottom: 20,
+          right: 20,
+          backgroundColor: "#71277a",
+          color: "white",
+          "&:hover": { backgroundColor: "#5a1e61" }, // Color más oscuro al pasar el mouse
+          borderRadius: "50%", // Hace que el botón sea redondo
+          width: 56,
+          height: 56,
+          boxShadow: 3,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minWidth: "auto"
+        }}
+      >
+        <Add sx={{ fontSize: 30 }} />
+      </Button>
 
     </Box>}
 </Box>
-
-
-
-
   );
 };
 
