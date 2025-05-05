@@ -181,7 +181,7 @@ const BitacoraDocumentosApp = () => {
         },
         body: JSON.stringify({ observacion: textoObservacion })
       });
-
+      
       if (!response.ok) {
         throw new Error('No se pudo guardar la observación');
       }
