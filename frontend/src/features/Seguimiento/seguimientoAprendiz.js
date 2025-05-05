@@ -344,11 +344,11 @@ const BitacoraDocumentosApp = () => {
     };
   }, []);
 
-  // Acciones disponibles según el tab
-  const actions = [
+  const actions = userRole === 'aprendiz' ? [
     ...(tab === 0 ? [{ icon: <NoteAddIcon />, name: 'Subir Bitácora' }] : []),
     ...(tab === 1 ? [{ icon: <UploadFileIcon />, name: 'Subir Documento' }] : []),
-  ];
+  ] : [];
+  
 
   // Calcular datos para paginación
   const datos = tab === 0 ? bitacoras : documentos;
