@@ -34,6 +34,18 @@ export const obtenerFichas = async () => {
       throw error;
     }
   };
+
+  // 🔸 Crear agendamiento como administrador (para cualquier instructor)
+export const crearEventoComoAdmin = async (idInstructor, nuevoEvento) => {
+  try {
+    const { data } = await axiosInstance.post(`/agendamiento/crear/${idInstructor}`, nuevoEvento);
+    return data;
+  } catch (error) {
+    console.error("Error al crear agendamiento como administrador:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
   
   // 🔸 Obtener agendamientos según rol
   export const obtenerEventos = async () => {

@@ -18,4 +18,5 @@ router.put('/modificar/:id',authMiddleware, modificarUsuario);
 router.patch('/eliminar/:idUsuario',authMiddleware, eliminarUsuario);
 router.get("/me", authMiddleware,obtenerUsuarioAutenticado);
 
+
 module.exports = router;

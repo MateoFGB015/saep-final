@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthProvider";
 import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
 import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
+import Sena from "../../assets/imgs/logoSena.png";
 import {
   AppBar,
   Toolbar,
@@ -24,14 +25,14 @@ import {
   People as PeopleIcon,
   CalendarToday as CalendarIcon,
   Assignment as AssignmentIcon,
-  Equalizer as EqualizerIcon, // ✅ Aquí está la importación correcta
+  Equalizer as EqualizerIcon,
   Logout as LogoutIcon,
   Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
-  ChecklistRtl as ChecklistRtlIcon,
 } from "@mui/icons-material";
 
 const drawerWidth = 250;
+const collapsedWidth = 60;
 
 const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
@@ -42,26 +43,22 @@ const Navbar = ({ children }) => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [openUserModal, setOpenUserModal] = useState(false);
 
+  const toggleDrawer = () => {
+    setOpen(!open);
+  };
+
   const handleVerUsuario = (usuario) => {
     setSelectedUser(usuario);
     setOpenUserModal(true);
-  };
-  
-
-
-  const toggleDrawer = () => {
-    setOpen(!open);
   };
 
   const menuItems = [
     { text: "Inicio", icon: <HomeIcon />, route: "/inicio", roles: ["Administrador", "Instructor", "aprendiz"] },
     { text: "Usuarios", icon: <PeopleIcon />, route: "/usuarios", roles: ["Administrador"] },
     { text: "Fichas", icon: <AssignmentIcon />, route: "/fichas", roles: ["Administrador", "Instructor"] },
-    { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos", roles: [ "Instructor", "aprendiz"] },
-    { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos/listaIntructores", roles: [ "Administrador"] },
-   { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: [ "aprendiz"] },
+    { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos", roles: ["Instructor", "aprendiz"] },
+    { text: "Agendamientos", icon: <CalendarIcon />, route: "/agendamientos/listaIntructores", roles: ["Administrador"] },
     { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["aprendiz"] },
-    // { text: "Reporte", icon:<ChecklistRtlIcon/>, route:"/reporte", roles:["Administrador", "Instructor"],}
   ];
 
   return (
@@ -72,7 +69,7 @@ const Navbar = ({ children }) => {
         position="fixed"
         sx={{
           backgroundColor: "#71277a",
-          zIndex: open ? theme.zIndex.drawer - 1 : theme.zIndex.drawer + 1,
+          zIndex: theme.zIndex.drawer + 1,
           width: "100%",
           boxShadow: "none",
         }}
@@ -87,10 +84,17 @@ const Navbar = ({ children }) => {
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" sx={{ flexGrow: 1, fontSize: "1rem", ml: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", ml: 4, flexGrow: 1, gap: 2 }}>
+          <img
+            src={Sena}
+            alt="Logo SENA"
+            style={{ height: 32 }}
+          />
+          <Typography variant="h6" sx={{ fontSize: "1rem" }}>
             SISTEMA SAEP
           </Typography>
-
+        </Box>
+               
           <Typography
             variant="body2"
             sx={{
@@ -113,66 +117,79 @@ const Navbar = ({ children }) => {
             <LogoutIcon />
           </IconButton>
         </Toolbar>
+
         {mostrarNotificaciones && (
           <NotificacionesFlotantes onClose={() => setMostrarNotificaciones(false)} />
         )}
       </AppBar>
 
       <Drawer
-        variant="temporary"
+        variant="permanent"
         open={open}
-        onClose={toggleDrawer}
         sx={{
-          zIndex: theme.zIndex.drawer + 1,
+          width: open ? drawerWidth : collapsedWidth,
+          flexShrink: 0,
+          whiteSpace: "nowrap",
+          boxSizing: "border-box",
           "& .MuiDrawer-paper": {
-            width: drawerWidth,
+            width: open ? drawerWidth : collapsedWidth,
             backgroundColor: "#71277a",
+            color: "white",
+            transition: theme.transitions.create("width", {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
             overflowX: "hidden",
-            position: "fixed",
           },
         }}
       >
-        <Box sx={{ width: drawerWidth, height: "100%", color: "white" }}>
-          <Box
-            sx={{
-              ml: 2,
-              width: "85%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px 1px",
-              borderBottom: "2px solid white",
-            }}
-          >
-            <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
-              <MenuIcon />
-            </IconButton>
-
-            <Typography
-              variant="subtitle1"
-              sx={{
-                color: "white",
-                fontWeight: "bold",
-                textAlign: "center",
-                mr: 5,
-                flexGrow: 1,
-              }}
-            >
+        <Box
+          sx={{
+            height: "64px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: open ? "space-between" : "center",
+            px: 1,
+          }}
+        >
+          <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
+            <MenuIcon />
+          </IconButton>
+          {open && (
+            <Typography variant="subtitle1" sx={{ color: "white", fontWeight: "bold" }}>
               {user?.rol || "Rol"}
             </Typography>
-          </Box>
-
-          <List>
-            {menuItems
-              .filter((item) => item.roles.includes(user?.rol))
-              .map(({ text, icon, route }) => (
-                <ListItemButton key={text} component={Link} to={route}>
-                  <ListItemIcon sx={{ color: "white", minWidth: "40px" }}>{icon}</ListItemIcon>
-                  <ListItemText primary={text} />
-                </ListItemButton>
-              ))}
-          </List>
+          )}
         </Box>
+
+        <List sx={{ mt: 2 }}>
+          {menuItems
+            .filter((item) => item.roles.includes(user?.rol))
+            .map(({ text, icon, route }) => (
+              <ListItemButton
+                key={text}
+                component={Link}
+                to={route}
+                sx={{
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                  py: 1.5, // Espaciado vertical
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color: "white",
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                  }}
+                >
+                  {icon}
+                </ListItemIcon>
+                {open && <ListItemText primary={text} />}
+              </ListItemButton>
+            ))}
+        </List>
       </Drawer>
 
       <Box
@@ -187,12 +204,12 @@ const Navbar = ({ children }) => {
       >
         {children}
       </Box>
-      <UserInfoModal
-       open={openUserModal}
-       onClose={() => setOpenUserModal(false)}
-       user={selectedUser}
-      />
 
+      <UserInfoModal
+        open={openUserModal}
+        onClose={() => setOpenUserModal(false)}
+        user={selectedUser}
+      />
     </Box>
   );
 };

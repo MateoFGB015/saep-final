@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from "react";
+import { useAuth } from "../../../context/AuthProvider";
 import {
   Dialog,
   DialogTitle,
@@ -15,6 +16,7 @@ import moment from "moment";
 import {
   crearEvento,
   obtenerFichas,
+  crearEventoComoAdmin,
   obtenerAprendices,
 } from "../../../api/AgendamientoAPI";
 import EventosContext from "../../../context/eventosProvider";
@@ -32,9 +34,10 @@ const textFieldStyle = {
   },
 };
 
-const ModalCrear = ({ open, onClose, fechaSeleccionada }) => {
+const ModalCrear = ({ open, onClose, fechaSeleccionada, idInstructor }) => {
   const { alerta, showAlert, closeAlert } = useAlert();
   const { eventos, setEventos } = useContext(EventosContext);
+  const { user } = useAuth();
   const [fichas, setFichas] = useState([]);
   const [aprendices, setAprendices] = useState([]);
   const [formData, setFormData] = useState({
@@ -116,10 +119,9 @@ const ModalCrear = ({ open, onClose, fechaSeleccionada }) => {
       showAlert("¡La fecha de finalización debe ser posterior a la fecha de inicio!", "error");
       return;
     }
-
+  
     const payload = {
       id_ficha_aprendiz: formData.id_ficha_aprendiz,
-      id_instructor: formData.id_instructor,
       herramienta_reunion: formData.herramienta_reunion,
       enlace_reunion: formData.enlace,
       fecha_inicio: formData.start,
@@ -128,24 +130,37 @@ const ModalCrear = ({ open, onClose, fechaSeleccionada }) => {
       tipo_visita: formData.tipo,
       numero_visita: formData.numero_visita,
     };
-
+  
     try {
-      const nuevoEvento = await crearEvento(payload);
+      let nuevoEvento;
+  
+      if (user.rol === "Administrador") {
+        if (!idInstructor) {
+          showAlert("No se ha seleccionado un instructor.", "error");
+          return;
+        }
+  
+        nuevoEvento = await crearEventoComoAdmin(idInstructor, payload); // <-- importante
+      } else {
+        nuevoEvento = await crearEvento(payload);
+      }
+  
       setEventos((prev) => [...prev, nuevoEvento]);
       showAlert("¡Agendamiento registrado exitosamente!", "success");
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error("Error al crear el evento:", error);
-    
+  
       const mensaje = error?.response?.data?.mensaje;
-    
-      if (mensaje?.includes("ya tiene una visita programada")) {
-        showAlert("Ese aprendiz ya tiene una visita en ese horario. Por favor elige otro horario.", "error");
+  
+      if (mensaje?.includes("ya tiene una visita")) {
+        showAlert("Ese aprendiz ya tiene una visita en ese horario.", "error");
       } else {
-        showAlert("¡Hubo un error al guardar el agendamiento! Revisa los datos.", "error");
+        showAlert("¡Hubo un error al guardar el agendamiento!", "error");
       }
     }
   };
+  
 
   return (
     <>

@@ -7,6 +7,9 @@ const agendamientoController = require('../controllers/AgendamientoController');
 // Crear agendamiento (instructor autenticado)
 router.post('/crear', authMiddleware, agendamientoController.crearAgendamiento);
 
+//Crear agendamiento con administrador
+router.post('/crear/:idInstructor', authMiddleware,agendamientoController.crearAgendamientoPorAdmin);
+
 // Obtener agendamientos del instructor logueado
 router.get('/instructor', authMiddleware, agendamientoController.obtenerAgendamientosInstructor);
 

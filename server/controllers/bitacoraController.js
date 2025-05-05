@@ -186,3 +186,31 @@ exports.eliminarBitacora = async (req, res) => {
     res.status(500).json({ mensaje: 'Error del servidor al eliminar la bitácora.', error });
   }
 };
+exports.agregarObservacion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { observacion } = req.body;
+    const { rol } = req.usuario;
+
+    if (rol !== 'Administrador' && rol !== 'Instructor') {
+      return res.status(403).json({ mensaje: 'Solo el administrador o instructor pueden hacer observaciones.' });
+    }
+
+    const bitacora = await Bitacora.findByPk(id);
+    if (!bitacora) {
+      return res.status(404).json({ mensaje: 'Bitácora no encontrada.' });
+    }
+
+    bitacora.observacion = observacion;
+    bitacora.estado_bitacora = 2; // Por ejemplo, 2 = Observada
+    bitacora.fecha_ultima_actualizacion = new Date();
+
+    await bitacora.save();
+
+    res.status(200).json({ mensaje: '✅ Observación registrada.', bitacora });
+
+  } catch (error) {
+    console.error('❌ Error al agregar observación:', error);
+    res.status(500).json({ mensaje: 'Error del servidor al agregar observación.', error });
+  }
+};

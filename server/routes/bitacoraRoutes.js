@@ -31,6 +31,12 @@ router.delete(
   bitacoraController.eliminarBitacora
 );
 
+router.put(
+  '/observacion/:id',
+  authMiddleware,
+  bitacoraController.agregarObservacion
+);
+
 
 
 module.exports = router;

@@ -140,9 +140,7 @@ function App() {
                       }
                     />
 
-                    <Route 
-                  path="/seguimiento/:id_usuario" element={<BitacoraDocumentosApp />} />
-
+                    <Route path="/seguimiento/:id_usuario" element={  <ProtectedRoute allowedRoles={['Administrador', 'Instructor', 'Aprendiz']}><BitacoraDocumentosApp /></ProtectedRoute> } />
                   
                  <Route path="/reporte/gfpi/:id" element={ <ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteGFPI /> </ProtectedRoute> } />
 

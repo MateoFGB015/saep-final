@@ -72,6 +72,7 @@ const Calendario = () => {
     <>
       <div style={{ display: "flex", gap: "20px" }}>
         <div style={{ height: "80vh", width: isDesktop ? "75%" : "100%" }}>
+      {user?.rol === "Instructor" && (
         <Button
           onClick={() => navigate('/reporte/agendamientos')}
       variant="contained"
@@ -88,6 +89,7 @@ const Calendario = () => {
     >
       Generar reporte de Agendamiento
     </Button>
+      )}
           <Calendar
             localizer={localizer}
             events={eventos}

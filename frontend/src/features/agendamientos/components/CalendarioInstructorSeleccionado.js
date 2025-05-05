@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ModalModificar from "./modalModificar";
+import ModalCrear from "./ModalCrear";
 import axios from "axios";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
+import { obtenerEventos } from "../../../api/AgendamientoAPI";
 import "moment/locale/es";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
@@ -39,6 +41,7 @@ const messages = {
 };
 
 const CalendarioInstructorSeleccionado = () => {
+  const [modalCrearOpen, setModalCrearOpen] = useState(false);
   const { idInstructor } = useParams();
   const navigate = useNavigate();
   const [eventos, setEventos] = useState([]);
@@ -166,6 +169,7 @@ const CalendarioInstructorSeleccionado = () => {
           <Typography variant="h6" textAlign="center" mb={2}>
             Visitas del {moment(diaSeleccionado).format("DD [de] MMMM")}
           </Typography>
+        
 
           {eventosDelDia.length === 0 ? (
             <Typography color="text.secondary">No hay visitas para este día.</Typography>
@@ -192,6 +196,20 @@ const CalendarioInstructorSeleccionado = () => {
           <Divider sx={{ mt: 2, mb: 1 }} />
 
           <Box>
+          <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setModalCrearOpen(true)}
+                  sx={{
+                    backgroundColor: "#71277a",
+                    "&:hover": {
+                      backgroundColor: "#5a1e61",
+                    },
+                    color: "white"
+                  }}
+                >
+                  Añadir visita
+                </Button>
             <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
               Estado de visitas:
             </Typography>
@@ -221,6 +239,14 @@ const CalendarioInstructorSeleccionado = () => {
           soloLectura={true}
         />
       )}
+       {modalCrearOpen && (
+        <ModalCrear
+        open={modalCrearOpen}
+        onClose={() => setModalCrearOpen(false)}
+        fechaSeleccionada={diaSeleccionado}
+        idInstructor={idInstructor}
+      />
+            )}
     </Box>
   );
 };
