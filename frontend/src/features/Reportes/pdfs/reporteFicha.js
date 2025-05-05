@@ -1,4 +1,3 @@
-// src/features/reportes/components/pdfs/reporteFicha.js
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
