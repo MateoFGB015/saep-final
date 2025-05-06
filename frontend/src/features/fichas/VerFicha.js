@@ -109,21 +109,29 @@ const FichaDetalle = () => {
     try {
       setIsLoading(true);
       
+      // Validación adicional antes de enviar
+      if (nuevoAprendiz.numero_documento.length > 9) {
+        alert('El número de documento no puede exceder los 9 dígitos.');
+        setIsLoading(false);
+        return;
+      }
+      
       // Paso 1: Registrar el aprendiz
       const response = await axios.post('http://localhost:3000/usuarios/registroAprendiz', {
         ...nuevoAprendiz,
-        password: nuevoAprendiz.numero_documento, // Usar "password" como espera el controlador
+        password: password || nuevoAprendiz.numero_documento, // Usar la contraseña ingresada o el número de documento como fallback
         rol: 'aprendiz',
-        numero_ficha: fichas.numero_ficha // Agregar este campo que es obligatorio en el controlador
+        numero_ficha: fichas.numero_ficha 
       });
       
       if (response.data && response.data.aprendiz) {
         const aprendizRegistrado = response.data.aprendiz;
         
-        // Ya no es necesario hacer la asociación manual, el controlador ya lo hace
-        
         // Actualizar la lista de aprendices en la UI
         setAprendices([...aprendices, aprendizRegistrado]);
+        
+        // Mostrar mensaje de éxito con las credenciales
+        alert(`Aprendiz registrado exitosamente`);
         
         handleCloseRegistroModal();
       }
@@ -375,29 +383,33 @@ const FichaDetalle = () => {
             </FormControl>
 
             <TextField
-                fullWidth
-                margin="normal"
-                label="Número de Documento"
-                name="numero_documento"
-                value={nuevoAprendiz.numero_documento}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^\d{0,10}$/.test(value)) { // Solo números y hasta 10 dígitos
-                    handleInputChange(e);
-                  }
-                }}
-                inputProps={{
-                  minLength: 5,
-                  maxLength: 10,
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                }}
-                required
-                variant="outlined"
-                size="small"
-              />
+  fullWidth
+  margin="normal"
+  label="Número de Documento"
+  name="numero_documento"
+  value={nuevoAprendiz.numero_documento}
+  onChange={(e) => {
+    const value = e.target.value;
+    // Limitamos a máximo 9 dígitos para evitar error de rango en la base de datos
+    if (/^\d{0,9}$/.test(value)) { 
+      handleInputChange(e);
+    }
+  }}
+  inputProps={{
+    minLength: 5,
+    maxLength: 9, // Cambiado de 10 a 9
+    inputMode: 'numeric',
+    pattern: '[0-9]*',
+  }}
+  required
+  variant="outlined"
+  size="small"
+  helperText="Máximo 9 dígitos numéricos"
+/>
             
                           <TextField
+
+                          
               fullWidth
               margin="normal"
               label="Correo Electrónico"
