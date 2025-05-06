@@ -19,6 +19,7 @@ import backgroundImage from "../../assets/imgs/confeccion.jpg";
 function FormularioAprendiz() {
   const navigate = useNavigate();
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [errors, setErrors] = useState({});
   const [fichas, setFichas] = useState([]);
   const [form, setForm] = useState({
     nombre: "",
@@ -58,11 +59,29 @@ function FormularioAprendiz() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+  
+    // Actualiza el formulario
     setForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+  
+    // Validación de longitud para "numero_documento"
+    if (name === "numero_documento") {
+      if (value.length < 5 || value.length > 10) {
+        setErrors((prev) => ({
+          ...prev,
+          numero_documento: "Debe tener entre 5 y 10 caracteres.",
+        }));
+      } else {
+        setErrors((prev) => ({
+          ...prev,
+          numero_documento: "",
+        }));
+      }
+    }
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -183,8 +202,13 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
+              error={Boolean(errors.numero_documento)}
+              helperText={errors.numero_documento}
+              inputProps={{ minLength: 5, maxLength: 9 }}
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
+
+
           </Box>
 
           <TextField
