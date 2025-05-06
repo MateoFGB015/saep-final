@@ -7,6 +7,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {BorderColorOutlined, ContentCutOutlined, Add, Close} from '@mui/icons-material';
 import {
   Box,
@@ -26,7 +27,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  IconButton
+  IconButton,
+  InputAdornment // ✅ Agregado aquí
 } from '@mui/material';
 
 const FichaDetalle = () => {
@@ -35,7 +37,8 @@ const FichaDetalle = () => {
   const [aprendices, setAprendices] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openUserModal, setOpenUserModal] = useState(false);
-
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [aprendizAEliminar, setAprendizAEliminar] = useState(null);
   
@@ -150,6 +153,8 @@ const FichaDetalle = () => {
   if (!fichas) {
     return <Typography sx={{ mt: 4 }}>Cargando...</Typography>;
   }
+
+  
 
   return (
 <Box
@@ -328,7 +333,8 @@ const FichaDetalle = () => {
             </IconButton>
           </Box>
           
-          <form onSubmit={handleRegistrarAprendiz}>
+          <form onSubmit={handleRegistrarAprendiz} >
+            
             <TextField
               fullWidth
               margin="normal"
@@ -367,17 +373,30 @@ const FichaDetalle = () => {
                 <MenuItem value="PAS">Pasaporte</MenuItem>
               </Select>
             </FormControl>
+
             <TextField
-              fullWidth
-              margin="normal"
-              label="Número de Documento"
-              name="numero_documento"
-              value={nuevoAprendiz.numero_documento}
-              onChange={handleInputChange}
-              required
-              variant="outlined"
-              size="small"
-            />
+                fullWidth
+                margin="normal"
+                label="Número de Documento"
+                name="numero_documento"
+                value={nuevoAprendiz.numero_documento}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d{0,10}$/.test(value)) { // Solo números y hasta 10 dígitos
+                    handleInputChange(e);
+                  }
+                }}
+                inputProps={{
+                  minLength: 5,
+                  maxLength: 10,
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                }}
+                required
+                variant="outlined"
+                size="small"
+              />
+            
                           <TextField
               fullWidth
               margin="normal"
@@ -390,6 +409,32 @@ const FichaDetalle = () => {
               variant="outlined"
               size="small"
             />
+            <TextField
+            label="Contraseña"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            variant="outlined"
+            inputProps={{
+              pattern: "(?=.*[0-9])(?=.*[A-Z]).{8,}",
+              title: "Mínimo 8 caracteres, al menos un número, una mayúscula"
+            }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
             <TextField
               fullWidth
               margin="normal"
