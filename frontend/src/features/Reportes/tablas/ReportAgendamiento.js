@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../../context/AuthProvider'; // Asegúrate de que la ruta es correcta
+import { useAuth } from '../../../context/AuthProvider';
+import { useParams } from 'react-router-dom';
 
 import {
   Box,
@@ -19,6 +20,7 @@ import {
 
 const ReporteAgendamientos = () => {
   const { user } = useAuth();
+  const { idInstructor } = useParams(); // <- viene desde la URL
   const [data, setData] = useState([]);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
@@ -34,11 +36,13 @@ const ReporteAgendamientos = () => {
 
     try {
       const token = localStorage.getItem('token');
-
       let url = `${API_URL}/reportes/agendamientos`;
 
       if (user?.rol === 'Administrador') {
-        const idInstructor = user.id; // o puedes reemplazar esto por el ID seleccionado si lo deseas
+        if (!idInstructor) {
+          alert("No se encontró el ID del instructor seleccionado.");
+          return;
+        }
         url += `/${idInstructor}`;
       }
 
@@ -51,6 +55,7 @@ const ReporteAgendamientos = () => {
       setReporteGenerado(true);
     } catch (error) {
       console.error('Error al obtener los agendamientos:', error);
+      alert("Ocurrió un error al generar el reporte.");
     }
   };
 

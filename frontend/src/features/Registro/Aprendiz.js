@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Swal from 'sweetalert2';
 import axios from "axios";
 import {
   TextField,
@@ -85,25 +86,48 @@ function FormularioAprendiz() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (Object.values(form).some((val) => val === "")) {
-      alert("Todos los campos son obligatorios");
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Todos los campos son obligatorios',
+        confirmButtonColor: '#5E35B1'
+      });
       return;
     }
-
+  
     if (form.password !== form.confirmarContrasena) {
-      alert("Las contraseñas no coinciden");
+      Swal.fire({
+        icon: 'error',
+        title: 'Contraseñas no coinciden',
+        text: 'Por favor verifica que ambas contraseñas coincidan',
+        confirmButtonColor: '#5E35B1'
+      });
       return;
     }
-
+  
     try {
       await axios.post(`${API_URL}/usuarios/registroAprendiz`, form);
-      setModalAbierto(true);
+      Swal.fire({
+        icon: 'success',
+        title: '¡Registro exitoso!',
+        text: 'Tu cuenta ha sido creada correctamente',
+        confirmButtonColor: '#5E35B1'
+      }).then(() => {
+        navigate("/");
+      });
     } catch (error) {
-      alert("Error al registrar aprendiz");
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo registrar el aprendiz. Intenta nuevamente.',
+        confirmButtonColor: '#5E35B1'
+      });
       console.error(error);
     }
   };
+  
 
   return (
     <Box

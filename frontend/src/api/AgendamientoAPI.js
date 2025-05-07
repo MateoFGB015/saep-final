@@ -186,4 +186,22 @@ export const obtenerVisitasPorFichaAprendiz = async (idFichaAprendiz) => {
   }
 };
 
+// Reportes
+export const obtenerReporteAgendamientos = async (fechaInicio, fechaFin, idInstructor = null) => {
+  try {
+    let url = '/reportes/agendamientos';
+    if (idInstructor) url += `/${idInstructor}`;
+
+    const { data } = await axiosInstance.get(url, {
+      params: { fechaInicio, fechaFin }
+    });
+
+    return data;
+  } catch (error) {
+    console.error("Error al obtener el reporte de agendamientos:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 

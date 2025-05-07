@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton,
-  Tab, Tabs, Typography, TextField, SpeedDial, SpeedDialAction, SpeedDialIcon, Paper, CircularProgress
+  Tab, Tabs, Typography, TextField, SpeedDial, SpeedDialAction, SpeedDialIcon, Paper, CircularProgress,List, ListItem, ListItemText,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCutIcon from '@mui/icons-material/ContentCut';
 import { useParams } from 'react-router-dom';
 
 
@@ -30,6 +32,7 @@ const BitacoraDocumentosApp = () => {
   const [documentos, setDocumentos] = useState([]);
   const [currentBitacora, setCurrentBitacora] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [observaciones, setObservaciones] = useState([]);
   
   const contentRef = useRef(null);
   const datosPorPagina = 5;
@@ -80,7 +83,36 @@ const BitacoraDocumentosApp = () => {
       }
   
       const data = await response.json();
-      setBitacoras(data.bitacoras || []);
+      
+      // Almacenar bitácoras
+      const bitacorasData = data.bitacoras || [];
+      
+      // Para cada bitácora, obtener sus observaciones
+      const bitacorasConObservaciones = await Promise.all(
+        bitacorasData.map(async (bitacora) => {
+          try {
+            const obsResponse = await fetch(`${API_URL}/observacion/bitacora/${bitacora.id_bitacora}`, {
+              headers: {
+                'Authorization': `Bearer ${getToken()}`,
+              },
+            });
+            
+            if (obsResponse.ok) {
+              const obsData = await obsResponse.json();
+              return {
+                ...bitacora,
+                observacionesLista: obsData.observaciones || []
+              };
+            }
+            return bitacora;
+          } catch (err) {
+            console.error(`Error al cargar observaciones para bitácora ${bitacora.id_bitacora}:`, err);
+            return bitacora;
+          }
+        })
+      );
+      
+      setBitacoras(bitacorasConObservaciones);
     } catch (error) {
       console.error('Error al cargar bitácoras:', error);
       setError('No se pudieron cargar las bitácoras. Por favor intente nuevamente.');
@@ -116,6 +148,33 @@ const BitacoraDocumentosApp = () => {
       setLoading(false);
     }
   };
+  const fetchObservaciones = async (idBitacora) => {
+    try {
+      console.log(`Obteniendo observaciones para bitácora ${idBitacora}`);
+      const response = await fetch(`${API_URL}/observacion/bitacora/${idBitacora}`, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Observaciones recibidas:', data);
+      
+      const observacionesData = data.observaciones || [];
+      setObservaciones(observacionesData);
+      
+      return observacionesData; // Retornar las observaciones
+    } catch (err) {
+      console.error('Error al obtener observaciones:', err);
+      setObservaciones([]);
+      return [];
+    }
+  };
+  
   
   
   // Función para ver una bitácora específica
@@ -151,10 +210,11 @@ const BitacoraDocumentosApp = () => {
   };
 
   // Función para manejar observaciones
-  const handleOpenObservacionDialog = (index, idBitacora) => {
+  const handleOpenObservacionDialog = async (index, idBitacora) => {
     setSelectedIndex(index);
     setCurrentBitacora(bitacoras[index]);
-    setTextoObservacion(bitacoras[index]?.observacion || '');
+    setTextoObservacion('');
+    await fetchObservaciones(idBitacora);
     setObservacionDialog(true);
   };
 
@@ -171,36 +231,127 @@ const BitacoraDocumentosApp = () => {
       alert('Por favor ingrese una observación válida');
       return;
     }
-
+    
     try {
-      const response = await fetch(`${API_URL}/bitacora/observacion/${currentBitacora.id_bitacora}`, {
-        method: 'PUT',
+      const response = await fetch(`${API_URL}/observacion/bitacora/${currentBitacora.id_bitacora}`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ observacion: textoObservacion })
+        body: JSON.stringify({ observacion: textoObservacion, mostrar_observacion: true })
       });
-      
-      if (!response.ok) {
-        throw new Error('No se pudo guardar la observación');
+    
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        throw new Error('Respuesta inesperada del servidor:\n' + errorText);
       }
-
-      // Actualizar bitácora en la lista local
-      const updatedBitacoras = bitacoras.map(b => 
-        b.id_bitacora === currentBitacora.id_bitacora 
-          ? { ...b, observacion: textoObservacion, fecha_ultima_actualizacion: new Date() }
-          : b
-      );
+    
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.mensaje);
+    
+      setTextoObservacion('');
       
-      setBitacoras(updatedBitacoras);
-      handleCloseObservacionDialog();
-      alert('Observación guardada correctamente');
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Error al guardar la observación');
+      // Actualizar observaciones en el estado actual
+      const nuevasObservaciones = await fetchObservaciones(currentBitacora.id_bitacora);
+      
+      // Actualizar la bitácora específica en el estado de bitácoras
+      if (selectedIndex !== null) {
+        setBitacoras(prevBitacoras => {
+          const nuevasBitacoras = [...prevBitacoras];
+          nuevasBitacoras[selectedIndex] = {
+            ...nuevasBitacoras[selectedIndex],
+            observacionesLista: nuevasObservaciones,
+            // Actualizar también la observación principal mostrada en la tarjeta
+            observacion: nuevasObservaciones.length > 0 ? 
+              nuevasObservaciones[nuevasObservaciones.length - 1].observacion : 
+              nuevasBitacoras[selectedIndex].observacion
+          };
+          return nuevasBitacoras;
+        });
+      }
+      
+      
+      // Mostrar confirmación de éxito
+      setMensajeExito('Observación guardada con éxito');
+      setSuccessDialogOpen(true);
+      
+      // Recargar toda la lista de bitácoras (con observaciones y fechas nuevas)
+      await fetchBitacoras();
+      
+      setTimeout(() => {
+        setSuccessDialogOpen(false);
+        handleCloseObservacionDialog(); // También cierra el modal
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Error al guardar observación:', err);
+      alert('Error al guardar la observación: ' + err.message);
     }
   };
+  
+  const eliminarObservacion = async (idObs) => {
+    if (!window.confirm('¿Estás seguro de eliminar esta observación?')) return;
+    try {
+      // Verificar que el ID sea válido
+      if (!idObs) {
+        console.error("ID de observación inválido:", idObs);
+        alert("Error: ID de observación inválido");
+        return;
+      }
+
+      console.log("Intentando eliminar observación con ID:", idObs);
+      
+      // Usar la ruta correcta según el archivo ObservacionRoutes.js
+      const response = await fetch(`${API_URL}/observacion/${idObs}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
+      
+      // Depuración para ver la respuesta completa
+      console.log("Respuesta del servidor - status:", response.status);
+      
+      // Esperar la respuesta como texto primero para ver si hay un error
+      const responseText = await response.text();
+      console.log("Respuesta del servidor (texto):", responseText);
+      
+      let data;
+      try {
+        // Intentar parsear como JSON si es posible
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch(e) {
+        console.error("Error al parsear respuesta:", e);
+        data = { mensaje: responseText };
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.mensaje || `Error ${response.status}`);
+      }
+      
+      // Actualizar observaciones
+      setObservaciones(prev => prev.filter(o => o.id_observacion !== idObs));
+      // Actualizar también la lista principal de bitácoras si es necesario
+      if (currentBitacora && selectedIndex !== null) {
+        setBitacoras(prevBitacoras => {
+          const nuevasBitacoras = [...prevBitacoras];
+          if (nuevasBitacoras[selectedIndex]?.observacionesLista) {
+            nuevasBitacoras[selectedIndex].observacionesLista = 
+              nuevasBitacoras[selectedIndex].observacionesLista.filter(o => o.id_observacion !== idObs);
+          }
+          return nuevasBitacoras;
+        });
+      }
+      
+      setMensajeExito('Observación eliminada con éxito');
+      setSuccessDialogOpen(true);
+      setTimeout(() => setSuccessDialogOpen(false), 2000);
+    } catch (err) {
+      console.error('Error al eliminar observación:', err);
+      alert('Error al eliminar observación: ' + err.message);
+    }
+  };
+  
 
   // Manejar cambio de tab
   const handleTabChange = (e, newValue) => {
@@ -385,7 +536,6 @@ const BitacoraDocumentosApp = () => {
           <Tab label="Documento de certificación" />
         </Tabs>
       </Paper>
-      <br></br>
 
       {loading && !modalOpen ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
@@ -411,36 +561,64 @@ const BitacoraDocumentosApp = () => {
               
               return (
                 <Paper
-                  key={itemId}
-                  elevation={3}
-                  sx={{
-                    p: 3, my: 2, borderRadius: 3, display: 'flex',
-                    flexDirection: 'column', backgroundColor: 'white',
-                    gap: 1, borderLeft: '6px solid #8e24aa'
-                  }}
-                >
-                  <Typography variant="h6" fontWeight={700} color="#6a1b9a">
-                    {tab === 0 
-                      ? `Bitácora #${item.numero_bitacora}` 
-                      : `Documento: ${item.nombre_documento || `Documento #${globalIndex + 1}`}`
-                    }
+                key={itemId}
+                elevation={3}
+                sx={{
+                  p: 3, my: 2, borderRadius: 3, display: 'flex',
+                  flexDirection: 'column', backgroundColor: 'white',
+                  gap: 1, borderLeft: '6px solid #8e24aa'
+                }}
+              >
+                <Typography variant="h6" fontWeight={700} color="#6a1b9a">
+                  {tab === 0 
+                    ? `Bitácora #${item.numero_bitacora}` 
+                    : `Documento: ${item.nombre_documento || `Documento #${globalIndex + 1}`}`
+                  }
+                </Typography>
+                
+                {tab === 0 && (
+                  <>
+                    
+                    {/* Mostrar lista de observaciones si existen */}
+                    {item.observacionesLista && item.observacionesLista.length > 0 && (
+                      <Box sx={{ mt: 1, mb: 1, pl: 2, borderLeft: '2px solid #e0e0e0' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          Todas las observaciones:
+                        </Typography>
+                        {item.observacionesLista.slice(0, 2).map((obs, idx) => (
+                          <Typography key={idx} variant="body2" sx={{ fontSize: '0.9rem', color: '#555', mb: 0.5 }}>
+                            • {obs.observacion} <span style={{ fontSize: '0.8rem', color: '#777' }}>
+                              ({obs.usuarioCreador?.nombre || 'Usuario'} {obs.usuarioCreador?.apellido || ''})
+                            </span>
+                          </Typography>
+                        ))}
+                        {item.observacionesLista.length > 2 && (
+                          <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#6a1b9a', cursor: 'pointer' }}
+                            onClick={() => handleOpenObservacionDialog(index, item.id_bitacora)}>
+                            Ver todas las observaciones ({item.observacionesLista.length})
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </>
+                )}
+                
+                {tab === 1 && item.descripcion && (
+                  <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
+                    Descripción: {item.descripcion}
                   </Typography>
-                  
-                  {tab === 0 && item.observacion && (
-                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
-                      Observación: {item.observacion}
-                    </Typography>
-                  )}
-                  
-                  {tab === 1 && item.descripcion && (
-                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: '#555' }}>
-                      Descripción: {item.descripcion}
-                    </Typography>
-                  )}
-                  
-                  <Typography variant="body2" color="text.secondary">
-                    Última actualización: {new Date(item.fecha_ultima_actualizacion).toLocaleString()}
-                  </Typography>
+                )}
+                
+                <Typography variant="body2" color="text.secondary">
+                  Última actualización:{' '}
+                  {item.observacionesLista?.[0]?.fecha_ultima_actualizacion
+                    ? new Date(item.observacionesLista[0].fecha_ultima_actualizacion).toLocaleString('es-ES', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                      })
+                    : 'Sin observaciones registradas'}
+                </Typography>
+                
                   
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <Button 
@@ -755,26 +933,66 @@ const BitacoraDocumentosApp = () => {
         </DialogTitle>
 
         <DialogContent sx={{ pt: 3 }}>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            {currentBitacora && `Bitácora #${currentBitacora.numero_bitacora}`}
-          </Typography>
-          
-          <textarea
-            value={textoObservacion}
-            onChange={(e) => setTextoObservacion(e.target.value)}
-            style={{
-              width: '100%',
-              minHeight: '150px',
-              padding: '12px',
-              borderRadius: '8px',
-              border: '1px solid #ccc',
-              resize: 'vertical',
-              fontFamily: 'inherit',
-              fontSize: '14px'
-            }}
-            placeholder="Escribe tu observación aquí..."
+  <Typography variant="body2" sx={{ mb: 2 }}>
+    {currentBitacora && `Bitácora #${currentBitacora.numero_bitacora}`}
+  </Typography>
+
+  {observaciones.length === 0 ? (
+    <Typography variant="body2" color="textSecondary">
+      No hay observaciones registradas.
+    </Typography>
+  ) : (
+    <List sx={{ maxHeight: '300px', overflow: 'auto', border: '1px solid #f0f0f0', borderRadius: '8px' }}>
+      {observaciones.map((obs, idx) => (
+        <ListItem 
+          key={obs.id_observacion || idx} 
+          alignItems="flex-start" 
+          divider={idx < observaciones.length - 1}
+          secondaryAction={
+            userRole === 'Administrador' && (
+              <ContentCutIcon edge="end" onClick={() => eliminarObservacion(obs.id_observacion)}>
+                <DeleteIcon color="red" />
+              </ContentCutIcon>
+            )
+          }
+        >
+          <ListItemText
+            primary={
+              <Typography variant="subtitle2">
+                {obs.usuarioCreador?.nombre || 'Usuario'} {obs.usuarioCreador?.apellido || ''} 
+                <span style={{ fontWeight: 'normal', fontSize: '0.8rem', marginLeft: '8px' }}>
+                  ({obs.rol_usuario || 'N/A'})
+                </span>
+              </Typography>
+            }
+            secondary={
+              <>
+                <Typography variant="body2" color="text.primary" sx={{ mt: 0.5, mb: 0.5 }}>
+                  {obs.observacion}
+                </Typography>
+                {obs.fecha_creacion && (
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(obs.fecha_creacion).toLocaleString()}
+                  </Typography>
+                )}
+              </>
+            }
           />
-        </DialogContent>
+        </ListItem>
+      ))}
+    </List>
+  )}
+
+<TextField
+    label="Nueva observación"
+    multiline
+    fullWidth
+    minRows={4}
+    value={textoObservacion}
+    onChange={(e) => setTextoObservacion(e.target.value)}
+    sx={{ mt: 2 }}
+  />
+</DialogContent>
 
         <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
           <Button
