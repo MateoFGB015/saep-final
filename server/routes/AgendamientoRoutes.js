@@ -37,4 +37,8 @@ router.put('/admin/modificar/:id', authMiddleware, agendamientoController.modifi
 // eliminar un agendamiento como admin
 router.delete('/admin/eliminar/:id', authMiddleware, agendamientoController.eliminarAgendamientoAdmin);
 
+//Obtener las visitas de un aprendiz
+router.get('/visitas/:id', authMiddleware, agendamientoController.obtenerVisitasPorFichaAprendiz);
+
+
 module.exports = router;

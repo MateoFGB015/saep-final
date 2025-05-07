@@ -175,3 +175,15 @@ export const eliminarEventoComoAdmin = async (id) => {
   }
 };
 
+// 🔸 Obtener visitas existentes del aprendiz
+export const obtenerVisitasPorFichaAprendiz = async (idFichaAprendiz) => {
+  try {
+    const { data } = await axiosInstance.get(`/agendamiento/visitas/${idFichaAprendiz}`);
+    return data;
+  } catch (error) {
+    console.error("Error al obtener visitas del aprendiz:", error.response?.data || error.message);
+    return [];
+  }
+};
+
+
