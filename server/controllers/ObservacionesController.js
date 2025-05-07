@@ -30,14 +30,19 @@ exports.crearOActualizarObservacion = async (req, res) => {
     });
 
     if (yaExiste) {
-      // Actualizar la observación
       yaExiste.observacion = observacion;
       yaExiste.mostrar_observacion = mostrar_observacion ?? true;
       yaExiste.fecha_ultima_actualizacion = new Date();
-      await yaExiste.save();
-
+    
+      // Forzar guardado incluso si el valor parece el mismo
+      await yaExiste.save({ silent: false });
+      await yaExiste.reload();
+    
+      console.log('✅ Fecha actualizada correctamente:', yaExiste.fecha_ultima_actualizacion);
+    
       return res.status(200).json({ mensaje: 'Observación actualizada.', data: yaExiste });
     }
+    
 
     // Crear nueva observación
     const nueva = await Observacion.create({

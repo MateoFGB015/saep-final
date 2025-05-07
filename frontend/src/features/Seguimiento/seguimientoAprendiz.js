@@ -33,6 +33,8 @@ const BitacoraDocumentosApp = () => {
   const [currentBitacora, setCurrentBitacora] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
   const [observaciones, setObservaciones] = useState([]);
+  const [bitacorasRecientementeActualizadas, setBitacorasRecientementeActualizadas] = useState([]);
+
   
   const contentRef = useRef(null);
   const datosPorPagina = 5;
@@ -63,6 +65,7 @@ const BitacoraDocumentosApp = () => {
       fetchDocumentos();
     }
   }, [tab]);
+  
 
   // Función para cargar bitácoras
   const fetchBitacoras = async () => {
@@ -254,20 +257,37 @@ const BitacoraDocumentosApp = () => {
       setTextoObservacion('');
       
       // Actualizar observaciones en el estado actual
-      const nuevasObservaciones = await fetchObservaciones(currentBitacora.id_bitacora);
+      let nuevasObservaciones = await fetchObservaciones(currentBitacora.id_bitacora);
+
+              // Guardar ID de bitácora recién actualizada
+        setBitacorasRecientementeActualizadas(prev => [...prev, currentBitacora.id_bitacora]);
+
+        // Eliminarlo después de 5 segundos
+        setTimeout(() => {
+          setBitacorasRecientementeActualizadas(prev =>
+            prev.filter(id => id !== currentBitacora.id_bitacora)
+          );
+        }, 5000);
+
+
+
       
       // Actualizar la bitácora específica en el estado de bitácoras
       if (selectedIndex !== null) {
         setBitacoras(prevBitacoras => {
           const nuevasBitacoras = [...prevBitacoras];
+      
+          // Ordenar las nuevas observaciones aquí mismo
+          const observacionesOrdenadas = [...nuevasObservaciones].sort(
+            (a, b) => new Date(b.fecha_ultima_actualizacion) - new Date(a.fecha_ultima_actualizacion)
+          );
+      
           nuevasBitacoras[selectedIndex] = {
             ...nuevasBitacoras[selectedIndex],
-            observacionesLista: nuevasObservaciones,
-            // Actualizar también la observación principal mostrada en la tarjeta
-            observacion: nuevasObservaciones.length > 0 ? 
-              nuevasObservaciones[nuevasObservaciones.length - 1].observacion : 
-              nuevasBitacoras[selectedIndex].observacion
+            observacionesLista: observacionesOrdenadas,
+            observacion: observacionesOrdenadas[0]?.observacion || ''
           };
+      
           return nuevasBitacoras;
         });
       }
@@ -278,7 +298,8 @@ const BitacoraDocumentosApp = () => {
       setSuccessDialogOpen(true);
       
       // Recargar toda la lista de bitácoras (con observaciones y fechas nuevas)
-      await fetchBitacoras();
+      await new Promise(resolve => setTimeout(resolve, 300));
+      await fetchBitacoras()
       
       setTimeout(() => {
         setSuccessDialogOpen(false);
@@ -610,14 +631,23 @@ const BitacoraDocumentosApp = () => {
                 )}
                 
                 <Typography variant="body2" color="text.secondary">
-                  Última actualización:{' '}
-                  {item.observacionesLista?.[0]?.fecha_ultima_actualizacion
-                    ? new Date(item.observacionesLista[0].fecha_ultima_actualizacion).toLocaleString('es-ES', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short'
-                      })
-                    : 'Sin observaciones registradas'}
-                </Typography>
+                {item.observacionesLista?.[0]?.fecha_ultima_actualizacion ? (
+                  <>
+                    Última actualización:{" "}
+                    {new Date(item.observacionesLista[0].fecha_ultima_actualizacion).toLocaleString("es-CO", {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                        timeZone: 'America/Bogota'
+                    })}
+                    {bitacorasRecientementeActualizadas.includes(item.id_bitacora) && (
+                      <span style={{ color: "#4caf50", fontWeight: 500 }}> — Actualizado hace un momento</span>
+                    )}
+                  </>
+                ) : (
+                  "Sin observaciones registradas"
+                )}
+              </Typography>
+
                 
                   
                   <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
