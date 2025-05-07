@@ -153,7 +153,7 @@ exports.crearAgendamiento = async (req, res) => {
     const { Op } = require('sequelize');
     const traslape = await modeloAgendamiento.findOne({
       where: {
-        id_ficha_aprendiz,
+        id_instructor: instructorId, // solo para ese instructor
         [Op.or]: [
           {
             fecha_inicio: { [Op.lte]: fecha_inicio },
@@ -170,10 +170,13 @@ exports.crearAgendamiento = async (req, res) => {
         ]
       }
     });
-
+    
     if (traslape) {
-      return res.status(400).json({ mensaje: "Ya existe una visita para este aprendiz en ese horario" });
+      return res.status(400).json({
+        mensaje: "El instructor ya tiene una visita en ese horario"
+      });
     }
+    
 
     // ✅ Crear agendamiento
     const nuevoAgendamiento = await modeloAgendamiento.create({
@@ -256,32 +259,26 @@ exports.modificarAgendamiento = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permiso para modificar este agendamiento' });
     }
 
-    await agendamiento.update(req.body);
-
-    const actualizado = await modeloAgendamiento.findOne({
-      where: { id_agendamiento: id },
-      include: [
-        { model: modeloUsuario, as: 'instructor' },
-        { 
-          model: FichaAprendiz, 
-          as: 'ficha_aprendiz',
-          include: [{ 
-            model: modeloUsuario, 
-            as: 'aprendiz',
-            include: [{ 
-              model: modeloAprendiz, 
-              as: 'detalle_aprendiz', 
-              include: [{ model: modeloEmpresa, as: 'empresa' }] 
-            }]
-          }]
-        }
-      ]
+    const { fecha_inicio, fecha_fin } = req.body;
+    const traslape = await modeloAgendamiento.findOne({
+      where: {
+        id_instructor: instructorId,
+        id_agendamiento: { [Op.ne]: id },
+        [Op.or]: [
+          { fecha_inicio: { [Op.lte]: fecha_inicio }, fecha_fin: { [Op.gt]: fecha_inicio } },
+          { fecha_inicio: { [Op.lt]: fecha_fin }, fecha_fin: { [Op.gte]: fecha_fin } },
+          { fecha_inicio: { [Op.gte]: fecha_inicio }, fecha_fin: { [Op.lte]: fecha_fin } }
+        ]
+      }
     });
+    if (traslape) {
+      return res.status(400).json({ mensaje: 'Ya tienes una visita en ese horario' });
+    }
 
-    res.json(actualizado);
+    await agendamiento.update(req.body);
+    res.json({ mensaje: 'Agendamiento actualizado correctamente' });
   } catch (error) {
-    console.error("Error al modificar el agendamiento:", error);
-    res.status(500).json({ mensaje: 'Error al modificar el agendamiento', error });
+    res.status(500).json({ mensaje: 'Error al modificar agendamiento', error });
   }
 };
 
@@ -310,10 +307,8 @@ exports.eliminarAgendamiento = async (req, res) => {
 
 exports.crearAgendamientoPorAdmin = async (req, res) => {
   try {
-    // 1️⃣ Tomamos el id del instructor desde la URL
     const idInstructor = parseInt(req.params.idInstructor, 10);
 
-    // 2️⃣ Campos esperados en el body
     const {
       id_ficha_aprendiz,
       herramienta_reunion,
@@ -324,7 +319,6 @@ exports.crearAgendamientoPorAdmin = async (req, res) => {
       numero_visita
     } = req.body;
 
-    // Validaciones
     if (
       !id_ficha_aprendiz ||
       !herramienta_reunion ||
@@ -337,36 +331,32 @@ exports.crearAgendamientoPorAdmin = async (req, res) => {
       return res.status(400).json({ mensaje: 'Todos los campos son obligatorios' });
     }
 
-    // Verificar existencia de ficha-aprendiz
     const fichaApr = await FichaAprendiz.findByPk(id_ficha_aprendiz);
     if (!fichaApr) {
       return res.status(404).json({ mensaje: 'FichaAprendiz no encontrada' });
     }
 
-    // Máximo 3 visitas
     const contador = await modeloAgendamiento.count({ where: { id_ficha_aprendiz } });
     if (contador >= 3) {
       return res.status(400).json({ mensaje: 'Ya tiene 3 visitas agendadas' });
     }
 
-    // Verificar traslapes
     const traslape = await modeloAgendamiento.findOne({
       where: {
-        id_ficha_aprendiz,
+        id_instructor: idInstructor,
         [Op.or]: [
           { fecha_inicio: { [Op.lte]: fecha_inicio }, fecha_fin: { [Op.gt]: fecha_inicio } },
-          { fecha_inicio: { [Op.lt]: fecha_fin },   fecha_fin: { [Op.gte]: fecha_fin } },
-          { fecha_inicio: { [Op.gte]: fecha_inicio }, fecha_fin: { [Op.lte]: fecha_fin } },
+          { fecha_inicio: { [Op.lt]: fecha_fin }, fecha_fin: { [Op.gte]: fecha_fin } },
+          { fecha_inicio: { [Op.gte]: fecha_inicio }, fecha_fin: { [Op.lte]: fecha_fin } }
         ]
       }
     });
     if (traslape) {
-      return res.status(400).json({ mensaje: 'Hay una visita en ese horario' });
+      return res.status(400).json({ mensaje: 'El instructor ya tiene una visita en ese horario' });
     }
 
-    // Crear
     const nuevo = await modeloAgendamiento.create({
-      id_instructor:      idInstructor,
+      id_instructor: idInstructor,
       id_ficha_aprendiz,
       herramienta_reunion,
       enlace_reunion,
@@ -393,63 +383,33 @@ exports.modificarAgendamientoAdmin = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permiso para modificar este agendamiento' });
     }
 
-    const agendamiento = await modeloAgendamiento.findOne({
-      where: { id_agendamiento: id },
-      include: [
-        { model: modeloUsuario, as: 'instructor' },
-        {
-          model: FichaAprendiz,
-          as: 'ficha_aprendiz',
-          include: [
-            {
-              model: modeloUsuario,
-              as: 'aprendiz',
-              include: [{
-                model: modeloAprendiz,
-                as: 'detalle_aprendiz',
-                include: [{ model: modeloEmpresa, as: 'empresa' }]
-              }]
-            }
-          ]
-        }
-      ]
-    });
-
+    const agendamiento = await modeloAgendamiento.findByPk(id);
     if (!agendamiento) {
       return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
     }
 
-    await agendamiento.update(req.body);
-
-    const actualizado = await modeloAgendamiento.findOne({
-      where: { id_agendamiento: id },
-      include: [
-        { model: modeloUsuario, as: 'instructor' },
-        {
-          model: FichaAprendiz,
-          as: 'ficha_aprendiz',
-          include: [
-            {
-              model: modeloUsuario,
-              as: 'aprendiz',
-              include: [{
-                model: modeloAprendiz,
-                as: 'detalle_aprendiz',
-                include: [{ model: modeloEmpresa, as: 'empresa' }]
-              }]
-            }
-          ]
-        }
-      ]
+    const { fecha_inicio, fecha_fin } = req.body;
+    const traslape = await modeloAgendamiento.findOne({
+      where: {
+        id_instructor: agendamiento.id_instructor,
+        id_agendamiento: { [Op.ne]: id },
+        [Op.or]: [
+          { fecha_inicio: { [Op.lte]: fecha_inicio }, fecha_fin: { [Op.gt]: fecha_inicio } },
+          { fecha_inicio: { [Op.lt]: fecha_fin }, fecha_fin: { [Op.gte]: fecha_fin } },
+          { fecha_inicio: { [Op.gte]: fecha_inicio }, fecha_fin: { [Op.lte]: fecha_fin } }
+        ]
+      }
     });
+    if (traslape) {
+      return res.status(400).json({ mensaje: 'El instructor ya tiene una visita en ese horario' });
+    }
 
-    res.json({ mensaje: 'Agendamiento actualizado correctamente', agendamiento: actualizado });
+    await agendamiento.update(req.body);
+    res.json({ mensaje: 'Agendamiento actualizado correctamente' });
   } catch (error) {
-    console.error("Error al modificar agendamiento por admin:", error);
     res.status(500).json({ mensaje: 'Error al modificar agendamiento', error });
   }
 };
-
 
 exports.eliminarAgendamientoAdmin = async (req, res) => {
   try {
@@ -491,5 +451,25 @@ exports.eliminarAgendamientoAdmin = async (req, res) => {
   } catch (error) {
     console.error("Error al eliminar agendamiento por admin:", error);
     res.status(500).json({ mensaje: 'Error al eliminar agendamiento', error });
+  }
+};
+
+
+exports.obtenerVisitasPorFichaAprendiz = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const visitas = await modeloAgendamiento.findAll({
+      where: { id_ficha_aprendiz: id },
+      attributes: ['numero_visita'],
+      order: [['numero_visita', 'ASC']]
+    });
+
+    const numeros = visitas.map(v => v.numero_visita);
+
+    res.json(numeros);
+  } catch (error) {
+    console.error("Error al obtener visitas:", error);
+    res.status(500).json({ mensaje: "Error al obtener visitas del aprendiz", error });
   }
 };
