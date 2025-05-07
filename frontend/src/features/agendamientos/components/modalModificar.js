@@ -1,22 +1,19 @@
 import { useState, useContext, useEffect } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  TextField,
-  MenuItem,
-  Button,
-  DialogActions,
-  IconButton,
-  Grid,
+  Dialog, DialogTitle, DialogContent, TextField, MenuItem, Button,
+  DialogActions, IconButton, Grid
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import moment from "moment";
-import { actualizarEvento } from "../../../api/AgendamientoAPI";
+import {
+  actualizarEvento,
+  actualizarEventoComoAdmin,
+  eliminarEvento,
+  eliminarEventoComoAdmin
+} from "../../../api/AgendamientoAPI";
 import EventosContext from "../../../context/eventosProvider";
 import CustomSnackbar from "../../../components/ui/Alert";
 import useAlert from "../../usuarios/hooks/UserAlert";
-import axiosInstance from "../../../api/AxiosInstance";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
 import { useAuth } from "../../../context/AuthProvider";
 
@@ -40,16 +37,15 @@ const textFieldStyle = {
 const ModalModificar = ({ open, onClose, evento }) => {
   const { alerta, closeAlert, showAlert } = useAlert();
   const { setEventos } = useContext(EventosContext);
-  const { user } = useAuth(); // ✅ Obtenemos el rol del usuario
-  const esAprendiz = user?.rol === "aprendiz" || user?.rol === "Aprendiz";
+  const { user } = useAuth();
+  const esAprendiz = user?.rol?.toLowerCase() === "aprendiz";
 
   const [formData, setFormData] = useState({
     nombreAprendiz: "",
-    telefonoAprendiz: "",
+    enlace: "",
     empresa: "",
     direccion: "",
     tipo: "",
-    enlace: "",
     start: "",
     end: "",
     estado: "",
@@ -62,7 +58,6 @@ const ModalModificar = ({ open, onClose, evento }) => {
     if (evento) {
       setFormData({
         nombreAprendiz: evento.nombreAprendiz || "",
-        telefonoAprendiz: evento.telefonoAprendiz || "",
         empresa: evento.nombreEmpresa || "",
         direccion: evento.direccion || "",
         tipo: evento.tipo_visita || "",
@@ -81,19 +76,30 @@ const ModalModificar = ({ open, onClose, evento }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      await actualizarEvento(evento.id, {
+      if (!evento?.id) throw new Error("No se pudo identificar el agendamiento.");
+
+      if (moment(formData.end).isBefore(moment(formData.start))) {
+        showAlert("La fecha de fin no puede ser anterior a la de inicio", "error");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
         fecha_inicio: formData.start,
         fecha_fin: formData.end,
         tipo_visita: formData.tipo,
         enlace_reunion: formData.enlace,
         estado_visita: formData.estado,
-      });
+      };
 
-      showAlert("¡Datos actualizados exitosamente!.", "success");
-      setTimeout(() => window.location.reload(), 2000);
+      const actualizar = user.rol === 'Administrador' ? actualizarEventoComoAdmin : actualizarEvento;
+      await actualizar(evento.id, payload);
+
+      showAlert("¡Datos actualizados exitosamente!", "success");
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error("Error al actualizar el evento:", error);
-      showAlert("¡Hubo un error al actualizar el agendamiento! Revisa los datos.", "error");
+      showAlert("Hubo un error al actualizar el agendamiento", "error");
     } finally {
       setLoading(false);
     }
@@ -103,13 +109,17 @@ const ModalModificar = ({ open, onClose, evento }) => {
 
   const handleConfirm = async () => {
     try {
-      await axiosInstance.delete(`/agendamiento/eliminar/${evento.id}`);
+      if (!evento?.id) throw new Error("No se pudo identificar el agendamiento.");
+
+      const eliminar = user.rol === 'Administrador' ? eliminarEventoComoAdmin : eliminarEvento;
+      await eliminar(evento.id);
+
       showAlert("¡Agendamiento eliminado correctamente!", "success");
       setShowConfirmationModal(false);
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
       console.error("Error al eliminar el agendamiento:", error);
-      showAlert("¡Hubo un error al eliminar el agendamiento!.", "error");
+      showAlert("Hubo un error al eliminar el agendamiento", "error");
     }
   };
 
@@ -123,22 +133,18 @@ const ModalModificar = ({ open, onClose, evento }) => {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent sx={{ height: "min-content" }}>
-          <Grid container spacing={2} sx={{ mt: -1 }}>
-            {[{ label: "Aprendiz", name: "nombreAprendiz" },
-              { label: "Teléfono", name: "telefonoAprendiz" },
-            ].map((field, i) => (
-              <Grid item xs={6} key={i}>
-                <TextField
-                  label={field.label}
-                  name={field.name}
-                  value={formData[field.name]}
-                  fullWidth
-                  sx={textFieldStyle}
-                  InputProps={{ readOnly: true }}
-                />
-              </Grid>
-            ))}
+        <DialogContent>
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TextField
+                label="Aprendiz"
+                name="nombreAprendiz"
+                value={formData.nombreAprendiz}
+                fullWidth
+                sx={textFieldStyle}
+                InputProps={{ readOnly: true }}
+              />
+            </Grid>
 
             <Grid item xs={6}>
               <TextField
@@ -151,8 +157,8 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 sx={textFieldStyle}
                 InputProps={esAprendiz ? { readOnly: true } : {}}
               >
-                <MenuItem value="virtual">virtual</MenuItem>
-                <MenuItem value="presencial">presencial</MenuItem>
+                <MenuItem value="virtual">Virtual</MenuItem>
+                <MenuItem value="presencial">Presencial</MenuItem>
               </TextField>
             </Grid>
 
@@ -207,9 +213,9 @@ const ModalModificar = ({ open, onClose, evento }) => {
                 sx={textFieldStyle}
                 InputProps={esAprendiz ? { readOnly: true } : {}}
               >
-                <MenuItem value="pendiente">pendiente</MenuItem>
-                <MenuItem value="realizado">realizado</MenuItem>
-                <MenuItem value="cancelado">cancelado</MenuItem>
+                <MenuItem value="pendiente">Pendiente</MenuItem>
+                <MenuItem value="realizado">Realizado</MenuItem>
+                <MenuItem value="cancelado">Cancelado</MenuItem>
               </TextField>
             </Grid>
           </Grid>

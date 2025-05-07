@@ -7,6 +7,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import {BorderColorOutlined, ContentCutOutlined, Add, Close} from '@mui/icons-material';
 import {
   Box,
@@ -26,7 +27,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  IconButton
+  IconButton,
+  InputAdornment // ✅ Agregado aquí
 } from '@mui/material';
 
 const FichaDetalle = () => {
@@ -35,7 +37,8 @@ const FichaDetalle = () => {
   const [aprendices, setAprendices] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [openUserModal, setOpenUserModal] = useState(false);
-
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [aprendizAEliminar, setAprendizAEliminar] = useState(null);
   
@@ -64,21 +67,16 @@ const FichaDetalle = () => {
   };
 
   const eliminarAprendiz = async () => {
-    try {
-      await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz`, {
-        data: {
-          id_usuario: aprendizAEliminar.id_usuario,
-          id_ficha: id,
-        },
-      });
-  
-      setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
-      setOpenConfirm(false);
-      setAprendizAEliminar(null);
-    } catch (error) {
-      console.error('❌ Error al eliminar el aprendiz:', error);
-    }
-  };
+  try {
+    await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz/${id}/${aprendizAEliminar.id_usuario}`);
+
+    setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
+    setOpenConfirm(false);
+    setAprendizAEliminar(null);
+  } catch (error) {
+    console.error('❌ Error al eliminar el aprendiz:', error);
+  }
+};
 
   // Funciones para el formulario de registro
   const handleOpenRegistroModal = () => {
@@ -111,21 +109,29 @@ const FichaDetalle = () => {
     try {
       setIsLoading(true);
       
+      // Validación adicional antes de enviar
+      if (nuevoAprendiz.numero_documento.length > 9) {
+        alert('El número de documento no puede exceder los 9 dígitos.');
+        setIsLoading(false);
+        return;
+      }
+      
       // Paso 1: Registrar el aprendiz
       const response = await axios.post('http://localhost:3000/usuarios/registroAprendiz', {
         ...nuevoAprendiz,
-        password: nuevoAprendiz.numero_documento, // Usar "password" como espera el controlador
+        password: password || nuevoAprendiz.numero_documento, // Usar la contraseña ingresada o el número de documento como fallback
         rol: 'aprendiz',
-        numero_ficha: fichas.numero_ficha // Agregar este campo que es obligatorio en el controlador
+        numero_ficha: fichas.numero_ficha 
       });
       
       if (response.data && response.data.aprendiz) {
         const aprendizRegistrado = response.data.aprendiz;
         
-        // Ya no es necesario hacer la asociación manual, el controlador ya lo hace
-        
         // Actualizar la lista de aprendices en la UI
         setAprendices([...aprendices, aprendizRegistrado]);
+        
+        // Mostrar mensaje de éxito con las credenciales
+        alert(`Aprendiz registrado exitosamente`);
         
         handleCloseRegistroModal();
       }
@@ -155,6 +161,8 @@ const FichaDetalle = () => {
   if (!fichas) {
     return <Typography sx={{ mt: 4 }}>Cargando...</Typography>;
   }
+
+  
 
   return (
 <Box
@@ -333,7 +341,8 @@ const FichaDetalle = () => {
             </IconButton>
           </Box>
           
-          <form onSubmit={handleRegistrarAprendiz}>
+          <form onSubmit={handleRegistrarAprendiz} >
+            
             <TextField
               fullWidth
               margin="normal"
@@ -372,18 +381,35 @@ const FichaDetalle = () => {
                 <MenuItem value="PAS">Pasaporte</MenuItem>
               </Select>
             </FormControl>
+
             <TextField
-              fullWidth
-              margin="normal"
-              label="Número de Documento"
-              name="numero_documento"
-              value={nuevoAprendiz.numero_documento}
-              onChange={handleInputChange}
-              required
-              variant="outlined"
-              size="small"
-            />
+  fullWidth
+  margin="normal"
+  label="Número de Documento"
+  name="numero_documento"
+  value={nuevoAprendiz.numero_documento}
+  onChange={(e) => {
+    const value = e.target.value;
+    // Limitamos a máximo 9 dígitos para evitar error de rango en la base de datos
+    if (/^\d{0,9}$/.test(value)) { 
+      handleInputChange(e);
+    }
+  }}
+  inputProps={{
+    minLength: 5,
+    maxLength: 9, // Cambiado de 10 a 9
+    inputMode: 'numeric',
+    pattern: '[0-9]*',
+  }}
+  required
+  variant="outlined"
+  size="small"
+  helperText="Máximo 9 dígitos numéricos"
+/>
+            
                           <TextField
+
+                          
               fullWidth
               margin="normal"
               label="Correo Electrónico"
@@ -395,6 +421,32 @@ const FichaDetalle = () => {
               variant="outlined"
               size="small"
             />
+            <TextField
+            label="Contraseña"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            fullWidth
+            required
+            margin="normal"
+            variant="outlined"
+            inputProps={{
+              pattern: "(?=.*[0-9])(?=.*[A-Z]).{8,}",
+              title: "Mínimo 8 caracteres, al menos un número, una mayúscula"
+            }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
             <TextField
               fullWidth
               margin="normal"

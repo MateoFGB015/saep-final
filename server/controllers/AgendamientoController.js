@@ -384,3 +384,112 @@ exports.crearAgendamientoPorAdmin = async (req, res) => {
   }
 };
 
+exports.modificarAgendamientoAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuario = req.usuario;
+
+    if (usuario.rol !== 'Administrador') {
+      return res.status(403).json({ mensaje: 'No tienes permiso para modificar este agendamiento' });
+    }
+
+    const agendamiento = await modeloAgendamiento.findOne({
+      where: { id_agendamiento: id },
+      include: [
+        { model: modeloUsuario, as: 'instructor' },
+        {
+          model: FichaAprendiz,
+          as: 'ficha_aprendiz',
+          include: [
+            {
+              model: modeloUsuario,
+              as: 'aprendiz',
+              include: [{
+                model: modeloAprendiz,
+                as: 'detalle_aprendiz',
+                include: [{ model: modeloEmpresa, as: 'empresa' }]
+              }]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!agendamiento) {
+      return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
+    }
+
+    await agendamiento.update(req.body);
+
+    const actualizado = await modeloAgendamiento.findOne({
+      where: { id_agendamiento: id },
+      include: [
+        { model: modeloUsuario, as: 'instructor' },
+        {
+          model: FichaAprendiz,
+          as: 'ficha_aprendiz',
+          include: [
+            {
+              model: modeloUsuario,
+              as: 'aprendiz',
+              include: [{
+                model: modeloAprendiz,
+                as: 'detalle_aprendiz',
+                include: [{ model: modeloEmpresa, as: 'empresa' }]
+              }]
+            }
+          ]
+        }
+      ]
+    });
+
+    res.json({ mensaje: 'Agendamiento actualizado correctamente', agendamiento: actualizado });
+  } catch (error) {
+    console.error("Error al modificar agendamiento por admin:", error);
+    res.status(500).json({ mensaje: 'Error al modificar agendamiento', error });
+  }
+};
+
+
+exports.eliminarAgendamientoAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const usuario = req.usuario;
+
+    if (usuario.rol !== 'Administrador') {
+      return res.status(403).json({ mensaje: 'No tienes permiso para eliminar este agendamiento' });
+    }
+
+    const agendamiento = await modeloAgendamiento.findOne({
+      where: { id_agendamiento: id },
+      include: [
+        { model: modeloUsuario, as: 'instructor' },
+        {
+          model: FichaAprendiz,
+          as: 'ficha_aprendiz',
+          include: [
+            {
+              model: modeloUsuario,
+              as: 'aprendiz',
+              include: [{
+                model: modeloAprendiz,
+                as: 'detalle_aprendiz',
+                include: [{ model: modeloEmpresa, as: 'empresa' }]
+              }]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!agendamiento) {
+      return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
+    }
+
+    await agendamiento.destroy();
+    res.json({ mensaje: 'Agendamiento eliminado correctamente' });
+  } catch (error) {
+    console.error("Error al eliminar agendamiento por admin:", error);
+    res.status(500).json({ mensaje: 'Error al eliminar agendamiento', error });
+  }
+};

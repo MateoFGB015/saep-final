@@ -385,6 +385,7 @@ const BitacoraDocumentosApp = () => {
           <Tab label="Documento de certificación" />
         </Tabs>
       </Paper>
+      <br></br>
 
       {loading && !modalOpen ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>

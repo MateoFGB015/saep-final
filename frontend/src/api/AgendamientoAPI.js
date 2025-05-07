@@ -152,3 +152,26 @@ export const crearEventoComoAdmin = async (idInstructor, nuevoEvento) => {
       throw error;
     }
   };
+
+// 🔸 Modificar agendamiento como administrador
+export const actualizarEventoComoAdmin = async (id, datosActualizados) => {
+  try {
+    const { data } = await axiosInstance.put(`/agendamiento/admin/modificar/${id}`, datosActualizados);
+    return data;
+  } catch (error) {
+    console.error("Error al actualizar evento como administrador:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// 🔸 Eliminar agendamiento como administrador
+export const eliminarEventoComoAdmin = async (id) => {
+  try {
+    const { data } = await axiosInstance.delete(`/agendamiento/admin/eliminar/${id}`);
+    return data;
+  } catch (error) {
+    console.error("Error al eliminar evento como administrador:", error.response?.data || error.message);
+    throw error;
+  }
+};
+

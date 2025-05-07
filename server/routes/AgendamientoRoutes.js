@@ -31,4 +31,10 @@ router.get('/aprendiz', authMiddleware, agendamientoController.obtenerAgendamien
 //obtener agendamientos de un instructor por id
 router.get('/instructor/:id', authMiddleware, agendamientoController.obtenerAgendamientosPorInstructor);
 
+//Modificar agendamiento como admin
+router.put('/admin/modificar/:id', authMiddleware, agendamientoController.modificarAgendamientoAdmin);
+
+// eliminar un agendamiento como admin
+router.delete('/admin/eliminar/:id', authMiddleware, agendamientoController.eliminarAgendamientoAdmin);
+
 module.exports = router;
