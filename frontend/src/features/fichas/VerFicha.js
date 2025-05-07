@@ -204,13 +204,13 @@ const FichaDetalle = () => {
   onClick={() => generarReporteFicha(fichas, aprendices)}
         variant="contained"
         sx={{
-          backgroundColor: '#792382',  // morado similar al de la imagen
-          borderRadius: '20px',        // bordes redondeados
-          textTransform: 'none',       // evitar mayúsculas automáticas
+          backgroundColor: '#792382',  
+          borderRadius: '20px',        
+          textTransform: 'none',      
           fontWeight: 'bold',
           padding: '6px 16px',
           '&:hover': {
-            backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+            backgroundColor: '#5e1b65', 
           },
         }}
       >
