@@ -31,7 +31,7 @@ const ListaInstructores = () => {
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h5" gutterBottom>
-        Lista de Instructores
+        Instructores
       </Typography>
       <TableContainer component={Paper}>
         <Table>

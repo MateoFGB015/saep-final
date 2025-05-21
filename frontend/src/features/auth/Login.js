@@ -17,6 +17,7 @@ import { Email, Lock } from "@mui/icons-material";
 import { useAuthActions } from "../../api/useAuthActions";
 import backgroundImage from "../../assets/imgs/confeccion.jpg";
 import sideImage from "../../assets/imgs/confeccion.jpg";
+// import logo from "../../assets/imgs/logoSena.png";
 
 const IniciarSesion = () => {
   const { login } = useAuthActions();
