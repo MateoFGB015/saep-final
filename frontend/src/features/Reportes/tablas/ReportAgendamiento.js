@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useAuth } from '../../../context/AuthProvider'; // Asegúrate de que la ruta es correcta
+import { useAuth } from '../../../context/AuthProvider';
+import { generarPDF_Agendamientos } from "../pdfs/reporteAgendamiento";
+
+import { useParams } from 'react-router-dom';
 
 import {
   Box,
@@ -19,6 +22,7 @@ import {
 
 const ReporteAgendamientos = () => {
   const { user } = useAuth();
+  const { idInstructor } = useParams(); // <- viene desde la URL
   const [data, setData] = useState([]);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
@@ -34,11 +38,13 @@ const ReporteAgendamientos = () => {
 
     try {
       const token = localStorage.getItem('token');
-
       let url = `${API_URL}/reportes/agendamientos`;
 
       if (user?.rol === 'Administrador') {
-        const idInstructor = user.id; // o puedes reemplazar esto por el ID seleccionado si lo deseas
+        if (!idInstructor) {
+          alert("No se encontró el ID del instructor seleccionado.");
+          return;
+        }
         url += `/${idInstructor}`;
       }
 
@@ -51,11 +57,32 @@ const ReporteAgendamientos = () => {
       setReporteGenerado(true);
     } catch (error) {
       console.error('Error al obtener los agendamientos:', error);
+      alert("Ocurrió un error al generar el reporte.");
     }
+  };
+  const generarPDF = () => {
+    generarPDF_Agendamientos(data, { fechaInicio, fechaFin });
   };
 
   return (
-    <Box sx={{ p: 4, backgroundColor: 'white', borderRadius: 2, boxShadow: 3 }}>
+    <Box
+  sx={{
+    maxHeight: '80vh',
+    overflowY: 'auto',
+    p: 2,
+    backgroundColor: 'white',
+    borderRadius: 2,
+    boxShadow: 3,
+    scrollbarWidth: 'thin',
+    '&::-webkit-scrollbar': {
+      width: '6px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#ccc',
+      borderRadius: '10px',
+    },
+  }}
+> {     <Box sx={{ p: 4, backgroundColor: 'white', borderRadius: 2, boxShadow: 3 }}>
       <Typography variant="h6" textAlign="center" fontWeight="bold" mb={2}>
         Reporte de agendamientos por rango de fechas
       </Typography>
@@ -133,9 +160,32 @@ const ReporteAgendamientos = () => {
           <Typography textAlign="center" mt={3} color="gray">
             Fecha de creación del reporte: {new Date().toLocaleDateString()}
           </Typography>
+
+          <Button
+          onClick={generarPDF}
+         variant="outlined"
+         sx={{
+          ml: 2,
+          borderRadius: '20px',
+          textTransform: 'none',
+          px: 3,
+          py: 1.5,
+         color: '#71277a', // color del texto
+         borderColor: '#71277a', // color del borde
+        '&:hover': {
+         backgroundColor: '#f3e5f5',
+         borderColor: '#5a1e61',
+         color: '#5a1e61'
+         }
+        }}
+         disabled={!reporteGenerado}
+        >
+          Descargar PDF
+         </Button>
         </>
       )}
-    </Box>
+    </Box> }
+</Box>
   );
 };
 

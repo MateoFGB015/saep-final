@@ -32,7 +32,7 @@ import BitacoraDocumentosApp from "./features/Seguimiento/seguimientoAprendiz";
 
 // 🔹 Reportes 
 import ReporteAprendiz from "./features/Reportes/tablas/ReportAprendiz";
-// import ReporteAgendamientos from './features/Reportes/tablas/ReportAgendamiento';
+import ReporteAgendamientos from './features/Reportes/tablas/ReportAgendamiento';
 import ReporteGFPI from './features/Reportes/tablas/ReportGFPI';
 
 
@@ -100,7 +100,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-               {/* <Route path="/reportes/agendamientos" element={<ProtectedRoute allowedRoles={['Administrador', 'Instructor']}> <ReporteAgendamientos /> </ProtectedRoute>} /> */}
+               <Route path="/reporte/agendamientos/:idInstructor" element={<ProtectedRoute allowedRoles={['Administrador']}> <ReporteAgendamientos /> </ProtectedRoute>} />
+               <Route path="/reporte/agendamientos/" element={<ProtectedRoute allowedRoles={['Instructor']}> <ReporteAgendamientos /> </ProtectedRoute>} />
+
 
                      <Route
                       path="/seguimiento"

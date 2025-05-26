@@ -4,6 +4,7 @@ import UserInfoModal from '../../components/ui/UserInfoModal';
 import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
@@ -111,10 +112,16 @@ const FichaDetalle = () => {
       
       // Validación adicional antes de enviar
       if (nuevoAprendiz.numero_documento.length > 9) {
-        alert('El número de documento no puede exceder los 9 dígitos.');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Número de documento inválido',
+          text: 'El número de documento no puede exceder los 9 dígitos.',
+          confirmButtonColor: '#71277a'
+        });
         setIsLoading(false);
         return;
       }
+      
       
       // Paso 1: Registrar el aprendiz
       const response = await axios.post('http://localhost:3000/usuarios/registroAprendiz', {
@@ -131,14 +138,24 @@ const FichaDetalle = () => {
         setAprendices([...aprendices, aprendizRegistrado]);
         
         // Mostrar mensaje de éxito con las credenciales
-        alert(`Aprendiz registrado exitosamente`);
+        Swal.fire({
+          icon: 'success',
+          title: '¡Registro exitoso!',
+          text: `Aprendiz registrado exitosamente`,
+          confirmButtonColor: '#71277a'
+        });
         
         handleCloseRegistroModal();
       }
     } catch (error) {
       console.error('❌ Error al registrar el aprendiz:', error);
       console.error('Detalles del error:', error.response?.data || error.message);
-      alert('Error al registrar el aprendiz: ' + (error.response?.data?.mensaje || error.message));
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al registrar',
+        text: error.response?.data?.mensaje || error.message,
+        confirmButtonColor: '#71277a'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -187,13 +204,13 @@ const FichaDetalle = () => {
   onClick={() => generarReporteFicha(fichas, aprendices)}
         variant="contained"
         sx={{
-          backgroundColor: '#792382',  // morado similar al de la imagen
-          borderRadius: '20px',        // bordes redondeados
-          textTransform: 'none',       // evitar mayúsculas automáticas
+          backgroundColor: '#792382',  
+          borderRadius: '20px',        
+          textTransform: 'none',      
           fontWeight: 'bold',
           padding: '6px 16px',
           '&:hover': {
-            backgroundColor: '#5e1b65', // tono más oscuro al pasar mouse
+            backgroundColor: '#5e1b65', 
           },
         }}
       >
@@ -391,20 +408,20 @@ const FichaDetalle = () => {
   onChange={(e) => {
     const value = e.target.value;
     // Limitamos a máximo 9 dígitos para evitar error de rango en la base de datos
-    if (/^\d{0,9}$/.test(value)) { 
+    if (/^\d{0,11}$/.test(value)) { 
       handleInputChange(e);
     }
   }}
   inputProps={{
     minLength: 5,
-    maxLength: 9, // Cambiado de 10 a 9
+    maxLength: 11, // Cambiado de 10 a 11
     inputMode: 'numeric',
     pattern: '[0-9]*',
   }}
   required
   variant="outlined"
   size="small"
-  helperText="Máximo 9 dígitos numéricos"
+  helperText="Máximo 11 dígitos numéricos"
 />
             
                           <TextField

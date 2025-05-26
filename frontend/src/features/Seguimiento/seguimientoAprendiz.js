@@ -797,38 +797,41 @@ const BitacoraDocumentosApp = () => {
       )}
 
       {/* SpeedDial con acciones */}
-      <SpeedDial
-        ariaLabel="Acciones"
+      {userRole === 'aprendiz' && (
+  <SpeedDial
+    ariaLabel="Acciones"
+    sx={{
+      position: 'fixed',
+      bottom: 32,
+      right: 32,
+      '& .MuiFab-primary': {
+        backgroundColor: '#6a1b9a',
+        color: 'white',
+        '&:hover': {
+          backgroundColor: '#4a0072'
+        }
+      }
+    }}
+    icon={<SpeedDialIcon />}
+  >
+    {actions.map((action) => (
+      <SpeedDialAction
+        key={action.name}
+        icon={action.icon}
+        tooltipTitle={action.name}
+        onClick={() => handleOpenModal(action.name)}
         sx={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-          '& .MuiFab-primary': {
-            backgroundColor: '#6a1b9a',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#4a0072'
-            }
+          backgroundColor: '#6a1b9a',
+          color: 'white',
+          '&:hover': {
+            backgroundColor: '#4a0072'
           }
         }}
-        icon={<SpeedDialIcon />}
-      >
-        {actions.map((action) => (
-          <SpeedDialAction
-            key={action.name}
-            icon={action.icon}
-            tooltipTitle={action.name}
-            onClick={() => handleOpenModal(action.name)}
-            sx={{
-              backgroundColor: '#6a1b9a',
-              color: 'white',
-              '&:hover': {
-                backgroundColor: '#4a0072'
-              }
-            }}
-          />
-        ))}
-      </SpeedDial>
+      />
+    ))}
+  </SpeedDial>
+)}
+
 
       {/* Modal para subir archivos */}
       <Dialog
