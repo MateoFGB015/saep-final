@@ -408,20 +408,20 @@ const FichaDetalle = () => {
   onChange={(e) => {
     const value = e.target.value;
     // Limitamos a máximo 9 dígitos para evitar error de rango en la base de datos
-    if (/^\d{0,9}$/.test(value)) { 
+    if (/^\d{0,11}$/.test(value)) { 
       handleInputChange(e);
     }
   }}
   inputProps={{
     minLength: 5,
-    maxLength: 9, // Cambiado de 10 a 9
+    maxLength: 11, // Cambiado de 10 a 11
     inputMode: 'numeric',
     pattern: '[0-9]*',
   }}
   required
   variant="outlined"
   size="small"
-  helperText="Máximo 9 dígitos numéricos"
+  helperText="Máximo 11 dígitos numéricos"
 />
             
                           <TextField

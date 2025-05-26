@@ -22,8 +22,19 @@ exports.subirBitacora = async (req, res) => {
     const id_ficha_aprendiz = relacion.id_ficha_aprendiz;
 
     // Calcular número de bitácora
-    const cantidad = await Bitacora.count({ where: { id_ficha_aprendiz } });
-    const numero_bitacora = cantidad + 1;
+    const existentes = await Bitacora.findAll({
+      where: { id_ficha_aprendiz },
+      attributes: ['numero_bitacora'],
+      order: [['numero_bitacora', 'ASC']]
+    });
+    
+    let numero_bitacora = 1;
+    for (let i = 0; i < existentes.length; i++) {
+      if (existentes[i].numero_bitacora !== numero_bitacora) {
+        break; // Encontramos el primer hueco
+      }
+      numero_bitacora++;
+    }
 
     // Validar que haya archivo
     if (!req.file) {
