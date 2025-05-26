@@ -14,9 +14,11 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { Email, Lock } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthActions } from "../../api/useAuthActions";
-import backgroundImage from "../../assets/imgs/confeccion.jpg";
-import sideImage from "../../assets/imgs/confeccion.jpg";
+import backgroundImage from "../../assets/imgs/Portada3.jpg";
+import sideImage from "../../assets/imgs/Portada3.jpg";
+import saepLogo from "../../assets/imgs/SAEP2.png";
 
 const IniciarSesion = () => {
   const { login } = useAuthActions();
@@ -24,6 +26,7 @@ const IniciarSesion = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -81,9 +84,17 @@ const IniciarSesion = () => {
             backgroundColor: "rgba(255, 255, 255, 0.9)",
           }}
         >
-          <Typography variant="h4" fontWeight="bold" gutterBottom textAlign="center">
+
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
+            textAlign="center"
+            sx={{ fontFamily: "'Palatino Linotype', 'Book Antiqua', Palatino, serif" }}
+          >
             Iniciar Sesión
           </Typography>
+
 
           <form onSubmit={handleSubmit}>
           <TextField
@@ -122,41 +133,39 @@ const IniciarSesion = () => {
         }}
         />
 
-
-
             <TextField
-              fullWidth
-              margin="normal"
-              label="Contraseña"
-              type="password"
-              variant="outlined"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Lock color="action" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                "& label": { color: "gray" },
-                "& label.Mui-focused": { color: "#71277a" },
-                "& .MuiOutlinedInput-root": {
+            fullWidth
+            margin="normal"
+            label="Contraseña"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end" sx={{ cursor: "pointer" }} onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& label": { color: "gray" },
+              "& label.Mui-focused": { color: "#71277a" },
+              "& .MuiOutlinedInput-root": {
                 "& fieldset": { borderColor: "lightgray" },
                 "&:hover fieldset": { borderColor: "lightgray" },
                 "&.Mui-focused fieldset": { borderColor: "#71277a" },
                 backgroundColor: "white !important",
               },
-                "& input": {
+              "& input": {
                 backgroundColor: "white !important",
                 color: "black",
                 caretColor: "#71277a",
                 WebkitBoxShadow: "0 0 0px 1000px white inset !important",
-                },
-              }}
-              />
+              },
+            }}
+          />
 
             {error && (
               <Typography color="error" sx={{ mt: 1 }}>
@@ -176,12 +185,13 @@ const IniciarSesion = () => {
               type="submit"
               disabled={loading}
               sx={{
-                mb:-2,
-                mt: 4,
-                borderRadius: "8px",
-                height: "45px",
-                bgcolor: "#71277a",
-                "&:hover": { bgcolor: "#5a1f63" },
+               mb: -2,
+              mt: 4,
+              borderRadius: "8px",
+              height: "45px",
+              bgcolor: "#71277a",
+              transition: "background-color 0.3s ease",
+              "&:hover": { bgcolor: "#5a1f63" },
               }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : "INGRESAR"}
@@ -189,20 +199,35 @@ const IniciarSesion = () => {
           </form>
         </Paper>
       </Grid>
-      <Grid
-        item
-        xs={12}
-        md={6}
-        sx={{
-          display: { xs: "none", md: "block" },
-          backgroundImage: `linear-gradient(to right, rgba(113, 39, 122, 0.9) 40%, rgba(113, 39, 122, 0.75) 60%, rgba(113, 39, 122, 0.6) 90%), url(${sideImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          borderTopLeftRadius: "50px",
-          borderBottomLeftRadius: "50px",
-        }}
-      />
-    </Grid>
+       <Grid
+    item
+    xs={12}
+    md={6}
+    sx={{
+      display: { xs: "none", md: "block" },
+      backgroundImage: `linear-gradient(to left, rgba(113, 39, 122, 0.6), rgba(0,0,0,0.4)), url(${backgroundImage})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      borderTopLeftRadius: "50px",
+      borderBottomLeftRadius: "50px",
+    }}
+  />
+
+  <Box
+  component="img"
+  src={saepLogo}
+  alt="Logo SAEP"
+  sx={{
+    position: "fixed",
+    bottom: 16,
+    right: 16,
+    width: { xs: "150px", sm: "150px" },
+    zIndex: 1,
+  }}
+/>
+
+
+</Grid>
   );
 };
 

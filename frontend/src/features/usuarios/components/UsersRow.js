@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { TableRow, TableCell, IconButton } from "@mui/material";
 import { EditNote, ContentCutOutlined } from "@mui/icons-material";
+import BorderColorOutlinedIcon from '@mui/icons-material/BorderColorOutlined';
 import usersAPI from "../../../api/UsersAPI";
 import useAlert from "../hooks/UserAlert";
 import CustomSnackbar from "../../../components/ui/Alert";
@@ -49,7 +50,7 @@ const UserRow = ({ usuario, onEdit, onDelete }) => {
         <TableCell sx={{ padding: "6px", textAlign: "center" }}>{usuario.numero_documento}</TableCell>
         <TableCell align="center" sx={{ padding: "6px" }}>
           <IconButton onClick={() => onEdit(usuario)} sx={{ color: "#71277a" }}>
-            <EditNote sx={{ fontSize: 26 }} />
+            <BorderColorOutlinedIcon sx={{ fontSize: 30, backgroundColor: "#71277a",p: 1, color: "white",borderRadius: "5px" }} />
           </IconButton>
           <IconButton size="small" onClick={() => setOpenConfirm(true)} sx={{ color: "red"}}>
             <ContentCutOutlined sx={{backgroundColor:"red", p:1,fontSize:"30px",color:"white",borderRadius:"5px"}}></ContentCutOutlined>
