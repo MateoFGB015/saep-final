@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
   Box,
   IconButton,
   Button,
+  useMediaQuery,
 } from "@mui/material";
 import {
   FirstPage,
@@ -19,9 +20,30 @@ import {
 } from "@mui/icons-material";
 import UserRow from "./UsersRow";
 
+const useResponsiveRows = () => {
+  const [rowsPerPage, setRowsPerPage] = useState(getRowsPerPage());
+
+  function getRowsPerPage() {
+    const width = window.innerWidth;
+    return width >= 1400 ? 10 : 5;
+  }
+
+  useEffect(() => {
+    const updateRows = () => {
+      setRowsPerPage(getRowsPerPage());
+    };
+
+    window.addEventListener("resize", updateRows);
+    return () => window.removeEventListener("resize", updateRows);
+  }, []);
+
+  return rowsPerPage;
+};
+
 const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage }) => {
-  const rowsPerPage = 5;
+  const rowsPerPage = useResponsiveRows();
   const totalPages = Math.ceil(usuarios.length / rowsPerPage);
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   const visibleRows = usuarios.slice(
     currentPage * rowsPerPage,
@@ -30,12 +52,6 @@ const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage })
 
   const handleChangePage = (event, newPage) => {
     setCurrentPage(newPage);
-  };
-
-  const handleDeleteUser = (idUsuario) => {
-    if (onDelete) {
-      onDelete(idUsuario);
-    }
   };
 
   const renderPageNumbers = () => {
@@ -76,46 +92,49 @@ const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage })
 
   return (
     <>
-      <Paper
-        elevation={4}
-        sx={{
-          borderRadius: 4,
-          border: "1px solid #ddd",
-          overflow: "hidden",
-        }}
-      >
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: "#f0f0f0" }}>
-                <TableCell sx={headerStyle}>Nombre</TableCell>
-                <TableCell sx={headerStyle}>Apellido</TableCell>
-                <TableCell sx={headerStyle}>Rol</TableCell>
-                <TableCell sx={headerStyle}>N° Documento</TableCell>
-                <TableCell sx={headerStyle}>Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {visibleRows.map((usuario, index) => (
-                <UserRow
-                  key={usuario.id_usuario}
-                  usuario={usuario}
-                  onEdit={onEdit}
-                  onDelete={handleDeleteUser}
-                  sx={{
-                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
-                    "&:hover": {
-                      backgroundColor: "#f0f0f0",
-                    },
-                  }}
-                />
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+      <Paper elevation={4} sx={{ borderRadius: 2, border: "1px solid #ddd", overflow: "hidden" }}>
+        {isMobile ? (
+          // Vista tipo tarjeta para celular
+          <Box p={2}>
+            {visibleRows.map((usuario, index) => (
+              <UserRow
+                key={usuario.id_usuario}
+                usuario={usuario}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                isMobile
+              />
+            ))}
+          </Box>
+        ) : (
+          // Vista tabla para pantallas más grandes
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ bgcolor: "#f0f0f0" }}>
+                  <TableCell sx={headerStyle}>Nombre</TableCell>
+                  <TableCell sx={headerStyle}>Apellido</TableCell>
+                  <TableCell sx={headerStyle}>Rol</TableCell>
+                  <TableCell sx={headerStyle}>N° Documento</TableCell>
+                  <TableCell sx={headerStyle}>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {visibleRows.map((usuario, index) => (
+                  <UserRow
+                    key={usuario.id_usuario}
+                    usuario={usuario}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
-      {/* Paginación afuera de la tabla */}
+      {/* Paginación */}
       <Box
         sx={{
           mt: 2,

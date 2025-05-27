@@ -16,15 +16,10 @@ import {
 import { Email, Lock } from "@mui/icons-material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useAuthActions } from "../../api/useAuthActions";
-<<<<<<< HEAD
 import backgroundImage from "../../assets/imgs/Portada3.jpg";
 import sideImage from "../../assets/imgs/Portada3.jpg";
 import saepLogo from "../../assets/imgs/SAEP2.png";
-=======
-import backgroundImage from "../../assets/imgs/confeccion.jpg";
-import sideImage from "../../assets/imgs/confeccion.jpg";
-// import logo from "../../assets/imgs/logoSena.png";
->>>>>>> 70903256827b5d1f40a1d67234404124d3b3f1c9
+
 
 const IniciarSesion = () => {
   const { login } = useAuthActions();
