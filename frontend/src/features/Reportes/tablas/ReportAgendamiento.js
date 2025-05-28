@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useAuth } from '../../../context/AuthProvider';
 import { generarPDF_Agendamientos } from "../pdfs/reporteAgendamiento";
 
+
+
 import { useParams } from 'react-router-dom';
 
 import {
@@ -28,7 +30,8 @@ const ReporteAgendamientos = () => {
   const [fechaFin, setFechaFin] = useState('');
   const [reporteGenerado, setReporteGenerado] = useState(false);
 
-  const API_URL = 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 
   const fetchAgendamientos = async () => {
     if (!fechaInicio || !fechaFin) {

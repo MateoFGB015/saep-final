@@ -7,7 +7,7 @@ const Observacion = require('./observacion');
 const Documento = require('./Documento');
 const Empresa = require('./Empresa');
 const Aprendiz = require('./Aprendiz');
-
+const Notificacion = require('./Notificaciones');
 
 // ⁡⁢⁢⁣​‌‌‍𝘙͟𝘦͟𝘭͟𝘢͟𝘤͟𝘪͟ó͟𝘯 𝘮͟𝘶͟𝘤͟𝘩͟𝘰͟𝘴 ͟𝘢 𝘮͟𝘶͟𝘤͟𝘩͟𝘰͟𝘴 𝘦͟𝘯͟𝘵͟𝘳͟𝘦 𝘜͟𝘴͟𝘶͟𝘢͟𝘳͟𝘪͟𝘰 ͟𝘺 𝘍͟𝘪͟𝘤͟𝘩͟𝘢​⁡
 Usuario.belongsToMany(Ficha, {
@@ -142,5 +142,17 @@ Documento.belongsTo(FichaAprendiz, {
   as: 'fichaAprendiz'
 });
 
+// Relacion Notificaciones
+Usuario.hasMany(Notificacion, {
+  foreignKey: 'id_usuario',
+  as: 'notificaciones'
+});
 
-module.exports = { Usuario, Ficha, Agendamiento,FichaAprendiz, Bitacora, Observacion, Documento };
+Notificacion.belongsTo(Usuario, {
+  foreignKey: 'id_usuario',
+  as: 'usuario'
+});
+
+
+
+module.exports = { Usuario, Ficha, Agendamiento,FichaAprendiz, Bitacora, Observacion, Documento, Notificacion, Empresa, Aprendiz };

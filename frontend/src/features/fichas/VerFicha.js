@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom';
 import { generarReporteFicha } from '../Reportes/pdfs/reporteFicha';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+
 import {BorderColorOutlined, ContentCutOutlined, Add, Close} from '@mui/icons-material';
 import {
   Box,
@@ -31,6 +32,7 @@ import {
   IconButton,
   InputAdornment // ✅ Agregado aquí
 } from '@mui/material';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 const FichaDetalle = () => {
   const { id } = useParams();
@@ -69,7 +71,7 @@ const FichaDetalle = () => {
 
   const eliminarAprendiz = async () => {
   try {
-    await axios.delete(`http://localhost:3000/fichasAprendiz/eliminar_aprendiz/${id}/${aprendizAEliminar.id_usuario}`);
+    await axios.delete(`${API_URL}/fichasAprendiz/eliminar_aprendiz/${id}/${aprendizAEliminar.id_usuario}`);
 
     setAprendices(aprendices.filter(a => a.id_usuario !== aprendizAEliminar.id_usuario));
     setOpenConfirm(false);
@@ -124,7 +126,7 @@ const FichaDetalle = () => {
       
       
       // Paso 1: Registrar el aprendiz
-      const response = await axios.post('http://localhost:3000/usuarios/registroAprendiz', {
+      const response = await axios.post(`${API_URL}/usuarios/registroAprendiz`, {
         ...nuevoAprendiz,
         password: password || nuevoAprendiz.numero_documento, // Usar la contraseña ingresada o el número de documento como fallback
         rol: 'aprendiz',
@@ -164,7 +166,7 @@ const FichaDetalle = () => {
   useEffect(() => {
     const obtenerFicha = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/fichas/ver/${id}`);
+        const response = await axios.get(`${API_URL}/fichas/ver/${id}`);
         setFicha(response.data.ficha);
         setAprendices(response.data.aprendices);
       } catch (error) {

@@ -22,7 +22,8 @@ const ReportAprendiz = () => {
   const { id } = useParams();
   const [data, setData] = useState(null);
 
-  const API_URL = 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 
   useEffect(() => {
     const fetchReporte = async () => {

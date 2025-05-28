@@ -4,6 +4,10 @@ import { AuthProvider } from "./context/AuthProvider";
 import { EventosProvider } from "./context/eventosProvider";
 import ProtectedRoute from "./components/ProtectedRouter";
 
+// import './index.css'; 
+// import { ThemeProvider } from "@mui/material/styles";
+// import theme from "./styles/theme"; // Importar el tema
+
 // 🔹 Páginas login
 import IniciarSesion from "./features/auth/Login";
 import SolicitarRestablecimiento from "./features/auth/RecuperarContrasenia";
@@ -41,18 +45,17 @@ import FormularioAprendiz from "./features/Registro/Aprendiz";
 
 function App() {
   return (
+    // <ThemeProvider theme={theme}>
     <AuthProvider>
       <EventosProvider>
-        <Router>
+        <Router >
           <Routes>
             {/* Rutas públicas */}
             <Route path="/" element={<IniciarSesion />} />
             <Route path="/solicitar-restablecimiento" element={<SolicitarRestablecimiento />} />
             <Route path="/restablecer-contrasenia/:token" element={<RestablecerContrasenia />} />
             <Route path="/no-autorizado" element={<NoAutorizado />} />
-
-            {/* Ruta sin Navbar para el formulario de aprendiz */}
-            <Route path="/aprendiz" element={<FormularioAprendiz />} />
+            <Route path="/registro-aprendiz" element={<FormularioAprendiz />} />
 
             {/* Rutas protegidas con Navbar */}
             <Route
@@ -154,6 +157,7 @@ function App() {
         </Router>
       </EventosProvider>
     </AuthProvider>
+    // </ThemeProvider>
   );
 }
 

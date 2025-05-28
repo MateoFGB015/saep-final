@@ -35,7 +35,8 @@ function FormularioAprendiz() {
   });
 
     // API URL base
-  const API_URL = 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 
   const purpleFocusStyle = {
     "& .MuiOutlinedInput-root.Mui-focused fieldset": {

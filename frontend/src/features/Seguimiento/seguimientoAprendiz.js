@@ -40,7 +40,8 @@ const BitacoraDocumentosApp = () => {
   const datosPorPagina = 5;
 
   // API URL base
-  const API_URL = 'http://localhost:3000';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
   
   // Obtener token del almacenamiento local
   const getToken = () => localStorage.getItem('token');

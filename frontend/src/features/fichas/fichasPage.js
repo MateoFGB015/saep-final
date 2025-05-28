@@ -9,6 +9,8 @@ import {
   DialogTitle, Select, MenuItem, IconButton
 } from "@mui/material";
 import {BorderColorOutlined, ContentCutOutlined, Add} from '@mui/icons-material';
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 
 const FichasTable = () => {
   const [fichas, setFichas] = useState([]);
@@ -41,9 +43,9 @@ const FichasTable = () => {
   
       const endpoint =
         user.rol === "Instructor"
-          ? "http://localhost:3000/fichas/instructor"
-          : "http://localhost:3000/fichas/ver";
-  
+          ? `${API_URL}/fichas/instructor`
+          : `${API_URL}/fichas/ver`;
+
       const response = await axios.get(endpoint, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -71,7 +73,7 @@ const FichasTable = () => {
 
   const eliminarFichaConfirmada = async () => {
     try {
-      await axios.delete(`http://localhost:3000/fichas/eliminar/${fichaAEliminar.id_ficha}`);
+      await axios.delete(`${API_URL}/fichas/eliminar/${fichaAEliminar.id_ficha}`);
       setFichas(fichas.filter(f => f.id_ficha !== fichaAEliminar.id_ficha));
       setDialogOpen(false);
       setFichaAEliminar(null);
@@ -108,9 +110,9 @@ const FichasTable = () => {
     e.preventDefault();
     try {
       if (isEditing) {
-        await axios.put(`http://localhost:3000/fichas/modificar/${formData.id_ficha}`, formData);
+        await axios.put(`${API_URL}/fichas/modificar/${formData.id_ficha}`, formData);
       } else {
-        await axios.post("http://localhost:3000/fichas", formData);
+        await axios.post(`${API_URL}/fichas`, formData);
       }
       fetchFichas();
       handleCloseModal();
@@ -124,7 +126,7 @@ const FichasTable = () => {
    useEffect(() => {
     const fetchInstructores = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/usuarios/instructores");
+      const response = await axios.get(`${API_URL}/usuarios/instructores`);
       setInstructores(response.data);
     } catch (error) {
       console.error("Error al obtener instructores:", error);

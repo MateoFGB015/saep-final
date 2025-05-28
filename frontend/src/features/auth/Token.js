@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuth } from "../auth/AuthProvider"; // Importamos el contexto
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000",
+  baseURL: process.env.REACT_APP_BACKEND_API_URL
 });
 
 // Interceptor para incluir token en todas las peticiones

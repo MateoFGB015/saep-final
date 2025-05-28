@@ -21,8 +21,11 @@ import {
 import { isSameDay } from "date-fns";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 moment.locale("es");
 const localizer = momentLocalizer(moment);
+
 
 const messages = {
   allDay: "Todo el día",
@@ -57,14 +60,14 @@ const CalendarioInstructorSeleccionado = () => {
 
         // Corregido: ahora usamos la ruta correcta `/ver/:id`
         const usuarioRes = await axios.get(
-          `http://localhost:3000/usuarios/ver/${idInstructor}`,
+          `${API_URL}/usuarios/ver/${idInstructor}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const nombreCompleto = `${usuarioRes.data.nombre} ${usuarioRes.data.apellido}`;
         setNombreInstructor(nombreCompleto);
 
         const eventosRes = await axios.get(
-          `http://localhost:3000/agendamiento/instructor/${idInstructor}`,
+          `${API_URL}/agendamiento/instructor/${idInstructor}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 

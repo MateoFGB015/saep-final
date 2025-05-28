@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const modeloUsuario = require('../models/usuario') 
-const {enviarCorreo} = require('../utils/EmailService')
+const modeloUsuario = require('../models/usuario');
+const {enviarCorreo} = require('../utils/EmailService');
+const frontendUrl = process.env.FRONTEND_URL;
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -76,7 +77,7 @@ const solicitar = async (req,res) => {
         const token = jwt.sign({ id: usuario.id_usuario }, JWT_SECRET, { expiresIn: '1h' });
         console.log("🔑 Token generado:", token);
     
-        const resetLink = `http://localhost:3001/restablecer-contrasenia/${token}`;// este es el url que llega al correo
+        const resetLink = `${frontendUrl}/restablecer-contrasenia/${token}`;// este es el url que llega al correo
 
         // Configurar el correo
         const to = correo_electronico;

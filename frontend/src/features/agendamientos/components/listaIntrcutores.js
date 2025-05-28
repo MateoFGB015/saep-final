@@ -3,6 +3,9 @@ import { Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
+
 const ListaInstructores = () => {
   const [instructores, setInstructores] = useState([]);
   const navigate = useNavigate();
@@ -11,7 +14,7 @@ const ListaInstructores = () => {
     const cargarInstructores = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await axios.get("http://localhost:3000/usuarios/instructores", {
+        const response = await axios.get(`${API_URL}/usuarios/instructores`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

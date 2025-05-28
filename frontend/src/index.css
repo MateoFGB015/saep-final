@@ -1,4 +1,10 @@
 /*aqui se definen unos estilos que siempre se van a aplicar*/
+/* @font-face {
+  font-family: 'Opulent';
+  src: url('./assets/fonts/OPN.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+} */
 
 html, body {
     margin: 0;
@@ -6,4 +12,5 @@ html, body {
     width: 100%;
     height: 100%;
     overflow: hidden; /* Para evitar scroll no deseado */
+    /* font-family: 'Opulent', serif ,!important; */
   }
