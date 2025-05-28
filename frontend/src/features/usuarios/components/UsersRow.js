@@ -5,6 +5,8 @@ import usersAPI from "../../../api/UsersAPI";
 import useAlert from "../hooks/UserAlert";
 import CustomSnackbar from "../../../components/ui/Alert";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
+import { useMediaQuery, Paper, Typography, Stack, Button, Tooltip } from '@mui/material';
+import BorderColorOutlinedIcon from '@mui/icons-material/BorderColorOutlined';
 
 const UserRow = ({ usuario, onEdit, onDelete }) => {
   const { alerta, showAlert, closeAlert } = useAlert();
