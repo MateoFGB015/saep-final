@@ -1,17 +1,6 @@
 import React, { useState } from "react";
-import {
-  TableRow,
-  TableCell,
-  IconButton,
-  Typography,
-  Paper,
-  useMediaQuery,
-  Stack,
-  Button,
-  Tooltip,
-} from "@mui/material";
-import { ContentCutOutlined } from "@mui/icons-material";
-import BorderColorOutlinedIcon from "@mui/icons-material/BorderColorOutlined";
+import { TableRow, TableCell, IconButton } from "@mui/material";
+import { EditNote, ContentCutOutlined } from "@mui/icons-material";
 import usersAPI from "../../../api/UsersAPI";
 import useAlert from "../hooks/UserAlert";
 import CustomSnackbar from "../../../components/ui/Alert";
