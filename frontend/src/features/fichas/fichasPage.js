@@ -3,15 +3,19 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthProvider";
 import ConfirmDialog from "../../components/ui/ModalConfirmacion";
 import { useNavigate } from "react-router-dom";
-import { 
-  Button, TextField, Table, TableBody, TableCell, TableContainer, 
-  TableHead, TableRow, Paper, Dialog, DialogActions, DialogContent, 
-  DialogTitle, Select, MenuItem, IconButton
+import SearchBar from "../usuarios/components/SearchBar";
+
+import {
+  Button, TextField, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Paper, Dialog, DialogActions, DialogContent,
+  DialogTitle, Select, MenuItem, IconButton, Box
 } from "@mui/material";
-import {BorderColorOutlined, ContentCutOutlined, Add} from '@mui/icons-material';
+import {
+  BorderColorOutlined, ContentCutOutlined, Add,
+  FirstPage, KeyboardArrowLeft, KeyboardArrowRight, LastPage
+} from "@mui/icons-material";
+
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
-
 const FichasTable = () => {
   const [fichas, setFichas] = useState([]);
   const { user } = useAuth();
@@ -136,6 +140,43 @@ const FichasTable = () => {
   fetchInstructores();
 }, []);
 
+
+ // PAGINACIÓN
+  const [currentPage, setCurrentPage] = useState(0);
+  const rowsPerPage = useResponsiveRows(setCurrentPage);
+  const totalPages = Math.ceil(fichas.length / rowsPerPage);
+
+  const visibleRows = fichas.slice(
+    currentPage * rowsPerPage,
+    currentPage * rowsPerPage + rowsPerPage
+  );
+
+  function useResponsiveRows(setCurrentPage) {
+    const [rowsPerPage, setRowsPerPage] = useState(getRowsPerPage());
+
+    function getRowsPerPage() {
+      const width = window.innerWidth;
+      return width >= 1400 ? 10 : 5;
+    }
+
+    useEffect(() => {
+      const updateRows = () => {
+        const newRows = getRowsPerPage();
+        setRowsPerPage((prev) => {
+          if (prev !== newRows) {
+            setCurrentPage(0);
+          }
+          return newRows;
+        });
+      };
+
+      window.addEventListener("resize", updateRows);
+      return () => window.removeEventListener("resize", updateRows);
+    }, [setCurrentPage]);
+
+    return rowsPerPage;
+  }
+
   return (
     <div>
   <TextField
@@ -165,51 +206,86 @@ const FichasTable = () => {
   }}
 />
     
-      <TableContainer component={Paper}>
+     <TableContainer component={Paper}
+        elevation={4}
+        sx={{
+          borderRadius: 4,
+          border: "1px solid #ddd",
+          overflow: "hidden",
+          mt: 2
+        }}
+      >
         <Table size="small">
-          <TableHead sx={{ "& .MuiTableCell-root": { textAlign: "center" } }}>
-            <TableRow>
-              <TableCell sx={{ backgroundColor:"#f2f2f2"}}>Nombre del Programa</TableCell>
-              <TableCell sx={{ backgroundColor:"#f2f2f2"}}>Término del Programa</TableCell>
-              <TableCell sx={{ backgroundColor:"#f2f2f2"}}>N° Ficha</TableCell>
-              <TableCell sx={{ backgroundColor:"#f2f2f2"}}>Acciones</TableCell>
+          <TableHead>
+            <TableRow sx={{ bgcolor: "#f0f0f0" }}>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "14px", color: "#333", textAlign: "center" }}>
+                Nombre del Programa
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "14px", color: "#333", textAlign: "center" }}>
+                Término del Programa
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "14px", color: "#333", textAlign: "center" }}>
+                N° Ficha
+              </TableCell>
+              <TableCell sx={{ fontWeight: "bold", fontSize: "14px", color: "#333", textAlign: "center" }}>
+                Acciones
+              </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody sx={{ "& .MuiTableCell-root": { textAlign: "center" } }}>
-  {fichas.map((ficha, index) => (
-    <TableRow 
-      key={ficha.id_ficha} 
-      sx={{ backgroundColor: index % 2 === 0 ? "white" : "#f2f2f2" }} // Alterna colores
-    >
-      <TableCell>{ficha.nombre_programa}</TableCell>
-      <TableCell>{ficha.termino_programa}</TableCell>
-      <TableCell>{ficha.numero_ficha}</TableCell>
-      <TableCell>
-        <Button
-          sx={{ border: "1px solid #71277a", color: "#71277a", fontSize: "10px", borderRadius: "5px" }}
-          onClick={() => handleVerFicha(ficha.id_ficha)}
-        >
-          Ver listado
-        </Button>
-        <IconButton onClick={() => handleOpenModal(ficha)}>
-          <BorderColorOutlined
-            sx={{
-              backgroundColor: "#71277a",
-              p: 1,
-              fontSize: "30px",
-              color: "white",
-              borderRadius: "5px",
-            }}
-          />
-        </IconButton>
-        <IconButton onClick={() => confirmarEliminacion(ficha)}>
-                    <ContentCutOutlined sx={{ backgroundColor: "red", p: 1, fontSize: "30px", color: "white", borderRadius: "5px" }} />
-        </IconButton>
-      </TableCell>
-    </TableRow>
-  ))}
-</TableBody>
-</Table>
+          <TableBody>
+            {visibleRows.map((ficha, index) => (
+              <TableRow
+                key={ficha.id_ficha}
+                sx={{
+                  backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
+                  "&:hover": {
+                    backgroundColor: "#f0f0f0",
+                  },
+                }}
+              >
+                <TableCell align="center">{ficha.nombre_programa}</TableCell>
+                <TableCell align="center">{ficha.termino_programa}</TableCell>
+                <TableCell align="center">{ficha.numero_ficha}</TableCell>
+                <TableCell align="center">
+                  <Button
+                    sx={{
+                      border: "1px solid #71277a",
+                      color: "#71277a",
+                      fontSize: "10px",
+                      borderRadius: "5px",
+                      mr: 1,
+                    }}
+                    onClick={() => handleVerFicha(ficha.id_ficha)}
+                  >
+                    Ver listado
+                  </Button>
+                  <IconButton onClick={() => handleOpenModal(ficha)}>
+                    <BorderColorOutlined
+                      sx={{
+                        backgroundColor: "#71277a",
+                        p: 1,
+                        fontSize: "30px",
+                        color: "white",
+                        borderRadius: "5px",
+                      }}
+                    />
+                  </IconButton>
+                  <IconButton onClick={() => confirmarEliminacion(ficha)}>
+                    <ContentCutOutlined
+                      sx={{
+                        backgroundColor: "red",
+                        p: 1,
+                        fontSize: "30px",
+                        color: "white",
+                        borderRadius: "5px",
+                      }}
+                    />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </TableContainer>
 
       <ConfirmDialog
@@ -376,6 +452,62 @@ const FichasTable = () => {
     </Button>
   </DialogActions>
 </Dialog>
+
+  {/* PAGINACIÓN VISUAL */}
+      <Box
+        sx={{
+          mt: 2,
+          py: 1,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 1,
+          backgroundColor: "white",
+          borderRadius: 2,
+          flexWrap: "wrap",
+          width: "100%",
+          maxWidth: "900px",
+          margin: "0 auto",
+        }}
+      >
+        <IconButton onClick={() => setCurrentPage(0)} disabled={currentPage === 0} sx={{ color: "#71277a" }}>
+          <FirstPage />
+        </IconButton>
+        <IconButton onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))} disabled={currentPage === 0} sx={{ color: "#71277a" }}>
+          <KeyboardArrowLeft />
+        </IconButton>
+
+        {[...Array(totalPages)].map((_, i) =>
+          i >= currentPage - 2 && i <= currentPage + 2 ? (
+            <Button
+              key={i}
+              onClick={() => setCurrentPage(i)}
+              variant={i === currentPage ? "contained" : "outlined"}
+              size="small"
+              sx={{
+                minWidth: 32,
+                px: 1,
+                color: i === currentPage ? "white" : "#71277a",
+                backgroundColor: i === currentPage ? "#71277a" : "transparent",
+                borderColor: "#71277a",
+                "&:hover": {
+                  backgroundColor: "#71277a",
+                  color: "white",
+                },
+              }}
+            >
+              {i + 1}
+            </Button>
+          ) : null
+        )}
+
+        <IconButton onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))} disabled={currentPage >= totalPages - 1} sx={{ color: "#71277a" }}>
+          <KeyboardArrowRight />
+        </IconButton>
+        <IconButton onClick={() => setCurrentPage(totalPages - 1)} disabled={currentPage >= totalPages - 1} sx={{ color: "#71277a" }}>
+          <LastPage />
+        </IconButton>
+      </Box>
 
 
 
