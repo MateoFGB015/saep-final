@@ -10,7 +10,6 @@ import {
   Box,
   IconButton,
   Button,
-  useMediaQuery,
 } from "@mui/material";
 import {
   FirstPage,
@@ -20,30 +19,36 @@ import {
 } from "@mui/icons-material";
 import UserRow from "./UsersRow";
 
-const useResponsiveRows = () => {
+// Hook responsive con reinicio de página
+const useResponsiveRows = (setCurrentPage) => {
   const [rowsPerPage, setRowsPerPage] = useState(getRowsPerPage());
 
   function getRowsPerPage() {
     const width = window.innerWidth;
-    return width >= 1400 ? 10 : 5;
+    return width >= 1400 ? 10 : 5; // PC: 10, Laptop/celular: 5
   }
 
   useEffect(() => {
     const updateRows = () => {
-      setRowsPerPage(getRowsPerPage());
+      const newRows = getRowsPerPage();
+      setRowsPerPage((prev) => {
+        if (prev !== newRows) {
+          setCurrentPage(0); // Reiniciar a página 0 si cambia
+        }
+        return newRows;
+      });
     };
 
     window.addEventListener("resize", updateRows);
     return () => window.removeEventListener("resize", updateRows);
-  }, []);
+  }, [setCurrentPage]);
 
   return rowsPerPage;
 };
 
 const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage }) => {
-  const rowsPerPage = useResponsiveRows();
+  const rowsPerPage = useResponsiveRows(setCurrentPage);
   const totalPages = Math.ceil(usuarios.length / rowsPerPage);
-  const isMobile = useMediaQuery("(max-width:600px)");
 
   const visibleRows = usuarios.slice(
     currentPage * rowsPerPage,
@@ -52,6 +57,12 @@ const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage })
 
   const handleChangePage = (event, newPage) => {
     setCurrentPage(newPage);
+  };
+
+  const handleDeleteUser = (idUsuario) => {
+    if (onDelete) {
+      onDelete(idUsuario);
+    }
   };
 
   const renderPageNumbers = () => {
@@ -67,23 +78,24 @@ const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage })
 
     for (let i = startPage; i < endPage; i++) {
       pageButtons.push(
-        <Button
-          key={i}
-          variant={i === currentPage ? "contained" : "text"}
-          size="small"
-          onClick={() => handleChangePage(null, i)}
-          sx={{
-            minWidth: 32,
-            mx: 0.5,
-            color: i === currentPage ? "white" : "#71277a",
-            backgroundColor: i === currentPage ? "#71277a" : "transparent",
-            "&:hover": {
-              backgroundColor: i === currentPage ? "#5e2062" : "#f3e5f5",
-            },
-          }}
-        >
-          {i + 1}
-        </Button>
+       <Button
+                 key={i}
+                 onClick={() => setCurrentPage(i)}
+                 variant={i === currentPage ? "contained" : "outlined"}
+                 size="small"
+                 sx={{
+                   minWidth: 32,
+                   px: 1,
+                   color: i === currentPage ? 'white' : '#71277a',
+                   backgroundColor: i === currentPage ? '#71277a' : 'transparent',
+                   borderColor: '#71277a',
+                   '&:hover': {
+                     backgroundColor: '#71277a',
+                   }
+                 }}
+               >
+                 {i + 1}
+               </Button>
       );
     }
 
@@ -92,92 +104,93 @@ const UsersTable = ({ usuarios, onEdit, onDelete, currentPage, setCurrentPage })
 
   return (
     <>
-      <Paper elevation={4} sx={{ borderRadius: 2, border: "1px solid #ddd", overflow: "hidden" }}>
-        {isMobile ? (
-          // Vista tipo tarjeta para celular
-          <Box p={2}>
-            {visibleRows.map((usuario, index) => (
-              <UserRow
-                key={usuario.id_usuario}
-                usuario={usuario}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                isMobile
-              />
-            ))}
-          </Box>
-        ) : (
-          // Vista tabla para pantallas más grandes
-          <TableContainer sx={{ overflowX: "auto" }}>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f0f0f0" }}>
-                  <TableCell sx={headerStyle}>Nombre</TableCell>
-                  <TableCell sx={headerStyle}>Apellido</TableCell>
-                  <TableCell sx={headerStyle}>Rol</TableCell>
-                  <TableCell sx={headerStyle}>N° Documento</TableCell>
-                  <TableCell sx={headerStyle}>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {visibleRows.map((usuario, index) => (
-                  <UserRow
-                    key={usuario.id_usuario}
-                    usuario={usuario}
-                    onEdit={onEdit}
-                    onDelete={onDelete}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+      <Paper
+        elevation={4}
+        sx={{
+          borderRadius: 4,
+          border: "1px solid #ddd",
+          overflow: "hidden",
+        }}
+      >
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "#f0f0f0" }}>
+                <TableCell sx={headerStyle}>Nombre</TableCell>
+                <TableCell sx={headerStyle}>Apellido</TableCell>
+                <TableCell sx={headerStyle}>Rol</TableCell>
+                <TableCell sx={headerStyle}>N° Documento</TableCell>
+                <TableCell sx={headerStyle}>Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {visibleRows.map((usuario, index) => (
+                <UserRow
+                  key={usuario.id_usuario}
+                  usuario={usuario}
+                  onEdit={onEdit}
+                  onDelete={handleDeleteUser}
+                  sx={{
+                    backgroundColor: index % 2 === 0 ? "#fff" : "#f9f9f9",
+                    "&:hover": {
+                      backgroundColor: "#f0f0f0",
+                    },
+                  }}
+                />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Paper>
 
-      {/* Paginación */}
+      {/* Paginación afuera de la tabla */}
       <Box
         sx={{
-          mt: 2,
-          py: 1,
+          mt: { xs: 1, sm: 1 },       // menos margen en pantallas pequeñas
+          py: { xs: 1, sm: 1 },       // menos padding vertical
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           gap: 1,
           backgroundColor: "white",
           borderRadius: 2,
+          flexWrap: 'wrap',
+          width: '100%',              // ajusta al ancho del contenedor
+          maxWidth: '900px',          // opcional: evita que se estire demasiado
+          margin: '0 auto'  
         }}
       >
         <IconButton
-          onClick={() => handleChangePage(null, 0)}
-          disabled={currentPage === 0}
-          sx={{ color: "#71277a" }}
-        >
-          <FirstPage />
-        </IconButton>
-        <IconButton
-          onClick={() => handleChangePage(null, currentPage - 1)}
-          disabled={currentPage === 0}
-          sx={{ color: "#71277a" }}
-        >
-          <KeyboardArrowLeft />
-        </IconButton>
-
-        {renderPageNumbers()}
-
-        <IconButton
-          onClick={() => handleChangePage(null, currentPage + 1)}
-          disabled={currentPage >= totalPages - 1}
-          sx={{ color: "#71277a" }}
-        >
-          <KeyboardArrowRight />
-        </IconButton>
-        <IconButton
-          onClick={() => handleChangePage(null, totalPages - 1)}
-          disabled={currentPage >= totalPages - 1}
-          sx={{ color: "#71277a" }}
-        >
-          <LastPage />
-        </IconButton>
+                    onClick={() => handleChangePage(null, 0)}
+                    disabled={currentPage === 0}
+                    sx={{ color: "#71277a" }}
+                  >
+                    <FirstPage />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleChangePage(null, currentPage - 1)}
+                    disabled={currentPage === 0}
+                    sx={{ color: "#71277a" }}
+                  >
+                    <KeyboardArrowLeft />
+                  </IconButton>
+        
+                  {renderPageNumbers()}
+        
+                  <IconButton
+                    onClick={() => handleChangePage(null, currentPage + 1)}
+                    disabled={currentPage >= totalPages - 1}
+                    sx={{ color: "#71277a" }}
+                  >
+                    <KeyboardArrowRight />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleChangePage(null, totalPages - 1)}
+                    disabled={currentPage >= totalPages - 1}
+                    sx={{ color: "#71277a" }}
+                  >
+                    <LastPage />
+                  </IconButton>
       </Box>
     </>
   );
@@ -191,4 +204,3 @@ const headerStyle = {
 };
 
 export default UsersTable;
-
