@@ -3,7 +3,8 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthProvider";
 import ConfirmDialog from "../../components/ui/ModalConfirmacion";
 import { useNavigate } from "react-router-dom";
-import SearchBar from "../usuarios/components/SearchBar";
+import SearchBarFichas from "../fichas/SearchBarFichas"; // Ajusta la ruta real
+
 
 import {
   Button, TextField, Table, TableBody, TableCell, TableContainer,
@@ -23,6 +24,8 @@ const FichasTable = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+const [filterType, setFilterType] = useState("numero_ficha");
   const [fichaAEliminar, setFichaAEliminar] = useState(null);
   const [formData, setFormData] = useState({
     numero_ficha: "",
@@ -40,6 +43,24 @@ const FichasTable = () => {
     }
     
   }, [user]);
+  
+  useEffect(() => {
+  const term = searchTerm.trim().toLowerCase();
+
+  if (term === "") {
+    setFilteredFichas([]); // Si no hay búsqueda, muestra todo
+    return;
+  }
+
+  const filtradas = fichas.filter((f) => {
+    const valor = f[filterType]?.toString().toLowerCase();
+    return valor?.includes(term);
+  });
+
+  setFilteredFichas(filtradas);
+  setCurrentPage(0);
+}, [searchTerm, filterType, fichas]);
+
 
   const fetchFichas = async () => {
     try {
@@ -62,6 +83,26 @@ const FichasTable = () => {
     }
   };
   
+ const onSearch = () => {
+  const term = searchTerm.toLowerCase();
+
+  if (term.trim() === "") {
+    setFilteredFichas([]); // 🔁 Vacío: mostrar todo de nuevo
+    return;
+  }
+
+  const filtradas = fichas.filter((f) => {
+    const valor = f[filterType]?.toString().toLowerCase();
+    return valor?.includes(term);
+  });
+
+  setFilteredFichas(filtradas);
+  setCurrentPage(0);
+};
+
+
+const [filteredFichas, setFilteredFichas] = useState([]);
+
 
   const navigate = useNavigate();
 
@@ -141,15 +182,20 @@ const FichasTable = () => {
 }, []);
 
 
- // PAGINACIÓN
-  const [currentPage, setCurrentPage] = useState(0);
-  const rowsPerPage = useResponsiveRows(setCurrentPage);
-  const totalPages = Math.ceil(fichas.length / rowsPerPage);
+// PAGINACIÓN + SOPORTE PARA BÚSQUEDA
+const [currentPage, setCurrentPage] = useState(0);
 
-  const visibleRows = fichas.slice(
-    currentPage * rowsPerPage,
-    currentPage * rowsPerPage + rowsPerPage
-  );
+
+const rowsPerPage = useResponsiveRows(setCurrentPage);
+
+const visibleRows = (filteredFichas.length ? filteredFichas : fichas).slice(
+  currentPage * rowsPerPage,
+  currentPage * rowsPerPage + rowsPerPage
+);
+
+const totalPages = Math.ceil(
+  (filteredFichas.length ? filteredFichas.length : fichas.length) / rowsPerPage
+);
 
   function useResponsiveRows(setCurrentPage) {
     const [rowsPerPage, setRowsPerPage] = useState(getRowsPerPage());
@@ -179,32 +225,14 @@ const FichasTable = () => {
 
   return (
     <div>
-  <TextField
-  placeholder="Buscar Número de Ficha"
-  value={searchInput}
-  onChange={(e) => setSearchInput(e.target.value)}
-  fullWidth
-  margin="normal"
-  variant="outlined"  // Aseguramos que se use el variant outlined
-  sx={{
-    width: "1100px",
-    margin: "20px auto",
-    borderRadius: "20px",
-    backgroundColor: "#f2f2f2",
-    // Personalizamos el estilo del contenedor del input
-    '& .MuiOutlinedInput-root': {
-      '& fieldset': {
-        borderColor: 'white', // Borde negro por defecto
-      },
-      '&:hover fieldset': {
-        borderColor: 'white', // Borde negro al hacer hover
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: 'purple', borderRadius:'20px' // Borde morado al enfocar el input
-      },
-    },
-  }}
+  <SearchBarFichas
+  searchTerm={searchTerm}
+  setSearchTerm={setSearchTerm}
+  filterType={filterType}
+  setFilterType={setFilterType}
+  onSearch={onSearch}
 />
+
     
      <TableContainer component={Paper}
         elevation={4}
