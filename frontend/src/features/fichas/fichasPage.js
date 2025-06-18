@@ -237,13 +237,18 @@ const totalPages = Math.ceil(
      <TableContainer component={Paper}
         elevation={4}
         sx={{
-          borderRadius: 4,
-          border: "1px solid #ddd",
-          overflow: "hidden",
-          mt: 2
+           borderRadius: 4,
+    border: "1px solid #ddd",
+    mt: 2,
+    width: "100%",
+    maxWidth: "100%",
+    overflowX: "hidden"
         }}
       >
-        <Table size="small">
+        <Table size="small"   sx={{
+      width: "100%",
+      tableLayout: "fixed", // ✅ distribución automática de columnas
+    }}>
           <TableHead>
             <TableRow sx={{ bgcolor: "#f0f0f0" }}>
               <TableCell sx={{ fontWeight: "bold", fontSize: "14px", color: "#333", textAlign: "center" }}>
