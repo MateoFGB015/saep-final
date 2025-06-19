@@ -4,6 +4,7 @@ const FichaAprendiz = require('../models/FichaAprendiz');
 const modeloAprendiz = require('../models/Aprendiz');
 const modeloEmpresa = require('../models/Empresa');
 const modeloFicha = require('../models/fichas');
+const { crearNotificacion, crearNotificacionesLote } = require('../service/notificacionservice');
 const { Op } = require('sequelize');
 
 // Agendamientos del instructor autenticado
@@ -140,7 +141,6 @@ exports.crearAgendamiento = async (req, res) => {
       return res.status(404).json({ mensaje: "FichaAprendiz no encontrada" });
     }
 
-    // ✅ Verificar que no tenga más de 3 visitas
     const visitasExistentes = await modeloAgendamiento.count({
       where: { id_ficha_aprendiz }
     });
@@ -149,11 +149,10 @@ exports.crearAgendamiento = async (req, res) => {
       return res.status(400).json({ mensaje: "Este aprendiz ya tiene 3 visitas agendadas" });
     }
 
-    // ✅ Validar traslape de horarios
     const { Op } = require('sequelize');
     const traslape = await modeloAgendamiento.findOne({
       where: {
-        id_instructor: instructorId, // solo para ese instructor
+        id_instructor: instructorId,
         [Op.or]: [
           {
             fecha_inicio: { [Op.lte]: fecha_inicio },
@@ -170,15 +169,13 @@ exports.crearAgendamiento = async (req, res) => {
         ]
       }
     });
-    
+
     if (traslape) {
       return res.status(400).json({
         mensaje: "El instructor ya tiene una visita en ese horario"
       });
     }
-    
 
-    // ✅ Crear agendamiento
     const nuevoAgendamiento = await modeloAgendamiento.create({
       id_ficha_aprendiz,
       id_instructor: instructorId,
@@ -189,6 +186,14 @@ exports.crearAgendamiento = async (req, res) => {
       estado_visita,
       tipo_visita,
       numero_visita
+    });
+
+    // ✅ Crear la notificación para el aprendiz
+    await crearNotificacion({
+      id_usuario: fichaAprendiz.id_usuario, 
+      tipo: 'Información',
+      titulo: 'Nueva visita agendada',
+      mensaje: 'Tu instructor ha agendado una nueva visita contigo.'
     });
 
     res.status(201).json(nuevoAgendamiento);
@@ -245,12 +250,19 @@ exports.obtenerFichas = async (req, res) => {
 };
 
 // Modificar agendamiento (solo si es del instructor autenticado)
+
 exports.modificarAgendamiento = async (req, res) => {
   try {
     const { id } = req.params;
     const instructorId = req.usuario.id;
 
-    const agendamiento = await modeloAgendamiento.findByPk(id);
+    const agendamiento = await modeloAgendamiento.findByPk(id, {
+      include: {
+        model: FichaAprendiz,
+        as: 'ficha_aprendiz'
+      }
+    });
+
     if (!agendamiento) {
       return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
     }
@@ -260,6 +272,7 @@ exports.modificarAgendamiento = async (req, res) => {
     }
 
     const { fecha_inicio, fecha_fin } = req.body;
+
     const traslape = await modeloAgendamiento.findOne({
       where: {
         id_instructor: instructorId,
@@ -276,8 +289,21 @@ exports.modificarAgendamiento = async (req, res) => {
     }
 
     await agendamiento.update(req.body);
+
+    const idAprendiz = agendamiento.ficha_aprendiz?.id_usuario;
+
+    if (idAprendiz) {
+      await crearNotificacion({
+        id_usuario: idAprendiz,
+        tipo: 'Información',
+        titulo: 'Visita actualizada',
+        mensaje: 'Tu instructor ha modificado la programación de tu visita.'
+      });
+    }
+
     res.json({ mensaje: 'Agendamiento actualizado correctamente' });
   } catch (error) {
+    console.error('Error al modificar agendamiento:', error);
     res.status(500).json({ mensaje: 'Error al modificar agendamiento', error });
   }
 };
@@ -288,7 +314,13 @@ exports.eliminarAgendamiento = async (req, res) => {
     const { id } = req.params;
     const instructorId = req.usuario.id;
 
-    const agendamiento = await modeloAgendamiento.findByPk(id);
+    const agendamiento = await modeloAgendamiento.findByPk(id, {
+      include: {
+        model: FichaAprendiz,
+        as: 'ficha_aprendiz'
+      }
+    });
+
     if (!agendamiento) {
       return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
     }
@@ -297,12 +329,29 @@ exports.eliminarAgendamiento = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permiso para eliminar este agendamiento' });
     }
 
+    // ✅ Obtener el ID del aprendiz correctamente
+    const idAprendiz = agendamiento.ficha_aprendiz?.id_usuario;
+
+    // ✅ Elimina el agendamiento
     await agendamiento.destroy();
-    res.json({ mensaje: 'Agendamiento eliminado correctamente' });
+
+    // ✅ Genera notificación al aprendiz informando la cancelación
+    if (idAprendiz) {
+      await crearNotificacion({
+        id_usuario: idAprendiz,
+        tipo: 'Alerta',
+        titulo: 'Visita cancelada',
+        mensaje: 'Tu instructor ha cancelado una visita que estaba programada contigo.'
+      });
+    }
+
+    res.json({ mensaje: 'Agendamiento eliminado y notificación enviada al aprendiz' });
   } catch (error) {
+    console.error('Error al eliminar agendamiento:', error);
     res.status(500).json({ mensaje: 'Error al eliminar el agendamiento', error });
   }
 };
+
 
 
 exports.crearAgendamientoPorAdmin = async (req, res) => {
@@ -367,10 +416,18 @@ exports.crearAgendamientoPorAdmin = async (req, res) => {
       estado_visita: 'pendiente'
     });
 
-    res.status(201).json(nuevo);
+    // ✅ Crear notificaciones para instructor y aprendiz
+    await crearNotificacionesLote([idInstructor, fichaApr.id_usuario], {
+      tipo: 'Información',
+      titulo: 'Nuevo agendamiento creado',
+      mensaje: 'Se ha creado un nuevo agendamiento por el administrador.',
+      estado: 'NoLeida'
+    });
+
+    return res.status(201).json(nuevo);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
+    return res.status(500).json({ mensaje: 'Error interno del servidor', error: error.message });
   }
 };
 
@@ -383,10 +440,14 @@ exports.modificarAgendamientoAdmin = async (req, res) => {
       return res.status(403).json({ mensaje: 'No tienes permiso para modificar este agendamiento' });
     }
 
-    const agendamiento = await modeloAgendamiento.findByPk(id);
-    if (!agendamiento) {
-      return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
-    }
+const agendamiento = await modeloAgendamiento.findByPk(id, {
+  include: {
+    model: FichaAprendiz,
+    as: 'ficha_aprendiz'
+  }
+});
+
+   if (!agendamiento) return res.status(404).json({ mensaje: 'Agendamiento no encontrado' });
 
     const { fecha_inicio, fecha_fin } = req.body;
     const traslape = await modeloAgendamiento.findOne({
@@ -404,9 +465,20 @@ exports.modificarAgendamientoAdmin = async (req, res) => {
       return res.status(400).json({ mensaje: 'El instructor ya tiene una visita en ese horario' });
     }
 
-    await agendamiento.update(req.body);
+const idAprendiz = agendamiento.ficha_aprendiz?.id_usuario;
+
+await agendamiento.update(req.body);
+
+await crearNotificacionesLote([agendamiento.id_instructor, idAprendiz], {
+  tipo: 'Información',
+  titulo: 'Agendamiento actualizado',
+  mensaje: 'Un agendamiento ha sido modificado por el administrador.',
+  estado: 'NoLeida'
+});
+
     res.json({ mensaje: 'Agendamiento actualizado correctamente' });
   } catch (error) {
+    console.error('❗ Error al modificar agendamiento:', error);
     res.status(500).json({ mensaje: 'Error al modificar agendamiento', error });
   }
 };
@@ -447,7 +519,16 @@ exports.eliminarAgendamientoAdmin = async (req, res) => {
     }
 
     await agendamiento.destroy();
-    res.json({ mensaje: 'Agendamiento eliminado correctamente' });
+
+    // ✅ Crear notificaciones para instructor y aprendiz
+    await crearNotificacionesLote([agendamiento.id_instructor, agendamiento.ficha_aprendiz.id_usuario], {
+      tipo: 'Información',
+      titulo: 'Agendamiento cancelado',
+      mensaje: 'Un agendamiento ha sido cancelado por el administrador.',
+      estado: 'NoLeida'
+    });
+
+    res.json({ mensaje: 'Agendamiento cancelado correctamente' });
   } catch (error) {
     console.error("Error al eliminar agendamiento por admin:", error);
     res.status(500).json({ mensaje: 'Error al eliminar agendamiento', error });

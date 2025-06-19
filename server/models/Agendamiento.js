@@ -38,7 +38,7 @@ const modeloAgendamiento = sequelize.define('Agendamiento', {
     }
 }, {
     timestamps: false,
-    tableName: 'Agendamiento'
+    tableName: 'agendamiento'
 });
 
 module.exports = modeloAgendamiento;

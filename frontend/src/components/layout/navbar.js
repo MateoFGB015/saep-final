@@ -192,18 +192,22 @@ const Navbar = ({ children }) => {
         </List>
       </Drawer>
 
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          pl: "5%",
-          pr: "5%",
-          mt: 13,
-          width: "100%",
-        }}
-      >
-        {children}
-      </Box>
+     <Box
+  component="main"
+  sx={{
+    flexGrow: 1,
+    pl: "5%",
+    pr: "5%",
+    mt: 13,
+    width: "100%",
+    minHeight: "100vh", // Asegura que crezca al menos a pantalla completa
+    pb: 10, // Espacio inferior para que la paginación no quede cortada
+    overflowY: "auto",
+  }}
+>
+  {children}
+</Box>
+
 
       <UserInfoModal
         open={openUserModal}

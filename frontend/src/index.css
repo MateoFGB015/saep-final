@@ -16,3 +16,21 @@ html, body {
     /* font-family: 'Opulent', serif ,!important; */
   }
 
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    scrollbar-width: none;        
+    -ms-overflow-style: none;     
+
+    
+  }
+
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}
+.swal2-container {
+  z-index: 14000 !important;
+}

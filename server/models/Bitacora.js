@@ -40,7 +40,7 @@ const modeloBitacora = sequelize.define('Bitacora', {
 
 }, {
     timestamps: false,
-    tableName: 'Bitacora'
+    tableName: 'bitacora'
 });
 
 module.exports = modeloBitacora;

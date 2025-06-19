@@ -33,8 +33,6 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AddIcon from "@mui/icons-material/Add";
 
-const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
 moment.locale("es");
 const localizer = momentLocalizer(moment);
 
@@ -53,6 +51,9 @@ const messages = {
   noEventsInRange: "No hay visitas programadas",
   showMore: (total) => `(+${total}) visitas`,
 };
+
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
 
 const CalendarioInstructorSeleccionado = () => {
   const [modalCrearOpen, setModalCrearOpen] = useState(false);
@@ -156,6 +157,10 @@ const CalendarioInstructorSeleccionado = () => {
       '& .rbc-date-cell': {
         padding: '2px',
         minHeight: '30px',
+        cursor: 'pointer',
+      },
+      '& .rbc-date-cell:hover': {
+        backgroundColor: 'rgba(113, 39, 122, 0.05)',
       },
       '& .rbc-event': {
         fontSize: '0.6rem',
@@ -175,6 +180,21 @@ const CalendarioInstructorSeleccionado = () => {
       '& .rbc-event': {
         fontSize: '0.7rem',
         padding: '2px 4px',
+      },
+      '& .rbc-date-cell': {
+        cursor: 'pointer',
+      },
+      '& .rbc-date-cell:hover': {
+        backgroundColor: 'rgba(113, 39, 122, 0.05)',
+      }
+    }),
+    // Estilos para desktop
+    ...(!isMobile && !isTablet && {
+      '& .rbc-date-cell': {
+        cursor: 'pointer',
+      },
+      '& .rbc-date-cell:hover': {
+        backgroundColor: 'rgba(113, 39, 122, 0.05)',
       }
     })
   });
@@ -193,9 +213,20 @@ const CalendarioInstructorSeleccionado = () => {
       sx={{ 
         px: { xs: 1, sm: 2, md: 3 },
         pt: { xs: 0.5, sm: 1 },
-        pb: { xs: 10, sm: 3, md: 2 },
+        pb: { xs: 20, sm: 3, md: 2 }, // Aumentado padding bottom para móvil
         maxWidth: '100%',
-        width: '100%'
+        width: '100%',
+        // Configuración específica para móvil
+        ...(isMobile && {
+          minHeight: 'calc(100vh - 64px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        })
       }}
     >
       {/* Header con botón de regreso */}
@@ -241,7 +272,11 @@ const CalendarioInstructorSeleccionado = () => {
         gap: { xs: 1.5, sm: 2, md: 2.5 }, 
         flexDirection: { xs: "column", md: "row" },
         height: { xs: 'auto', md: 'calc(100vh - 200px)' },
-        minHeight: { xs: 'auto', md: '600px' }
+        minHeight: { xs: 'auto', md: '600px' },
+        // Configuración específica para móvil
+        ...(isMobile && {
+          paddingBottom: '160px', // Espacio para los FABs
+        })
       }}>
         
         {/* Panel de eventos del día - Móvil */}
@@ -393,7 +428,13 @@ const CalendarioInstructorSeleccionado = () => {
           flex: { xs: 'none', md: 3 }, 
           width: { xs: '100%', md: 'auto' },
           minWidth: { xs: '100%', md: '300px' },
-          order: { xs: 2, md: 1 }
+          order: { xs: 2, md: 1 },
+          // Configuración específica para móvil
+          ...(isMobile && {
+            marginBottom: '20px',
+            position: 'relative',
+            zIndex: 1,
+          })
         }}>
           <Calendar
             localizer={localizer}
@@ -401,9 +442,19 @@ const CalendarioInstructorSeleccionado = () => {
             startAccessor="start"
             endAccessor="end"
             messages={messages}
-            onSelectSlot={(slot) => setDiaSeleccionado(slot.start)}
+            onSelectSlot={(slot) => {
+              console.log("Día seleccionado:", slot.start);
+              setDiaSeleccionado(slot.start);
+            }}
             onSelectEvent={handleSelectEvent}
-            selectable
+            onNavigate={(date) => {
+              console.log("Navegando a:", date);
+              setDiaSeleccionado(date);
+            }}
+            selectable={true}
+            selectType="click"
+            step={60}
+            timeslots={1}
             style={getCalendarStyles()}
             views={{ month: true, week: true, day: true }}
             defaultView={isMobile ? 'month' : 'month'}
@@ -427,13 +478,21 @@ const CalendarioInstructorSeleccionado = () => {
                 },
               };
             }}
-            dayPropGetter={(date) => ({
-              style: {
-                backgroundColor: isSameDay(date, diaSeleccionado) 
-                  ? 'rgba(113, 39, 122, 0.1)' 
-                  : undefined,
-              }
-            })}
+            dayPropGetter={(date) => {
+              const isSelected = isSameDay(date, diaSeleccionado);
+              return {
+                style: {
+                  backgroundColor: isSelected ? 'rgba(113, 39, 122, 0.15)' : undefined,
+                  cursor: 'pointer',
+                  border: isSelected ? '2px solid #71277a' : undefined,
+                  borderRadius: isSelected ? '4px' : undefined,
+                },
+                onClick: () => {
+                  console.log("Click en día:", date);
+                  setDiaSeleccionado(date);
+                }
+              };
+            }}
           />
         </Box>
 
@@ -611,50 +670,61 @@ const CalendarioInstructorSeleccionado = () => {
         />
       )}
 
-      {/* FABs para móvil */}
+      {/* FABs para móvil - Posicionamiento mejorado */}
       {isMobile && (
-        <>
+        <Box sx={{ 
+          position: "fixed", 
+          bottom: 20, 
+          right: 16, 
+          zIndex: 1400,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1.5,
+          alignItems: 'flex-end'
+        }}>
           {/* FAB Añadir visita */}
           <Fab
             color="primary"
             onClick={() => setModalCrearOpen(true)}
             sx={{
-              position: "fixed",
-              bottom: 100,
-              right: 16,
               backgroundColor: "#71277a",
               "&:hover": {
                 backgroundColor: "#5a1e61",
               },
-              zIndex: 1300,
-              width: 48,
-              height: 48,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              width: 56,
+              height: 56,
+              boxShadow: "0 8px 20px rgba(113, 39, 122, 0.4)",
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                backgroundColor: "#5a1e61",
+              }
             }}
           >
-            <AddIcon sx={{ fontSize: '1.2rem' }} />
+            <AddIcon sx={{ fontSize: '1.5rem' }} />
           </Fab>
 
           {/* FAB Reporte */}
           <Fab
             onClick={() => navigate(`/reporte/agendamientos/${idInstructor}`)}
             sx={{
-              position: "fixed",
-              bottom: 32,
-              right: 16,
               backgroundColor: "#71277a",
               "&:hover": {
                 backgroundColor: "#5a1e61",
               },
-              zIndex: 1300,
-              width: 48,
-              height: 48,
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+              width: 56,
+              height: 56,
+              boxShadow: "0 8px 20px rgba(113, 39, 122, 0.4)",
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+                backgroundColor: "#5a1e61",
+              }
             }}
           >
-            <PictureAsPdfIcon sx={{ fontSize: '1.1rem' }} />
+            <PictureAsPdfIcon sx={{ fontSize: '1.3rem', color: 'white' }} />
           </Fab>
-        </>
+        </Box>
       )}
 
       {/* Botón reporte para desktop y tablet */}

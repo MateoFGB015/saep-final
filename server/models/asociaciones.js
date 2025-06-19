@@ -36,6 +36,18 @@ Ficha.hasMany(FichaAprendiz, {
   as: 'fichasAprendiz'
 });
 
+// Ficha pertenece a un instructor
+Ficha.belongsTo(Usuario, {
+  foreignKey: 'id_instructor',
+  as: 'instructor'
+});
+
+// Un instructor puede tener muchas fichas
+Usuario.hasMany(Ficha, {
+  foreignKey: 'id_instructor',
+  as: 'fichasAsignadas'
+});
+
 
 //⁡⁣⁢⁣​‌‌‍𝙍͟𝙚͟𝙡͟𝙖͟𝙘͟𝙞͟𝙤͟𝙣͟𝙚͟𝙨 𝘼͟𝙜͟𝙚͟𝙣͟𝙙͟𝙖͟𝙢͟𝙞͟𝙚͟𝙣͟𝙩͟𝙤͟𝙨​⁡
 

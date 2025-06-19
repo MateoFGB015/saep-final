@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const Bitacora = require('../models/Bitacora');
 const FichaAprendiz = require('../models/FichaAprendiz');
+const { crearNotificacion } = require('../service/notificacionservice');
 
 // Subir Bitácora
 exports.subirBitacora = async (req, res) => {
@@ -168,33 +169,39 @@ exports.modificarBitacora = async (req, res) => {
 exports.eliminarBitacora = async (req, res) => {
   try {
     const { id } = req.params;
-    const { rol } = req.usuario;
+    const usuario = req.usuario;
 
-    // 🔐 Solo el ADMIN puede eliminar
-    if (rol !== 'Administrador') {
-      return res.status(403).json({ mensaje: 'Solo el administrador puede eliminar bitácoras.' });
+    if (usuario.rol !== 'Administrador' && usuario.rol !== 'Instructor') {
+      return res.status(403).json({ mensaje: 'No tienes permisos para eliminar esta bitácora' });
     }
 
-    // Buscar la bitácora
-    const bitacora = await Bitacora.findByPk(id);
+    const bitacora = await Bitacora.findByPk(id, {
+      include: { model: FichaAprendiz, as: 'fichaAprendiz' }
+    });
+
     if (!bitacora) {
-      return res.status(404).json({ mensaje: 'Bitácora no encontrada.' });
+      return res.status(404).json({ mensaje: 'Bitácora no encontrada' });
     }
 
-    // Eliminar archivo del sistema si existe
-    const rutaArchivo = path.join(__dirname, '..', 'uploads', 'bitacoras', bitacora.bitacora);
-    if (fs.existsSync(rutaArchivo)) {
-      fs.unlinkSync(rutaArchivo);
+    const idAprendiz = bitacora.fichaAprendiz?.id_usuario;
+
+    await bitacora.destroy();
+
+    // ✅ Notificar al aprendiz que se eliminó la bitácora
+    if (idAprendiz) {
+      await crearNotificacion({
+        id_usuario: idAprendiz,
+        tipo: 'Alerta',
+        titulo: 'Bitácora eliminada',
+        mensaje: 'Una de tus bitácoras ha sido eliminada por el administrador o instructor.',
+        estado: 'NoLeida'
+      });
     }
 
-    // Eliminar registro en la base de datos
-    await Bitacora.destroy({ where: { id_bitacora: id } });
-
-    res.status(200).json({ mensaje: '✅ Bitácora eliminada correctamente.' });
-
+    return res.json({ mensaje: 'Bitácora eliminada correctamente.' });
   } catch (error) {
     console.error('❌ Error al eliminar bitácora:', error);
-    res.status(500).json({ mensaje: 'Error del servidor al eliminar la bitácora.', error });
+    res.status(500).json({ mensaje: 'Error al eliminar bitácora.', error });
   }
 };
 exports.agregarObservacion = async (req, res) => {

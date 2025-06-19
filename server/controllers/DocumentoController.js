@@ -3,6 +3,7 @@ const path = require('path');
 const Documento = require('../models/Documento');
 const Usuario = require('../models/usuario');
 const FichaAprendiz = require('../models/FichaAprendiz');
+const { crearNotificacion } = require('../service/notificacionservice');
 
 exports.subirDocumento = async (req, res) => {
   try {
@@ -194,30 +195,48 @@ exports.eliminarDocumento = async (req, res) => {
     const { id } = req.params;
     const { rol } = req.usuario;
 
-    // Validar permisos
     if (rol !== 'Administrador') {
       return res.status(403).json({ mensaje: 'Solo el administrador puede eliminar documentos.' });
     }
 
-    // Buscar documento
-    const documento = await Documento.findByPk(id);
+    const documento = await Documento.findByPk(id, {
+      include: {
+        model: FichaAprendiz,
+        as: 'fichaAprendiz'
+      }
+    });
+
     if (!documento) {
       return res.status(404).json({ mensaje: 'Documento no encontrado.' });
     }
 
-    // Eliminar archivo del servidor
+    // ✅ Obtener el id del aprendiz dueño del documento
+    const idAprendiz = documento.fichaAprendiz?.id_usuario;
+
+    // Eliminar archivo físico
     const rutaArchivo = path.join(__dirname, '../uploads/documentos', documento.documento);
     if (fs.existsSync(rutaArchivo)) {
       fs.unlinkSync(rutaArchivo);
     }
 
-    // Eliminar registro de la base de datos
+    // Eliminar registro en la base de datos
     await documento.destroy();
 
-    res.status(200).json({ mensaje: '✅ Documento eliminado correctamente.' });
+    // ✅ Crear notificación al aprendiz
+    if (idAprendiz) {
+      await crearNotificacion({
+        id_usuario: idAprendiz,
+        tipo: 'Alerta',
+        titulo: 'Documento eliminado',
+        mensaje: 'Uno de tus documentos ha sido eliminado por el administrador.',
+        estado: 'NoLeida'
+      });
+    }
+
+    return res.status(200).json({ mensaje: '✅ Documento eliminado correctamente.' });
 
   } catch (error) {
     console.error('❌ Error al eliminar documento:', error);
-    res.status(500).json({ mensaje: 'Error del servidor al eliminar el documento.', error });
+    return res.status(500).json({ mensaje: 'Error del servidor al eliminar el documento.', error });
   }
 };
