@@ -28,9 +28,7 @@ const ListaInstructores = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(16);
 
-  
-  const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
+    const API_URL = process.env.REACT_APP_BACKEND_API_URL;
   const navigate = useNavigate();
   
   // Solo detectamos mobile
@@ -231,7 +229,7 @@ const ListaInstructores = () => {
                 borderRadius: 3,
                 textAlign: 'center',
                 transition: '0.3s',
-                minHeight: isMobile ? 130 : 'auto',
+                height: isMobile ? 160 : 'auto', // Altura fija para mobile
                 justifyContent: 'space-between',
                 '&:hover': {
                   boxShadow: 8,
@@ -242,18 +240,18 @@ const ListaInstructores = () => {
                   variant="h6"
                   sx={{
                     fontWeight: 600,
-                    fontSize: isMobile ? '0.9rem' : 'clamp(0.75rem, 1.2vw, 1.15rem)',
+                    fontSize: isMobile ? '0.85rem' : 'clamp(0.75rem, 1.2vw, 1.15rem)',
                     textAlign: 'center',
                     whiteSpace: 'normal',
                     wordBreak: 'break-word',
                     maxWidth: '100%',
                     lineHeight: 1.2,
                     display: '-webkit-box',
-                    WebkitLineClamp: isMobile ? 3 : 2,
+                    WebkitLineClamp: 2, // Mismo que desktop
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
-                    minHeight: isMobile ? '2.7em' : '2.4em',
-                    mb: isMobile ? 1.5 : 0,
+                    minHeight: '2.4em', // Mismo que desktop
+                    mb: isMobile ? 2 : 0,
                     flex: 1,
                     display: 'flex',
                     alignItems: 'center',
