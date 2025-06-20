@@ -200,6 +200,7 @@ const FichasTable = () => {
     function getRowsPerPage() {
       const width = window.innerWidth;
       if (width < 768) return 3; // Móvil: menos filas
+      if (width < 1600) return 6; // laptops un poco mas grandes
       return width >= 1400 ? 10 : 5;
     }
 
