@@ -202,6 +202,7 @@ const FichasTable = () => {
     if (width < 600) return 5; // Móvil: 5 tarjetas
     if (width < 950) return 8; // Tablet: 8 filas
     if( width < 1400) return 5; // Pantallas medianas: 5 filas
+    if(width < 1600) return 6; // laptops un poco mas grandes 
     return 10; // PC: 10 filas
   }
 
