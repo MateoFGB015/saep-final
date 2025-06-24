@@ -1,43 +1,40 @@
-//este contexto es para compartir datos entre componentes (es muy importante)
-
 import { createContext, useContext, useState, useEffect } from "react";
 import authAPI from "../api/AuthAPI";
 
-// Crear el contexto
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem("token") || null);
   const [loading, setLoading] = useState(true);
 
-  // Función para obtener el usuario desde el backend
   const fetchUser = async () => {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
+    const storedToken = localStorage.getItem("token");
+    if (!storedToken) {
       setLoading(false);
-      return; // 🔐 No intentes consultar si no hay token
+      return;
     }
 
     try {
-      const userData = await authAPI.getUserData(token);
+      const userData = await authAPI.getUserData(storedToken);
       setUser(userData);
+      setToken(storedToken);
     } catch (error) {
       console.error("Error obteniendo usuario:", error);
       localStorage.removeItem("token");
       setUser(null);
+      setToken(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // Cargar usuario al iniciar la app
   useEffect(() => {
     fetchUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, fetchUser }}>
+    <AuthContext.Provider value={{ user, token, setUser, setToken, loading, fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

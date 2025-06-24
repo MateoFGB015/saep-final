@@ -42,7 +42,6 @@ app.use('/observacion', ObservacionRoutes);
 app.use('/documentos', DocumentosRoutes);
 app.use('/reportes', ReportesRoutes);
 app.use('/programas', programasRoutes);
-app.use('/api/notificaciones', notificacionRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 module.exports = app;

@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios"; // ✅ Necesario
 import { useAuth } from "../../context/AuthProvider";
 import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
+import Badge from '@mui/material/Badge';
 import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
 import Sena from "../../assets/imgs/logoSena.png";
@@ -33,20 +35,19 @@ import {
 
 const drawerWidth = 250;
 const collapsedWidth = 60;
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
 const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
-  const { user } = useAuth();
+  const [cantidadNoLeidas, setCantidadNoLeidas] = useState(0);
+  const { user, token } = useAuth(); // ✅ Traemos el token directamente aquí
   const { logout } = useAuthActions();
   const theme = useTheme();
   const [selectedUser, setSelectedUser] = useState(null);
   const [openUserModal, setOpenUserModal] = useState(false);
 
-  const toggleDrawer = () => {
-    setOpen(!open);
-  };
-
+  const toggleDrawer = () => setOpen(!open);
   const handleVerUsuario = (usuario) => {
     setSelectedUser(usuario);
     setOpenUserModal(true);
@@ -61,10 +62,26 @@ const Navbar = ({ children }) => {
     { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["aprendiz"] },
   ];
 
+  // ✅ Solo obtenemos el conteo de notificaciones, no las notificaciones completas
+  useEffect(() => {
+    const obtenerCantidadNoLeidas = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/notificacion/ver`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const noLeidas = res.data.notificaciones.filter(n => n.estado === "NoLeida").length;
+        setCantidadNoLeidas(noLeidas);
+      } catch (error) {
+        console.error("❌ Error al obtener cantidad de no leídas:", error);
+      }
+    };
+
+    if (token) obtenerCantidadNoLeidas();
+  }, [token]);
+
   return (
     <Box sx={{ display: "flex", width: "100%" }}>
       <CssBaseline />
-
       <AppBar
         position="fixed"
         sx={{
@@ -75,26 +92,15 @@ const Navbar = ({ children }) => {
         }}
       >
         <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={toggleDrawer}
-            sx={{ position: "relative", zIndex: theme.zIndex.drawer + 2 }}
-          >
+          <IconButton edge="start" color="inherit" onClick={toggleDrawer} sx={{ position: "relative", zIndex: theme.zIndex.drawer + 2 }}>
             <MenuIcon />
           </IconButton>
 
           <Box sx={{ display: "flex", alignItems: "center", ml: 4, flexGrow: 1, gap: 2 }}>
-          <img
-            src={Sena}
-            alt="Logo SENA"
-            style={{ height: 32 }}
-          />
-          <Typography variant="h6" sx={{ fontSize: "1rem" }}>
-            SISTEMA SAEP
-          </Typography>
-        </Box>
-               
+            <img src={Sena} alt="Logo SENA" style={{ height: 32 }} />
+            <Typography variant="h6" sx={{ fontSize: "1rem" }}>SISTEMA SAEP</Typography>
+          </Box>
+
           <Typography
             variant="body2"
             sx={{
@@ -110,16 +116,27 @@ const Navbar = ({ children }) => {
           <IconButton color="inherit" onClick={() => handleVerUsuario(user)}>
             <AccountCircleIcon />
           </IconButton>
+
           <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
-            <NotificationsIcon />
+            <Badge
+              badgeContent={cantidadNoLeidas > 0 ? cantidadNoLeidas : null}
+              color="error"
+              overlap="circular"
+            >
+              <NotificationsIcon />
+            </Badge>
           </IconButton>
+
           <IconButton color="inherit" onClick={logout}>
             <LogoutIcon />
           </IconButton>
         </Toolbar>
 
         {mostrarNotificaciones && (
-          <NotificacionesFlotantes onClose={() => setMostrarNotificaciones(false)} />
+          <NotificacionesFlotantes
+            onClose={() => setMostrarNotificaciones(false)}
+            setCantidadNoLeidas={setCantidadNoLeidas} // ✅ Para actualizar el contador desde el flotante
+          />
         )}
       </AppBar>
 
@@ -173,7 +190,7 @@ const Navbar = ({ children }) => {
                 sx={{
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
-                  py: 1.5, // Espaciado vertical
+                  py: 1.5,
                 }}
               >
                 <ListItemIcon
@@ -192,28 +209,23 @@ const Navbar = ({ children }) => {
         </List>
       </Drawer>
 
-     <Box
-  component="main"
-  sx={{
-    flexGrow: 1,
-    pl: "5%",
-    pr: "5%",
-    mt: 13,
-    width: "100%",
-    minHeight: "100vh", // Asegura que crezca al menos a pantalla completa
-    pb: 10, // Espacio inferior para que la paginación no quede cortada
-    overflowY: "auto",
-  }}
->
-  {children}
-</Box>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          pl: "5%",
+          pr: "5%",
+          mt: 13,
+          width: "100%",
+          minHeight: "100vh",
+          pb: 10,
+          overflowY: "auto",
+        }}
+      >
+        {children}
+      </Box>
 
-
-      <UserInfoModal
-        open={openUserModal}
-        onClose={() => setOpenUserModal(false)}
-        user={selectedUser}
-      />
+      <UserInfoModal open={openUserModal} onClose={() => setOpenUserModal(false)} user={selectedUser} />
     </Box>
   );
 };

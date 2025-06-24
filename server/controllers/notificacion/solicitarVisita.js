@@ -18,7 +18,7 @@ const solicitarVisita = async (req, res) => {
 
     const { mensajePersonalizado } = req.body;
 
-    // 🧩 Buscar la ficha del aprendiz con su instructor
+    // Buscar la ficha del aprendiz con su instructor
     const fichaAprendiz = await FichaAprendiz.findOne({
       where: { id_usuario: idAprendiz },
       include: {
@@ -35,12 +35,12 @@ const solicitarVisita = async (req, res) => {
       return res.status(404).json({ error: 'No se encontró una ficha asignada al aprendiz.' });
     }
 
-const instructorId = fichaAprendiz.ficha.id_instructor;
-if (!instructorId) {
-  return res.status(404).json({ error: 'La ficha no tiene un instructor asignado.' });
-}
+    const instructorId = fichaAprendiz.ficha.id_instructor;
+    if (!instructorId) {
+      return res.status(404).json({ error: 'La ficha no tiene un instructor asignado.' });
+    }
 
-    // 🔍 Verificar si ya existe una solicitud pendiente del mismo aprendiz a ese instructor
+    // Verificar si ya existe una solicitud pendiente del mismo aprendiz a ese instructor
     const solicitudExistente = await Notificacion.findOne({
       where: {
         tipo: 'Solicitud',
@@ -54,13 +54,15 @@ if (!instructorId) {
       return res.status(409).json({ error: 'Ya existe una solicitud pendiente para este instructor.' });
     }
 
-    // 📥 Obtener los datos del aprendiz para incluirlos en el mensaje
+    // Obtener los datos del aprendiz para incluirlos en el mensaje
     const aprendiz = await Usuario.findByPk(idAprendiz);
 
-    const mensaje = `El aprendiz ${aprendiz.nombres} ha solicitado una visita de seguimiento.` +
-      (mensajePersonalizado ? `\n\nMensaje adicional:\n${mensajePersonalizado}` : '');
+    const mensaje = `
+      El aprendiz ${aprendiz.nombre} ${aprendiz.apellido} ha solicitado una visita de seguimiento. Ficha: ${fichaAprendiz.ficha.numero_ficha} - ${fichaAprendiz.ficha.nombre_programa}
+${mensajePersonalizado ? ` Mensaje adicional:\n${mensajePersonalizado}` : ''}
+    `.trim();
 
-    // 📨 Crear notificación
+    // Crear notificación
     const notificacion = await Notificacion.create({
       tipo: 'Solicitud',
       titulo: 'Solicitud de Visita',
@@ -81,4 +83,33 @@ if (!instructorId) {
   }
 };
 
-module.exports = { solicitarVisita };
+
+
+const marcarNotificacionLeida = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id: id_usuario } = req.usuario; // ID del usuario autenticado
+
+    const notificacion = await Notificacion.findByPk(id);
+
+    if (!notificacion) {
+      return res.status(404).json({ mensaje: 'Notificación no encontrada.' });
+    }
+
+    // Validar que la notificación sea del usuario autenticado
+    if (notificacion.id_usuario !== id_usuario) {
+      return res.status(403).json({ mensaje: 'No tienes permiso para modificar esta notificación.' });
+    }
+
+    // Marcar como leída
+    notificacion.estado = 'Leida';
+    await notificacion.save();
+
+    res.status(200).json({ mensaje: 'Notificación marcada como leída.', notificacion });
+  } catch (error) {
+    console.error('❌ Error al marcar notificación como leída:', error);
+    res.status(500).json({ mensaje: 'Error interno del servidor.', error });
+  }
+};
+
+module.exports = { solicitarVisita, marcarNotificacionLeida };

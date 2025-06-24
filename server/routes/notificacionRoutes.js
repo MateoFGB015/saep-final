@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const getNotificaciones = require('../controllers/notificacion/verNotificaciones');
-const { solicitarVisita } = require('../controllers/notificacion/solicitarVisita');
+const verNotificaciones = require('../controllers/notificacion/verNotificaciones');
+const { solicitarVisita, marcarNotificacionLeida } = require('../controllers/notificacion/solicitarVisita');
 const authMiddleware = require('../middlewares/authMiddleware');
 
 
-router.get('/ver', authMiddleware, getNotificaciones);
+router.get('/ver', authMiddleware, verNotificaciones);
 
 router.post('/solicitarVisita', authMiddleware, solicitarVisita);
+
+router.put('/marcarLeida/:id', authMiddleware, marcarNotificacionLeida);
 
 module.exports = router;

@@ -1,66 +1,162 @@
-import { Card, CardContent, Typography, IconButton, Box } from '@mui/material';
-import Grid from '@mui/material/Grid2';
-import CloseIcon from '@mui/icons-material/Close';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  Box,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  CircularProgress,
+} from "@mui/material";
+import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
+import { useAuth } from "../../context/AuthProvider";
 
-/**
- * Componente `Notificación`
- * Muestra un título, una descripción y un botón para archivarla.
- *
- * @example
- * <Notificacion 
- *   titulo="Nueva actualización"
- *   descripcion="Se ha lanzado una nueva versión del sistema."
- *   onArchivar={() => console.log('Notificación archivada')}
- * />
- *
- * @param {Object} props - Propiedades del componente.
- * @param {string} props.titulo - Título de la notificación, que aparece en la parte superior.
- * @param {string} props.descripcion - Descripción o contenido de la notificación.
- * @param {function} props.onArchivar - Función ejecutada al hacer clic en el botón de cerrar, para archivar o eliminar la notificación.
- *
- * @returns {JSX.Element} Un componente de tarjeta que muestra una notificación con opción de cierre.
- */
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
-const Notificacion = ({ titulo, descripcion, onArchivar }) => {
+const NotificacionesFlotantes = ({ onClose, setCantidadNoLeidas }) => {
+  const { token } = useAuth();
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [tabActiva, setTabActiva] = useState(0); // 0 = No leídas, 1 = Leídas
+
+  useEffect(() => {
+    const obtenerNotificaciones = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/notificacion/ver`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotificaciones(response.data.notificaciones);
+
+        // ✅ Calcula cantidad de no leídas para el Badge
+        const noLeidas = response.data.notificaciones.filter(n => n.estado === "NoLeida").length;
+        setCantidadNoLeidas(noLeidas);
+
+      } catch (error) {
+        console.error("❌ Error al obtener notificaciones:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    obtenerNotificaciones();
+  }, [token, setCantidadNoLeidas]);
+
+  const marcarComoLeida = async (id) => {
+    try {
+      await axios.put(`${API_URL}/notificacion/marcarLeida/${id}`, null, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setNotificaciones((prev) =>
+        prev.map((n) =>
+          n.id_notificacion === id ? { ...n, estado: "Leida" } : n
+        )
+      );
+
+      // ✅ Actualiza contador al marcar como leída
+      setCantidadNoLeidas((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error("❌ Error al marcar como leída:", error);
+    }
+  };
+
+  const notificacionesFiltradas = notificaciones.filter((n) =>
+    tabActiva === 0 ? n.estado === "NoLeida" : n.estado === "Leida"
+  );
+
   return (
-    <Card
-      elevation={0}
+    <Box
+      onClick={onClose} // 🔔 Cerrar al hacer clic fuera del panel
       sx={{
-        marginBottom: 2,
-        padding: '0.5px',
-        borderRadius: 2,
-        backgroundColor: 'white',
-        border: 'solid 2px #E0E0E0',
-        '&:hover': { bgcolor: '#f5f5f5' },
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.2)",
+        zIndex: 1400,
       }}
     >
-      <CardContent>
-        <Grid
-          container
-          alignItems="center"
-          spacing={1}
-          justifyContent="space-between"
+      <Box
+        onClick={(e) => e.stopPropagation()} // ⚠️ Esto evita que al hacer clic dentro se cierre
+        sx={{
+          position: "fixed",
+          top: 80,
+          right: 20,
+          width: 350,
+          height: "80vh",
+          backgroundColor: "#fff",
+          border: "1px solid #ccc",
+          borderRadius: 2,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.2)",
+          zIndex: 1501,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Tabs */}
+        <Tabs
+          value={tabActiva}
+          onChange={(_, newValue) => setTabActiva(newValue)}
+          textColor="inherit"
+          indicatorColor="secondary"
+          sx={{
+            "& .MuiTabs-indicator": { backgroundColor: "#71277a" },
+            "& .MuiTab-root": { color: "#333", fontWeight: 500 },
+            "& .Mui-selected": { color: "#71277a !important", fontWeight: "bold" },
+          }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <Typography fontWeight="600" variant="subtitle2">{titulo}</Typography>
-            <IconButton onClick={onArchivar} sx={{ color: '#1C1B1F' }}>
-              <CloseIcon sx={{ fontSize: '20px' }} />
-            </IconButton>
-          </Box>
-        </Grid>
-        <Typography variant="subtitle2" sx={{ marginTop: 1 }}>
-          {descripcion}
-        </Typography>
-      </CardContent>
-    </Card>
+          <Tab label="NO LEÍDAS" />
+          <Tab label="LEÍDAS" />
+        </Tabs>
+
+        {/* Contenido */}
+        <Box sx={{ p: 2, overflowY: "auto", flexGrow: 1 }}>
+          {loading ? (
+            <CircularProgress />
+          ) : notificacionesFiltradas.length === 0 ? (
+            <Typography variant="body2" color="textSecondary">
+              No hay notificaciones.
+            </Typography>
+          ) : (
+            notificacionesFiltradas.map((n) => (
+              <Card
+                key={n.id_notificacion}
+                sx={{
+                  mb: 1,
+                  backgroundColor: n.estado === "NoLeida" ? "#f9f9f9" : "#fff",
+                }}
+              >
+                <CardContent sx={{ position: "relative", pr: 5 }}>
+                  <Typography variant="subtitle2" fontWeight="bold">
+                    {n.titulo}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {n.mensaje}
+                  </Typography>
+                  {n.estado === "NoLeida" && (
+                    <IconButton
+                      onClick={() => marcarComoLeida(n.id_notificacion)}
+                      size="small"
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        color: "#71277a",
+                      }}
+                    >
+                      <CheckCircleOutlined sx={{ fontSize: 22 }} />
+                    </IconButton>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
-export default Notificacion;
+export default NotificacionesFlotantes;

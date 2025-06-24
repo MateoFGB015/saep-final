@@ -6,7 +6,7 @@ require('./models/asociaciones'); // 🔄 Esto conecta todas las relaciones
 const PORT = process.env.PORT;
 
 app.get('/', (req, res) => {
-  res.send('Bienvenido al servirdor SAEP');
+  res.send('Bienvenido al servidor SAEP');
 });
 
 app.listen(PORT, () => {

@@ -191,10 +191,12 @@ const FichaDetalle = () => {
 
   return (
      <Box sx={{ 
-      position: 'relative', 
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column'
+    position: 'relative', 
+  height: { xs: 'auto', md: '100vh' }, // Auto en móvil, fijo en laptop
+  minHeight: { xs: '100vh', md: 'auto' }, // minHeight en móvil, auto en laptop
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: { xs: 'visible', md: 'hidden' } 
     }}>
       {/* Header con navegación y acciones - Responsivo */}
       <Box sx={{
@@ -268,30 +270,36 @@ const FichaDetalle = () => {
 
       {/* Contenido principal con scroll */}
       <Box sx={{
-        flexGrow: 1,
-        padding: { xs: '15px', sm: '20px' },
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        overflowY: 'auto',
-        overflowX: 'hidden',
-        paddingBottom: '100px',
-        '&::-webkit-scrollbar': {
-          width: '6px',
-        },
-        '&::-webkit-scrollbar-track': {
-          backgroundColor: '#f1f1f1',
-          borderRadius: '3px',
-        },
-        '&::-webkit-scrollbar-thumb': {
-          backgroundColor: '#71277a',
-          borderRadius: '3px',
-          '&:hover': {
-            backgroundColor: '#5e1b65',
-          },
-        },
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#71277a #f1f1f1',
+         flexGrow: 1,
+  padding: { xs: '15px', sm: '20px' },
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  // Scroll solo en laptop/desktop
+  overflowY: { xs: 'visible', md: 'auto' },
+  overflowX: 'hidden',
+  paddingBottom: { xs: '12px', sm: '100px' },
+  // Altura fija solo en laptop
+  height: { 
+    xs: 'auto', // Auto en móvil - scroll natural
+    md: 'calc(100vh - 80px)' // Fijo en laptop - scroll interno
+  },
+  '&::-webkit-scrollbar': {
+    width: '6px',
+  },
+  '&::-webkit-scrollbar-track': {
+    backgroundColor: '#f1f1f1',
+    borderRadius: '3px',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: '#71277a',
+    borderRadius: '3px',
+    '&:hover': {
+      backgroundColor: '#5e1b65',
+    },
+  },
+  scrollbarWidth: 'thin',
+  scrollbarColor: '#71277a #f1f1f1',
       }}>
         {/* Información de la ficha - Responsiva */}
         <Box sx={{ 
@@ -304,24 +312,34 @@ const FichaDetalle = () => {
           <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
             <TableContainer 
               component={Paper} 
-              elevation={3}
-              sx={{
-                overflowX: 'auto',
-                '&::-webkit-scrollbar': {
-                  height: '6px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  backgroundColor: '#f1f1f1',
-                  borderRadius: '3px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  backgroundColor: '#71277a',
-                  borderRadius: '3px',
-                  '&:hover': {
-                    backgroundColor: '#5e1b65',
-                  },
-                },
-              }}
+  elevation={3}
+  sx={{
+    maxHeight: { 
+      xs: 300, 
+      sm: 350, 
+      md: 500,  // Más altura en laptop para aprovechar el scroll interno
+      lg: 600 
+    },
+    overflowY: 'auto',
+    overflowX: 'auto',
+    '&::-webkit-scrollbar': {
+      width: '8px',
+      height: '6px',
+    },
+    '&::-webkit-scrollbar-track': {
+      backgroundColor: '#f1f1f1',
+      borderRadius: '3px',
+    },
+    '&::-webkit-scrollbar-thumb': {
+      backgroundColor: '#71277a',
+      borderRadius: '3px',
+      '&:hover': {
+        backgroundColor: '#5e1b65',
+      },
+    },
+    scrollbarWidth: 'thin',
+    scrollbarColor: '#71277a #f1f1f1',
+  }}
             >
               <Table sx={{ minWidth: 600 }}>
                 <TableHead>
