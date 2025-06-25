@@ -34,23 +34,46 @@ const ModalCrearUsuario = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setErrorMessage("");
+const handleSubmit = (e) => {
+  e.preventDefault();
+  setErrorMessage("");
 
-    const requiredFields = [
-      "rol", "nombre", "apellido", "tipo_documento", 
-      "numero_documento", "telefono", "correo_electronico", "password"
-    ];
-    const errors = requiredFields.filter((field) => !formData[field]);
+  const requiredFields = [
+    "rol", "nombre", "apellido", "tipo_documento", 
+    "numero_documento", "telefono", "correo_electronico", "password"
+  ];
 
-    if (errors.length > 0) {
-      setErrorMessage(`Los siguientes campos son obligatorios: ${errors.join(", ")}`);
-      return;
-    }
+  const errors = requiredFields.filter((field) => !formData[field]);
 
-    setShowConfirmationModal(true);
-  };
+  if (errors.length > 0) {
+    setErrorMessage(`Los siguientes campos son obligatorios: ${errors.join(", ")}`);
+    return;
+  }
+
+  // ✅ Validar correo
+  const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!correoRegex.test(formData.correo_electronico)) {
+    setErrorMessage("Por favor, ingresa un correo electrónico válido.");
+    return;
+  }
+
+  // ✅ Validar teléfono numérico
+  if (!/^\d+$/.test(formData.telefono)) {
+    setErrorMessage("El teléfono solo debe contener números.");
+    return;
+  }
+
+  // ✅ Validar documento de identidad de max 11 dígitos
+if (!/^\d{1,11}$/.test(formData.numero_documento)) {
+  setErrorMessage("El número de documento debe contener solo números y tener máximo 11 dígitos.");
+  return;
+}
+
+
+  // ✅ Si todo pasa, mostramos el modal de confirmación
+  setShowConfirmationModal(true);
+};
+
 
   const handleConfirm = async () => {
     setShowConfirmationModal(false);
