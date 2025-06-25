@@ -106,11 +106,11 @@ const handleSave = async () => {
             <TextField key={name} fullWidth margin="dense" label={name.replace("_", " ")} name={name} value={formData[name]} onChange={handleChange} sx={inputStyles} />
           ))}
 
-          <Typography variant="body2" sx={{ mt: 2, color: "#444" }}>Rol</Typography>
+         {/* <Typography variant="body2" sx={{ mt: 2, color: "#444" }}>Rol</Typography>
           <Select fullWidth name="rol" value={formData.rol} onChange={handleChange} sx={selectStyles}>
             <MenuItem value="Aprendiz">Aprendiz</MenuItem>
             <MenuItem value="Instructor">Instructor</MenuItem>
-          </Select>
+          </Select> */}
 
           <Typography variant="body2" sx={{ mt: 2, color: "#444" }}>Tipo de documento</Typography>
           <Select fullWidth name="tipo_documento" value={formData.tipo_documento} onChange={handleChange} sx={selectStyles}>
