@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthProvider";
 import ConfirmDialog from "../../components/ui/ModalConfirmacion";
 import { useNavigate } from "react-router-dom";
 import SearchBarFichas from "../fichas/SearchBarFichas";
+import Swal from 'sweetalert2';
 
 import {
   Button, TextField, Table, TableBody, TableCell, TableContainer,
@@ -150,20 +151,48 @@ const FichasTable = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      if (isEditing) {
-        await axios.put(`${API_URL}/fichas/modificar/${formData.id_ficha}`, formData);
-      } else {
-        await axios.post(`${API_URL}/fichas`, formData);
-      }
-      fetchFichas();
-      handleCloseModal();
-    } catch (error) {
-      console.error("Error al guardar la ficha:", error);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  const { inicio_etapa_productiva, fin_etapa_productiva } = formData;
+
+  if (inicio_etapa_productiva && fin_etapa_productiva) {
+    const inicio = new Date(inicio_etapa_productiva);
+    const fin = new Date(fin_etapa_productiva);
+
+    if (inicio > fin) {
+      Swal.fire({
+        icon: "warning",
+        title: "Fechas inválidas",
+        text: "La fecha de inicio no puede ser posterior a la fecha de fin.",
+        confirmButtonColor: "#71277a",
+      });
+      return;
     }
-  };
+  }
+
+  try {
+    if (isEditing) {
+      await axios.put(`${API_URL}/fichas/modificar/${formData.id_ficha}`, formData);
+    } else {
+      await axios.post(`${API_URL}/fichas`, formData);
+    }
+
+    fetchFichas();
+    handleCloseModal();
+  } catch (error) {
+    console.error("Error al guardar la ficha:", error);
+    const mensaje = error.response?.data?.error || "Error desconocido al guardar la ficha";
+
+    Swal.fire({
+      icon: "error",
+      title: "No se pudo guardar",
+      text: mensaje,
+      confirmButtonColor: "#71277a",
+    });
+  }
+};
+
 
   const [instructores, setInstructores] = useState([]);
 
