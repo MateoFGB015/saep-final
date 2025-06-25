@@ -40,34 +40,37 @@ const ModalModificar = ({ open, onClose, evento }) => {
   const { user } = useAuth();
   const esAprendiz = user?.rol?.toLowerCase() === "aprendiz";
 
-  const [formData, setFormData] = useState({
-    nombreAprendiz: "",
-    enlace: "",
-    empresa: "",
-    direccion: "",
-    tipo: "",
-    start: "",
-    end: "",
-    estado: "",
-  });
+const [formData, setFormData] = useState({
+  nombreAprendiz: "",
+  enlace_reunion: "",
+  empresa: "",
+  direccion: "",
+  tipo_visita: "",
+  start: "",
+  end: "",
+  estado: "",
+});
+
 
   const [loading, setLoading] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
-  useEffect(() => {
-    if (evento) {
-      setFormData({
-        nombreAprendiz: evento.nombreAprendiz || "",
-        empresa: evento.nombreEmpresa || "",
-        direccion: evento.direccion || "",
-        tipo: evento.tipo_visita || "",
-        enlace: evento.enlace_reunion || "",
-        start: evento.start ? moment(evento.start).format("YYYY-MM-DDTHH:mm") : "",
-        end: evento.end ? moment(evento.end).format("YYYY-MM-DDTHH:mm") : "",
-        estado: evento.estado || "",
-      });
-    }
-  }, [evento]);
+useEffect(() => {
+  if (evento) {
+    console.log("Evento recibido en modal:", evento); // 👈
+    setFormData({
+      nombreAprendiz: evento.nombreAprendiz || "",
+      empresa: evento.nombreEmpresa || "",
+      direccion: evento.direccion || "",
+      tipo_visita: evento.tipo_visita || "",
+      enlace_reunion: evento.enlace_reunion || "",
+      start: evento.start ? moment(evento.start).format("YYYY-MM-DDTHH:mm") : "",
+      end: evento.end ? moment(evento.end).format("YYYY-MM-DDTHH:mm") : "",
+      estado: evento.estado || "",
+    });
+  }
+}, [evento]);
+
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -87,8 +90,8 @@ const ModalModificar = ({ open, onClose, evento }) => {
       const payload = {
         fecha_inicio: formData.start,
         fecha_fin: formData.end,
-        tipo_visita: formData.tipo,
-        enlace_reunion: formData.enlace,
+        tipo_visita: formData.tipo_visita,
+        enlace_reunion: formData.enlace_reunion,
         estado_visita: formData.estado,
       };
 
@@ -150,8 +153,8 @@ const ModalModificar = ({ open, onClose, evento }) => {
               <TextField
                 select
                 label="Tipo"
-                name="tipo"
-                value={formData.tipo}
+                name="tipo_visita"
+                value={formData.tipo_visita}
                 onChange={handleChange}
                 fullWidth
                 sx={textFieldStyle}
@@ -165,8 +168,8 @@ const ModalModificar = ({ open, onClose, evento }) => {
             <Grid item xs={6}>
               <TextField
                 label="Enlace"
-                name="enlace"
-                value={formData.enlace}
+                name="enlace_reunion"
+                value={formData.enlace_reunion}
                 onChange={handleChange}
                 fullWidth
                 sx={textFieldStyle}
