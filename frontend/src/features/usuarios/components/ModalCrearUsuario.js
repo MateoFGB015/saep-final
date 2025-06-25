@@ -1,18 +1,44 @@
-//este es el modal (recuadro) que se muestra el querer crear un usuario 
-
 import React, { useState } from "react";
-import { 
-  Box, Button,TextField, MenuItem, Select, FormControl, Typography, 
+import {
+  Box, Button, TextField, MenuItem, Select, FormControl, Typography,
   IconButton, Modal, Grid
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import usersAPI from "../../../api/UsersAPI"; // Importar API de usuarios
+import usersAPI from "../../../api/UsersAPI";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
 import useAlert from "../hooks/UserAlert";
 import CustomSnackbar from "../../../components/ui/Alert";
 
-
 const token = localStorage.getItem("token");
+
+// Funciones auxiliares
+const validarNombre = (valor) => {
+  return valor
+    .split(" ")
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(" ");
+};
+
+const contieneMayusculasInternas = (valor) => {
+  return valor.split(" ").some(p => /[A-Z]/.test(p.slice(1)));
+};
+
+const validarContrasena = (valor) => {
+  const longitudValida = valor.length >= 8 && valor.length <= 15;
+  const contieneMinuscula = /[a-z]/.test(valor);
+  const contieneMayuscula = /[A-Z]/.test(valor);
+  const contieneEspecial = /[@#!*+]/.test(valor);
+  const noRepetida = !/^([a-zA-Z])\1*$/.test(valor);
+
+  return (
+    longitudValida &&
+    contieneMinuscula &&
+    contieneMayuscula &&
+    contieneEspecial &&
+    noRepetida
+  );
+};
+
 
 const ModalCrearUsuario = ({ onClose }) => {
   const { alerta, showAlert, closeAlert } = useAlert();
@@ -31,49 +57,77 @@ const ModalCrearUsuario = ({ onClose }) => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let nuevoValor = value;
+
+    if (name === "nombre" || name === "apellido") {
+      if (contieneMayusculasInternas(value)) {
+        setErrorMessage("Cada palabra debe comenzar con mayúscula y seguir en minúscula.");
+      } else {
+        setErrorMessage("");
+      }
+      nuevoValor = validarNombre(value);
+    }
+
+    if (name === "password") {
+      if (!validarContrasena(value)) {
+        setErrorMessage("La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas y un carácter especial (@, #, !, *, +). No puede contener letras repetidas.");
+
+      } else {
+        setErrorMessage("");
+      }
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: nuevoValor,
+    }));
   };
 
-const handleSubmit = (e) => {
-  e.preventDefault();
-  setErrorMessage("");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setErrorMessage("");
 
-  const requiredFields = [
-    "rol", "nombre", "apellido", "tipo_documento", 
-    "numero_documento", "telefono", "correo_electronico", "password"
-  ];
+    const requiredFields = [
+      "rol", "nombre", "apellido", "tipo_documento",
+      "numero_documento", "telefono", "correo_electronico", "password"
+    ];
 
-  const errors = requiredFields.filter((field) => !formData[field]);
+    const errors = requiredFields.filter((field) => !formData[field]);
 
-  if (errors.length > 0) {
-    setErrorMessage(`Los siguientes campos son obligatorios: ${errors.join(", ")}`);
-    return;
-  }
+    if (errors.length > 0) {
+      setErrorMessage(`Los siguientes campos son obligatorios: ${errors.join(", ")}`);
+      return;
+    }
 
-  // ✅ Validar correo
-  const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!correoRegex.test(formData.correo_electronico)) {
-    setErrorMessage("Por favor, ingresa un correo electrónico válido.");
-    return;
-  }
+    if (!/^\d{1,11}$/.test(formData.numero_documento)) {
+      setErrorMessage("El número de documento debe tener máximo 11 dígitos numéricos.");
+      return;
+    }
 
-  // ✅ Validar teléfono numérico
-  if (!/^\d+$/.test(formData.telefono)) {
-    setErrorMessage("El teléfono solo debe contener números.");
-    return;
-  }
+    const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!correoRegex.test(formData.correo_electronico)) {
+      setErrorMessage("Por favor, ingresa un correo electrónico válido.");
+      return;
+    }
 
-  // ✅ Validar documento de identidad de max 11 dígitos
-if (!/^\d{1,11}$/.test(formData.numero_documento)) {
-  setErrorMessage("El número de documento debe contener solo números y tener máximo 11 dígitos.");
-  return;
-}
+    if (!/^\d+$/.test(formData.telefono)) {
+      setErrorMessage("El teléfono solo debe contener números.");
+      return;
+    }
 
+    if (contieneMayusculasInternas(formData.nombre) || contieneMayusculasInternas(formData.apellido)) {
+      setErrorMessage("Nombre y apellido deben tener solo la primera letra en mayúscula.");
+      return;
+    }
 
-  // ✅ Si todo pasa, mostramos el modal de confirmación
-  setShowConfirmationModal(true);
-};
+    if (!validarContrasena(formData.password)) {
+      setErrorMessage("La contraseña no cumple con los requisitos de seguridad.");
+      return;
+    }
 
+    setShowConfirmationModal(true);
+  };
 
   const handleConfirm = async () => {
     setShowConfirmationModal(false);
@@ -82,15 +136,13 @@ if (!/^\d{1,11}$/.test(formData.numero_documento)) {
     try {
       if (response.success) {
         showAlert('Usuario creado exitosamente', "success");
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      }else {
+        setTimeout(() => onClose(), 2000);
+      } else {
         showAlert(response.message || "Hubo un error al crear el usuario.", "error");
       }
-      } catch (error) {
-        console.error("Error al crear usuario:", error);
-        showAlert("Error inesperado al crear el usuario.", "error");
+    } catch (error) {
+      console.error("Error al crear usuario:", error);
+      showAlert("Error inesperado al crear el usuario.", "error");
     }
   };
 
@@ -113,7 +165,7 @@ if (!/^\d{1,11}$/.test(formData.numero_documento)) {
 
   const getSelectStyle = (field) => ({
     "& .MuiOutlinedInput-root": {
-      "& fieldset": { borderColor: "lightgray"},
+      "& fieldset": { borderColor: "lightgray" },
       "&:hover fieldset": { borderColor: "lightgray" },
       "&.Mui-focused fieldset": { borderColor: "#71277a" },
       backgroundColor: "white !important",
@@ -133,7 +185,6 @@ if (!/^\d{1,11}$/.test(formData.numero_documento)) {
           </IconButton>
           <Typography variant="h5" mb={2} sx={{ color: "#444", textAlign: "center" }}>Crear usuario</Typography>
 
-          {/* Información Básica */}
           <Typography variant="subtitle1" sx={{ fontWeight: "regular", mb: 1 }}>Información Básica</Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}>
@@ -154,7 +205,17 @@ if (!/^\d{1,11}$/.test(formData.numero_documento)) {
               </FormControl>
             </Grid>
             <Grid item xs={6}>
-              <TextField type="number" fullWidth label="Número de documento*" name="numero_documento" value={formData.numero_documento} onChange={handleInputChange} sx={textFieldStyle} />
+              <TextField
+                fullWidth
+                label="Número de documento*"
+                name="numero_documento"
+                value={formData.numero_documento}
+                onChange={(e) => {
+                  const valor = e.target.value;
+                  if (/^\d{0,11}$/.test(valor)) handleInputChange(e);
+                }}
+                sx={textFieldStyle}
+              />
             </Grid>
             <Grid item xs={6}>
               <FormControl fullWidth sx={getSelectStyle("rol")}>
@@ -170,42 +231,39 @@ if (!/^\d{1,11}$/.test(formData.numero_documento)) {
             </Grid>
           </Grid>
 
-          {/* Información de Contacto */}
           <Typography variant="subtitle1" sx={{ fontWeight: "regular", mt: 3, mb: 1 }}>Información de Contacto</Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}>
               <TextField fullWidth label="Teléfono*" name="telefono" value={formData.telefono} onChange={handleInputChange} sx={textFieldStyle} />
             </Grid>
             <Grid item xs={6}>
-              <TextField 
-                fullWidth 
-                label="Correo electrónico*" 
-                name="correo_electronico" 
-                value={formData.correo_electronico} 
-                onChange={handleInputChange} 
-                sx={textFieldStyle} 
-              />
+              <TextField fullWidth label="Correo electrónico*" name="correo_electronico" value={formData.correo_electronico} onChange={handleInputChange} sx={textFieldStyle} />
             </Grid>
           </Grid>
 
           {errorMessage && <Typography color="error" mt={2}>{errorMessage}</Typography>}
-          <Button variant="contained" fullWidth sx={{p:1.5, borderRadius:"8px", mt: 3, backgroundColor: "#71277a", "&:hover": { backgroundColor: "#5e2062" } }} onClick={handleSubmit}>
+
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ p: 1.5, borderRadius: "8px", mt: 3, backgroundColor: "#71277a", "&:hover": { backgroundColor: "#5e2062" } }}
+            onClick={handleSubmit}
+          >
             Crear
           </Button>
         </Box>
       </Modal>
 
-      {/* Modal de Confirmación */}
       <ConfirmDialog
         open={showConfirmationModal}
         onClose={() => setShowConfirmationModal(false)}
         onConfirm={handleConfirm}
         title="¡Alerta!"
-        message="Esta accion creara un nuevo registro de usuario en la base de datos ¿Desea continuar?"
+        message="Esta acción creará un nuevo usuario en la base de datos. ¿Desea continuar?"
       />
 
       <CustomSnackbar alerta={alerta} onClose={closeAlert} />
-</>
+    </>
   );
 };
 
