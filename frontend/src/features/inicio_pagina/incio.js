@@ -8,9 +8,7 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import Slider from 'react-slick';
-import 'slick-carousel/slick/slick.css';
-import 'slick-carousel/slick/slick-theme.css';
+import imagenInicio from '../../assets/imgs/imageninicio.jpg'; // AJUSTA esta ruta si es necesario
 
 const tendencias = [
   {
@@ -27,60 +25,33 @@ const tendencias = [
   },
 ];
 
-// Configuración del slider
-const sliderSettings = {
-  dots: true,
-  infinite: true,
-  speed: 500,
-  slidesToShow: 1,
-  slidesToScroll: 1,
-  arrows: false,
-  autoplay: true,
-  autoplaySpeed: 4000,
-};
-
 const Inicio = () => {
   return (
     <Box
       sx={{
         overflowY: 'auto',
         height: '100vh',
-        scrollbarWidth: 'none', // Firefox
+        scrollbarWidth: 'none',
         '&::-webkit-scrollbar': {
-          display: 'none', // Chrome
+          display: 'none',
         },
       }}
     >
       <Container maxWidth="lg" sx={{ py: 5 }}>
-        {/* Slider en vez de bienvenida */}
-        <Paper elevation={3} sx={{ mb: 4 }}>
-          <Slider {...sliderSettings}>
-            <Box
-              component="img"
-              src="/slider/slider1.png"
-              alt="Confección 1"
-              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
-            />
-            <Box
-              component="img"
-              src="/slider/slider2.png"
-              alt="Confección 2"
-              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
-            />
-            <Box
-              component="img"
-              src="/slider/slider3.png"
-              alt="Confección 3"
-              sx={{ width: '100%', maxHeight: 400, objectFit: 'cover' }}
-            />
-          </Slider>
+        <Paper elevation={3} sx={{ mb: 4, overflow: 'hidden' }}>
+          <Box
+            component="img"
+            src={imagenInicio}
+            alt="Imagen de Confección"
+            sx={{
+              width: '100%',
+              height: { xs: 250, sm: 300, md: 400 },
+              objectFit: 'cover',
+              display: 'block',
+            }}
+          />
         </Paper>
-
-        
-        
-
-
-        {/* Tendencias */}
+ {/* Sección de Tendencias */}
         <Paper elevation={2} sx={{ p: 3, mb: 5 }}>
           <Typography variant="h5" color="secondary" gutterBottom>
             📚 Últimas Tendencias Formativas
@@ -93,7 +64,9 @@ const Inicio = () => {
                     <Typography variant="h6" color="primary" gutterBottom>
                       {item.titulo}
                     </Typography>
-                    <Typography variant="body2">{item.descripcion}</Typography>
+                    <Typography variant="body2">
+                      {item.descripcion}
+                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>
@@ -101,21 +74,21 @@ const Inicio = () => {
           </Grid>
         </Paper>
 
-        {/* Beneficios */}
+        {/* Sección de Beneficios */}
         <Paper elevation={1} sx={{ p: 3, backgroundColor: '#f9fbe7' }}>
           <Typography variant="h5" color="primary" gutterBottom>
             Beneficios de esta herramienta
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={4}>
-              <Typography variant="body1">✅ Registro organizado de fichas y usuarios</Typography>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Typography variant="body1">✅ Seguimiento en tiempo real del aprendizaje</Typography>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Typography variant="body1">✅ Comunicación clara entre instructores y aprendices</Typography>
-            </Grid>
+            {[
+              '✅ Registro organizado de fichas y usuarios',
+              '✅ Seguimiento en tiempo real del aprendizaje',
+              '✅ Comunicación clara entre instructores y aprendices',
+            ].map((beneficio, index) => (
+              <Grid item xs={12} sm={4} key={index}>
+                <Typography variant="body1">{beneficio}</Typography>
+              </Grid>
+            ))}
           </Grid>
         </Paper>
 
@@ -129,5 +102,6 @@ const Inicio = () => {
     </Box>
   );
 };
+     
 
 export default Inicio;
