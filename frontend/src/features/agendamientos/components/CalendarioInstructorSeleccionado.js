@@ -97,13 +97,18 @@ const CalendarioInstructorSeleccionado = () => {
             : moment(inicio).add(1, 'hour').toDate();
 
           return {
-            id: evento.id_agendamiento,
-            title: `Hora: ${moment(inicio).format("hh:mm A")} - Tipo: ${evento.tipo_visita}`,
-            nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
-            start: inicio,
-            end: fin,
-            estado: evento.estado_visita,
-          };
+  id: evento.id_agendamiento,
+  title: `Hora: ${moment(inicio).format("hh:mm A")} - Tipo: ${evento.tipo_visita}`,
+  nombreAprendiz: `${evento.ficha_aprendiz?.aprendiz.nombre} ${evento.ficha_aprendiz?.aprendiz.apellido}`,
+  start: inicio,
+  end: fin,
+  estado: evento.estado_visita,
+  tipo_visita: evento.tipo_visita, // ✅ este faltaba
+  enlace_reunion: evento.enlace_reunion, // ✅ este faltaba
+  empresa: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.razon_social || "Sin empresa",
+  direccion: evento.ficha_aprendiz?.aprendiz.detalle_aprendiz?.empresa?.direccion || "Sin dirección",
+};
+
         });
 
         setEventos(eventosFormateados);
