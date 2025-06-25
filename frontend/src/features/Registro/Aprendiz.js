@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import Swal from 'sweetalert2';
 import axios from "axios";
 import {
@@ -17,158 +17,165 @@ import {
 import { useNavigate } from "react-router-dom";
 import backgroundImage from "../../assets/imgs/confeccion.jpg";
 
-    // API URL base
-const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
-const TIPOS_DOCUMENTO = [
-  { value: "CC", label: "Cédula" },
-  { value: "TI", label: "Tarjeta de Identidad" },
-  { value: "CE", label: "Cédula de Extranjería" }
-];
-
-const INITIAL_FORM_STATE = {
-  nombre: "",
-  apellido: "",
-  tipo_documento: "",
-  numero_documento: "",
-  telefono: "",
-  numero_ficha: "",
-  correo_electronico: "",
-  password: "",
-  confirmarContrasena: ""
-};
-
-// Estilos
-const purpleFocusStyle = {
-  "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-    borderColor: "#5E35B1"
-  },
-  "& label.Mui-focused": {
-    color: "#5E35B1"
-  }
-};
-
 function FormularioAprendiz() {
-  // Hooks
   const navigate = useNavigate();
-  
-  // Estados
   const [modalAbierto, setModalAbierto] = useState(false);
   const [errors, setErrors] = useState({});
   const [fichas, setFichas] = useState([]);
-  const [form, setForm] = useState(INITIAL_FORM_STATE);
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    nombre: "",
+    apellido: "",
+    tipo_documento: "",
+    numero_documento: "",
+    telefono: "",
+    numero_ficha: "",
+    correo_electronico: "",
+    password: "",
+    confirmarContrasena: ""
+  });
 
-  // Funciones de utilidad
-  const mostrarAlerta = (tipo, titulo, texto) => {
-    Swal.fire({
-      icon: tipo,
-      title: titulo,
-      text: texto,
-      confirmButtonColor: '#5E35B1'
-    });
+     // API URL base
+const API_URL = process.env.REACT_APP_BACKEND_API_URL;
+
+  const purpleFocusStyle = {
+    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+      borderColor: "#5E35B1"
+    },
+    "& label.Mui-focused": {
+      color: "#5E35B1"
+    }
   };
 
-  const validarDocumento = (numeroDocumento) => {
-    if (numeroDocumento.length < 5 || numeroDocumento.length > 10) {
-      return "Debe tener entre 5 y 10 caracteres.";
-    }
-    return "";
-  };
-
-  const validarFormulario = () => {
-    // Verificar campos vacíos
-    if (Object.values(form).some((val) => val === "")) {
-      mostrarAlerta('warning', 'Campos incompletos', 'Todos los campos son obligatorios');
-      return false;
-    }
-
-    // Verificar contraseñas
-    if (form.password !== form.confirmarContrasena) {
-      mostrarAlerta('error', 'Contraseñas no coinciden', 'Por favor verifica que ambas contraseñas coincidan');
-      return false;
-    }
-
-    // Verificar errores existentes
-    if (Object.values(errors).some(error => error !== "")) {
-      mostrarAlerta('error', 'Errores en el formulario', 'Por favor corrige los errores antes de continuar');
-      return false;
-    }
-
-    return true;
-  };
-
-  // Funciones de API
-  const obtenerFichas = useCallback(async () => {
-    try {
-      const { data } = await axios.get(`${API_URL}/fichas/ver`);
-      setFichas(data);
-    } catch (error) {
-      console.error("Error al obtener fichas:", error);
-      mostrarAlerta('error', 'Error', 'No se pudieron cargar las fichas disponibles');
-    }
+  useEffect(() => {
+    const obtenerFichas = async () => {
+      try {
+        const { data } = await axios.get(`${API_URL}/fichas/ver`);
+        setFichas(data);
+      } catch (error) {
+        console.error("Error al obtener fichas:", error);
+      }
+    };
+    obtenerFichas();
   }, []);
 
-  const registrarAprendiz = async (datosFormulario) => {
+
+ 
+
+const validarNombre = (valor) => {
+  // Solo la primera letra en mayúscula y el resto en minúscula
+  return valor.charAt(0).toUpperCase() + valor.slice(1).toLowerCase();
+};
+
+const contieneMayusculasInternas = (valor) => {
+  return /[A-Z]/.test(valor.slice(1));
+};
+
+const validarContrasena = (valor) => {
+  const tieneLongitudValida = valor.length >= 8;
+  const contieneCaracteresInvalidos = /[u0]/.test(valor);
+  const esRepetitivo = /^([a-zA-Z])\1*$/.test(valor);
+  return tieneLongitudValida && !contieneCaracteresInvalidos && !esRepetitivo;
+};
+
+ const handleChange = (e) => {
+  const { name, value } = e.target;
+  let nuevoValor = value;
+
+  if (name === "nombre" || name === "apellido") {
+    if (contieneMayusculasInternas(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "Solo la primera letra puede estar en mayúscula.",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+    nuevoValor = validarNombre(value);
+  }
+
+  if (name === "numero_documento") {
+    if (value.length < 5 || value.length > 11) {
+      setErrors((prev) => ({
+        ...prev,
+        numero_documento: "Debe tener entre 5 y 11 caracteres.",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        numero_documento: "",
+      }));
+    }
+  }
+
+  if (name === "password") {
+    if (!validarContrasena(value)) {
+      setErrors((prev) => ({
+        ...prev,
+        password: "Contraseña insegura. Mínimo 8 caracteres, sin 'u', '0', ni letras repetidas.",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        password: "",
+      }));
+    }
+  }
+
+  setForm((prev) => ({
+    ...prev,
+    [name]: nuevoValor,
+  }));
+};
+
+  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    if (Object.values(form).some((val) => val === "")) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Todos los campos son obligatorios',
+        confirmButtonColor: '#5E35B1'
+      });
+      return;
+    }
+  
+    if (form.password !== form.confirmarContrasena) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Contraseñas no coinciden',
+        text: 'Por favor verifica que ambas contraseñas coincidan',
+        confirmButtonColor: '#5E35B1'
+      });
+      return;
+    }
+  
     try {
-      setLoading(true);
-      await axios.post(`${API_URL}/usuarios/registroAprendiz`, datosFormulario);
-      
-      await Swal.fire({
+      await axios.post(`${API_URL}/usuarios/registroAprendiz`, form);
+      Swal.fire({
         icon: 'success',
         title: '¡Registro exitoso!',
         text: 'Tu cuenta ha sido creada correctamente',
         confirmButtonColor: '#5E35B1'
+      }).then(() => {
+        navigate("/");
       });
-      
-      navigate("/");
     } catch (error) {
-      console.error("Error en registro:", error);
-      mostrarAlerta('error', 'Error', 'No se pudo registrar el aprendiz. Intenta nuevamente.');
-    } finally {
-      setLoading(false);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'No se pudo registrar el aprendiz. Intenta nuevamente.',
+        confirmButtonColor: '#5E35B1'
+      });
+      console.error(error);
     }
   };
-
-  // Manejadores de eventos
-  const handleChange = (e) => {
-    const { name, value } = e.target;
   
-    // Actualizar formulario
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  
-    // Validación específica para número de documento
-    if (name === "numero_documento") {
-      const errorDocumento = validarDocumento(value);
-      setErrors((prev) => ({
-        ...prev,
-        numero_documento: errorDocumento,
-      }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validarFormulario()) {
-      return;
-    }
-
-    await registrarAprendiz(form);
-  };
-
-  const handleCloseModal = () => {
-    setModalAbierto(false);
-    navigate("/");
-  };
-
-  // Efecto para cargar fichas
-  useEffect(() => {
-    obtenerFichas();
-  }, [obtenerFichas]);
 
   return (
     <Box
@@ -198,38 +205,33 @@ function FormularioAprendiz() {
       }}
     >
       <Paper
-        elevation={8}
+        elevation={5}
         sx={{
-          width: "90%",
-          maxWidth: 350,
+          width: "100%",
+          maxWidth: 420, 
           padding: 2,
-          borderRadius: 3,
-          backgroundColor: "rgba(255,255,255,0.95)",
-          backdropFilter: "blur(15px)",
+          borderRadius: 2,
+          backgroundColor: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(10px)",
           zIndex: 1,
-          my: 2,
-          mx: 'auto',
-          boxShadow: '0 8px 32px rgba(94, 53, 177, 0.15)',
-          border: '1px solid rgba(255, 255, 255, 0.2)'
+          my: 3
         }}
       >
         <Typography
-          variant="h5"
+          variant="h4"
           align="center"
           sx={{
             color: "#5E35B1",
-            fontWeight: 700,
-            mb: 2,
-            fontSize: { xs: "1.2rem", sm: "1.3rem" },
-            textShadow: '0 2px 4px rgba(94, 53, 177, 0.1)'
+            fontWeight: 600,
+            mb: 3,
+            fontSize: "1.5rem"
           }}
         >
           Registro de Aprendiz
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          {/* Fila 1: Nombre y Apellido */}
-          <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <TextField
               label="Nombre"
               name="nombre"
@@ -237,7 +239,6 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
-              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
             <TextField
@@ -247,13 +248,11 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
-              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
           </Box>
 
-          {/* Fila 2: Tipo y Número de documento */}
-          <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
             <TextField
               select
               label="Tipo de documento"
@@ -262,14 +261,12 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
-              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             >
-              {TIPOS_DOCUMENTO.map((tipo) => (
-                <MenuItem key={tipo.value} value={tipo.value}>
-                  {tipo.label}
-                </MenuItem>
-              ))}
+              <MenuItem value="CC">CC</MenuItem>
+              <MenuItem value="TI">TI</MenuItem>
+              <MenuItem value="CE">CE</MenuItem>
+              <MenuItem value="PPT">PPT</MenuItem>
             </TextField>
             <TextField
               label="Número de documento"
@@ -278,15 +275,15 @@ function FormularioAprendiz() {
               onChange={handleChange}
               fullWidth
               required
-              size="small"
               error={Boolean(errors.numero_documento)}
               helperText={errors.numero_documento}
-              inputProps={{ minLength: 5, maxLength: 10 }}
+              inputProps={{ minLength: 5, maxLength: 9 }}
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
+
+
           </Box>
 
-          {/* Teléfono */}
           <TextField
             label="Teléfono"
             name="telefono"
@@ -294,11 +291,9 @@ function FormularioAprendiz() {
             onChange={handleChange}
             fullWidth
             required
-            size="small"
-            sx={{ mb: 1.5, ...purpleFocusStyle }}
+            sx={{ mb: 2, ...purpleFocusStyle }}
           />
 
-          {/* Ficha */}
           <Autocomplete
             options={fichas}
             getOptionLabel={(ficha) =>
@@ -310,19 +305,16 @@ function FormularioAprendiz() {
                 numero_ficha: value ? value.numero_ficha : ""
               }))
             }
-            size="small"
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Ficha"
                 required
-                size="small"
-                sx={{ mb: 1.5, ...purpleFocusStyle }}
+                sx={{ mb: 2, ...purpleFocusStyle }}
               />
             )}
           />
 
-          {/* Correo electrónico */}
           <TextField
             label="Correo electrónico"
             name="correo_electronico"
@@ -331,22 +323,21 @@ function FormularioAprendiz() {
             onChange={handleChange}
             fullWidth
             required
-            size="small"
-            sx={{ mb: 1.5, ...purpleFocusStyle }}
+            sx={{ mb: 2, ...purpleFocusStyle }}
           />
+        <TextField
+        label="Contraseña"
+        name="password"
+        type="password"
+        value={form.password}
+        onChange={handleChange}
+        fullWidth
+        required
+        error={Boolean(errors.password)}
+        helperText={errors.password}
+        sx={{ mb: 2, ...purpleFocusStyle }}
+      />
 
-          {/* Contraseñas */}
-          <TextField
-            label="Contraseña"
-            name="password"
-            type="password"
-            value={form.password}
-            onChange={handleChange}
-            fullWidth
-            required
-            size="small"
-            sx={{ mb: 1.5, ...purpleFocusStyle }}
-          />
           <TextField
             label="Confirmar contraseña"
             name="confirmarContrasena"
@@ -355,36 +346,30 @@ function FormularioAprendiz() {
             onChange={handleChange}
             fullWidth
             required
-            size="small"
             sx={{ mb: 2, ...purpleFocusStyle }}
           />
 
-          {/* Botón de registro */}
           <Button
             type="submit"
             variant="contained"
             fullWidth
-            disabled={loading}
             sx={{
-              py: 1,
+              py: 1.3,
               bgcolor: "#5E35B1",
               color: "white",
               fontWeight: "bold",
-              fontSize: "0.9rem",
+              fontSize: "1rem",
               "&:hover": { bgcolor: "#4527A0" },
-              "&:disabled": { bgcolor: "#9E9E9E" },
-              borderRadius: 2,
-              textTransform: "none",
-              boxShadow: '0 4px 12px rgba(94, 53, 177, 0.3)'
+              borderRadius: 1,
+              mt: 1
             }}
           >
-            {loading ? "Registrando..." : "REGISTRARSE"}
+            REGISTRARSE
           </Button>
         </form>
       </Paper>
 
-      {/* Modal de confirmación */}
-      <Dialog open={modalAbierto} onClose={handleCloseModal}>
+      <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)}>
         <DialogTitle sx={{ bgcolor: "#5E35B1", color: "white" }}>
           ¡Felicidades!
         </DialogTitle>
@@ -393,7 +378,7 @@ function FormularioAprendiz() {
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
-            onClick={handleCloseModal}
+            onClick={() => navigate("/")}
             variant="contained"
             sx={{ bgcolor: "#5E35B1", "&:hover": { bgcolor: "#4527A0" } }}
           >
