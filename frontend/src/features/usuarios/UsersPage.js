@@ -1,5 +1,3 @@
-//esta es la pagina general del modulo usuarios donde se juntan todos los componentes del modulo y que funcionen.
-
 import React, { useState } from "react";
 import { Fab } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -8,6 +6,8 @@ import UsersTable from "./components/UsersTable";
 import SearchBar from "./components/SearchBar";
 import UserModal from "./components/ModalEditarUsuario";
 import ModalCrearUsuario from "./components/ModalCrearUsuario";
+import usersAPI from "../../api/UsersAPI";
+import { useAuth } from "../../context/AuthProvider";
 
 const UsersPage = () => {
   const {
@@ -22,6 +22,7 @@ const UsersPage = () => {
     setCurrentPage,
   } = useUsers();
 
+  const { token } = useAuth();
   const [modalEditOpen, setModalEditOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalCreateOpen, setModalCreateOpen] = useState(false);
@@ -34,6 +35,19 @@ const UsersPage = () => {
   const handleCloseEditModal = () => {
     setModalEditOpen(false);
     setSelectedUser(null);
+  };
+
+  const handleDelete = async (idUsuario) => {
+    try {
+      const response = await usersAPI.eliminarUsuario(idUsuario, token);
+      if (response.message === "Usuario desactivado correctamente") {
+        fetchUsers();           // 🔁 Refrescar usuarios
+        setSearchTerm("");      // 🧹 Limpiar búsqueda
+        setFilterType("nombre");
+      }
+    } catch (error) {
+      console.error("Error al eliminar usuario:", error);
+    }
   };
 
   return (
@@ -51,6 +65,7 @@ const UsersPage = () => {
           currentPage={currentPage} 
           setCurrentPage={setCurrentPage} 
           onEdit={handleOpenEditModal}
+          onDelete={handleDelete} // ✅ Se pasa desde aquí
         />
         <UserModal 
           open={modalEditOpen} 
@@ -71,7 +86,14 @@ const UsersPage = () => {
         >
           <AddIcon />
         </Fab>
-        {modalCreateOpen && <ModalCrearUsuario onClose={() => { setModalCreateOpen(false); fetchUsers(); }} />}
+        {modalCreateOpen && (
+          <ModalCrearUsuario 
+            onClose={() => {
+              setModalCreateOpen(false);
+              fetchUsers(); // ✅ Actualizar al crear
+            }} 
+          />
+        )}
       </main>
     </div>
   );

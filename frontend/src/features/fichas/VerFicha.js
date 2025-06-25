@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import UserInfoModal from '../../components/ui/UserInfoModal';
+import ModalDetalleAprendiz from '../../components/ui/Modaldetalleaprendiz';
 import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -60,10 +60,12 @@ const FichaDetalle = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleVerUsuario = (usuario) => {
-    setSelectedUser(usuario);
-    setOpenUserModal(true);
-  };
+const handleVerUsuario = (usuario) => {
+  setSelectedUser(usuario);
+  setOpenUserModal(true);
+};
+
+
 
   const navigate = useNavigate();
 
@@ -792,12 +794,10 @@ const FichaDetalle = () => {
           )}
         </Box>
         {/* Modal Info Usuario */}
-        <UserInfoModal
+        <ModalDetalleAprendiz
          open={openUserModal}
          onClose={() => setOpenUserModal(false)}
-         user={selectedUser}
-         onGenerarGFPI={() => console.log("Generar reporte GFPI de", selectedUser)}
-         mostrarBotonGFPI={true}
+         aprendiz={selectedUser}
         />
 
         {/* Modal Confirmación */}

@@ -30,7 +30,7 @@ const usersAPI = {
 
   getUserById: async (id, token) => {
     try {
-      const response = await axiosInstance.get(`/usuarios/${id}`, {
+      const response = await axiosInstance.get(`/usuarios/ver/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;

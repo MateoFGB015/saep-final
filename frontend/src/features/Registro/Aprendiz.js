@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Swal from 'sweetalert2';
 import axios from "axios";
 import {
@@ -17,118 +17,158 @@ import {
 import { useNavigate } from "react-router-dom";
 import backgroundImage from "../../assets/imgs/confeccion.jpg";
 
-function FormularioAprendiz() {
-  const navigate = useNavigate();
-  const [modalAbierto, setModalAbierto] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [fichas, setFichas] = useState([]);
-  const [form, setForm] = useState({
-    nombre: "",
-    apellido: "",
-    tipo_documento: "",
-    numero_documento: "",
-    telefono: "",
-    numero_ficha: "",
-    correo_electronico: "",
-    password: "",
-    confirmarContrasena: ""
-  });
-
     // API URL base
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
+const TIPOS_DOCUMENTO = [
+  { value: "CC", label: "Cédula" },
+  { value: "TI", label: "Tarjeta de Identidad" },
+  { value: "CE", label: "Cédula de Extranjería" }
+];
 
-  const purpleFocusStyle = {
-    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-      borderColor: "#5E35B1"
-    },
-    "& label.Mui-focused": {
-      color: "#5E35B1"
+const INITIAL_FORM_STATE = {
+  nombre: "",
+  apellido: "",
+  tipo_documento: "",
+  numero_documento: "",
+  telefono: "",
+  numero_ficha: "",
+  correo_electronico: "",
+  password: "",
+  confirmarContrasena: ""
+};
+
+// Estilos
+const purpleFocusStyle = {
+  "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+    borderColor: "#5E35B1"
+  },
+  "& label.Mui-focused": {
+    color: "#5E35B1"
+  }
+};
+
+function FormularioAprendiz() {
+  // Hooks
+  const navigate = useNavigate();
+  
+  // Estados
+  const [modalAbierto, setModalAbierto] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [fichas, setFichas] = useState([]);
+  const [form, setForm] = useState(INITIAL_FORM_STATE);
+  const [loading, setLoading] = useState(false);
+
+  // Funciones de utilidad
+  const mostrarAlerta = (tipo, titulo, texto) => {
+    Swal.fire({
+      icon: tipo,
+      title: titulo,
+      text: texto,
+      confirmButtonColor: '#5E35B1'
+    });
+  };
+
+  const validarDocumento = (numeroDocumento) => {
+    if (numeroDocumento.length < 5 || numeroDocumento.length > 10) {
+      return "Debe tener entre 5 y 10 caracteres.";
+    }
+    return "";
+  };
+
+  const validarFormulario = () => {
+    // Verificar campos vacíos
+    if (Object.values(form).some((val) => val === "")) {
+      mostrarAlerta('warning', 'Campos incompletos', 'Todos los campos son obligatorios');
+      return false;
+    }
+
+    // Verificar contraseñas
+    if (form.password !== form.confirmarContrasena) {
+      mostrarAlerta('error', 'Contraseñas no coinciden', 'Por favor verifica que ambas contraseñas coincidan');
+      return false;
+    }
+
+    // Verificar errores existentes
+    if (Object.values(errors).some(error => error !== "")) {
+      mostrarAlerta('error', 'Errores en el formulario', 'Por favor corrige los errores antes de continuar');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Funciones de API
+  const obtenerFichas = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/fichas/ver`);
+      setFichas(data);
+    } catch (error) {
+      console.error("Error al obtener fichas:", error);
+      mostrarAlerta('error', 'Error', 'No se pudieron cargar las fichas disponibles');
+    }
+  }, []);
+
+  const registrarAprendiz = async (datosFormulario) => {
+    try {
+      setLoading(true);
+      await axios.post(`${API_URL}/usuarios/registroAprendiz`, datosFormulario);
+      
+      await Swal.fire({
+        icon: 'success',
+        title: '¡Registro exitoso!',
+        text: 'Tu cuenta ha sido creada correctamente',
+        confirmButtonColor: '#5E35B1'
+      });
+      
+      navigate("/");
+    } catch (error) {
+      console.error("Error en registro:", error);
+      mostrarAlerta('error', 'Error', 'No se pudo registrar el aprendiz. Intenta nuevamente.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const obtenerFichas = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/fichas/ver`);
-        setFichas(data);
-      } catch (error) {
-        console.error("Error al obtener fichas:", error);
-      }
-    };
-    obtenerFichas();
-  }, []);
-
+  // Manejadores de eventos
   const handleChange = (e) => {
     const { name, value } = e.target;
   
-    // Actualiza el formulario
+    // Actualizar formulario
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
   
-    // Validación de longitud para "numero_documento"
+    // Validación específica para número de documento
     if (name === "numero_documento") {
-      if (value.length < 5 || value.length > 10) {
-        setErrors((prev) => ({
-          ...prev,
-          numero_documento: "Debe tener entre 5 y 10 caracteres.",
-        }));
-      } else {
-        setErrors((prev) => ({
-          ...prev,
-          numero_documento: "",
-        }));
-      }
+      const errorDocumento = validarDocumento(value);
+      setErrors((prev) => ({
+        ...prev,
+        numero_documento: errorDocumento,
+      }));
     }
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    if (Object.values(form).some((val) => val === "")) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Campos incompletos',
-        text: 'Todos los campos son obligatorios',
-        confirmButtonColor: '#5E35B1'
-      });
+    
+    if (!validarFormulario()) {
       return;
     }
-  
-    if (form.password !== form.confirmarContrasena) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Contraseñas no coinciden',
-        text: 'Por favor verifica que ambas contraseñas coincidan',
-        confirmButtonColor: '#5E35B1'
-      });
-      return;
-    }
-  
-    try {
-      await axios.post(`${API_URL}/usuarios/registroAprendiz`, form);
-      Swal.fire({
-        icon: 'success',
-        title: '¡Registro exitoso!',
-        text: 'Tu cuenta ha sido creada correctamente',
-        confirmButtonColor: '#5E35B1'
-      }).then(() => {
-        navigate("/");
-      });
-    } catch (error) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No se pudo registrar el aprendiz. Intenta nuevamente.',
-        confirmButtonColor: '#5E35B1'
-      });
-      console.error(error);
-    }
+
+    await registrarAprendiz(form);
   };
-  
+
+  const handleCloseModal = () => {
+    setModalAbierto(false);
+    navigate("/");
+  };
+
+  // Efecto para cargar fichas
+  useEffect(() => {
+    obtenerFichas();
+  }, [obtenerFichas]);
 
   return (
     <Box
@@ -158,33 +198,38 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
       }}
     >
       <Paper
-        elevation={5}
+        elevation={8}
         sx={{
-          width: "100%",
-          maxWidth: 420, 
+          width: "90%",
+          maxWidth: 350,
           padding: 2,
-          borderRadius: 2,
-          backgroundColor: "rgba(255,255,255,0.9)",
-          backdropFilter: "blur(10px)",
+          borderRadius: 3,
+          backgroundColor: "rgba(255,255,255,0.95)",
+          backdropFilter: "blur(15px)",
           zIndex: 1,
-          my: 3
+          my: 2,
+          mx: 'auto',
+          boxShadow: '0 8px 32px rgba(94, 53, 177, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.2)'
         }}
       >
         <Typography
-          variant="h4"
+          variant="h5"
           align="center"
           sx={{
             color: "#5E35B1",
-            fontWeight: 600,
-            mb: 3,
-            fontSize: "1.5rem"
+            fontWeight: 700,
+            mb: 2,
+            fontSize: { xs: "1.2rem", sm: "1.3rem" },
+            textShadow: '0 2px 4px rgba(94, 53, 177, 0.1)'
           }}
         >
           Registro de Aprendiz
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+          {/* Fila 1: Nombre y Apellido */}
+          <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
             <TextField
               label="Nombre"
               name="nombre"
@@ -192,6 +237,7 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
             <TextField
@@ -201,11 +247,13 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+          {/* Fila 2: Tipo y Número de documento */}
+          <Box sx={{ display: "flex", gap: 1, mb: 1.5 }}>
             <TextField
               select
               label="Tipo de documento"
@@ -214,11 +262,14 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               sx={{ flex: 1, ...purpleFocusStyle }}
             >
-              <MenuItem value="CC">Cédula</MenuItem>
-              <MenuItem value="TI">Tarjeta de Identidad</MenuItem>
-              <MenuItem value="CE">Cédula de Extranjería</MenuItem>
+              {TIPOS_DOCUMENTO.map((tipo) => (
+                <MenuItem key={tipo.value} value={tipo.value}>
+                  {tipo.label}
+                </MenuItem>
+              ))}
             </TextField>
             <TextField
               label="Número de documento"
@@ -227,15 +278,15 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
               onChange={handleChange}
               fullWidth
               required
+              size="small"
               error={Boolean(errors.numero_documento)}
               helperText={errors.numero_documento}
-              inputProps={{ minLength: 5, maxLength: 9 }}
+              inputProps={{ minLength: 5, maxLength: 10 }}
               sx={{ flex: 1, ...purpleFocusStyle }}
             />
-
-
           </Box>
 
+          {/* Teléfono */}
           <TextField
             label="Teléfono"
             name="telefono"
@@ -243,9 +294,11 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
             onChange={handleChange}
             fullWidth
             required
-            sx={{ mb: 2, ...purpleFocusStyle }}
+            size="small"
+            sx={{ mb: 1.5, ...purpleFocusStyle }}
           />
 
+          {/* Ficha */}
           <Autocomplete
             options={fichas}
             getOptionLabel={(ficha) =>
@@ -257,16 +310,19 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
                 numero_ficha: value ? value.numero_ficha : ""
               }))
             }
+            size="small"
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Ficha"
                 required
-                sx={{ mb: 2, ...purpleFocusStyle }}
+                size="small"
+                sx={{ mb: 1.5, ...purpleFocusStyle }}
               />
             )}
           />
 
+          {/* Correo electrónico */}
           <TextField
             label="Correo electrónico"
             name="correo_electronico"
@@ -275,8 +331,11 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
             onChange={handleChange}
             fullWidth
             required
-            sx={{ mb: 2, ...purpleFocusStyle }}
+            size="small"
+            sx={{ mb: 1.5, ...purpleFocusStyle }}
           />
+
+          {/* Contraseñas */}
           <TextField
             label="Contraseña"
             name="password"
@@ -285,7 +344,8 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
             onChange={handleChange}
             fullWidth
             required
-            sx={{ mb: 2, ...purpleFocusStyle }}
+            size="small"
+            sx={{ mb: 1.5, ...purpleFocusStyle }}
           />
           <TextField
             label="Confirmar contraseña"
@@ -295,30 +355,36 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
             onChange={handleChange}
             fullWidth
             required
+            size="small"
             sx={{ mb: 2, ...purpleFocusStyle }}
           />
 
+          {/* Botón de registro */}
           <Button
             type="submit"
             variant="contained"
             fullWidth
+            disabled={loading}
             sx={{
-              py: 1.3,
+              py: 1,
               bgcolor: "#5E35B1",
               color: "white",
               fontWeight: "bold",
-              fontSize: "1rem",
+              fontSize: "0.9rem",
               "&:hover": { bgcolor: "#4527A0" },
-              borderRadius: 1,
-              mt: 1
+              "&:disabled": { bgcolor: "#9E9E9E" },
+              borderRadius: 2,
+              textTransform: "none",
+              boxShadow: '0 4px 12px rgba(94, 53, 177, 0.3)'
             }}
           >
-            REGISTRARSE
+            {loading ? "Registrando..." : "REGISTRARSE"}
           </Button>
         </form>
       </Paper>
 
-      <Dialog open={modalAbierto} onClose={() => setModalAbierto(false)}>
+      {/* Modal de confirmación */}
+      <Dialog open={modalAbierto} onClose={handleCloseModal}>
         <DialogTitle sx={{ bgcolor: "#5E35B1", color: "white" }}>
           ¡Felicidades!
         </DialogTitle>
@@ -327,7 +393,7 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button
-            onClick={() => navigate("/")}
+            onClick={handleCloseModal}
             variant="contained"
             sx={{ bgcolor: "#5E35B1", "&:hover": { bgcolor: "#4527A0" } }}
           >

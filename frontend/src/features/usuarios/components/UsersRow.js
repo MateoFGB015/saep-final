@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { TableRow, TableCell, IconButton, useMediaQuery, useTheme } from "@mui/material";
-import { EditNote, ContentCutOutlined } from "@mui/icons-material";
-import BorderColorOutlinedIcon from '@mui/icons-material/BorderColorOutlined';
-import usersAPI from "../../../api/UsersAPI";
+import { TableRow, TableCell, IconButton} from "@mui/material";
+import { ContentCutOutlined } from "@mui/icons-material";
+import BorderColorOutlinedIcon from "@mui/icons-material/BorderColorOutlined";
 import useAlert from "../hooks/UserAlert";
 import CustomSnackbar from "../../../components/ui/Alert";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
@@ -10,36 +9,14 @@ import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
 const UserRow = ({ usuario, onEdit, onDelete }) => {
   const { alerta, showAlert, closeAlert } = useAlert();
   const [openConfirm, setOpenConfirm] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const handleDelete = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showAlert("No tienes permisos para realizar esta acción.", "error");
-        return;
-      }
-
-      const response = await usersAPI.eliminarUsuario(usuario.id_usuario, token);
-      console.log("Respuesta de la API:", response);
-
-      if (response.message === "Usuario desactivado correctamente") {
-        showAlert("Usuario eliminado exitosamente.", "success");
-
-        if (onDelete) {
-          onDelete(usuario.id_usuario);
-        } else {
-          console.warn("onDelete no está definido en UsersTable.");
-        }
-      } else {
-        showAlert(response.message || "Hubo un problema al eliminar el usuario.", "warning");
-      }
-    } catch (error) {
-      console.error("Error al eliminar usuario:", error);
-
-      const errorMessage = error.response?.data?.message || "Error inesperado al eliminar usuario.";
-      showAlert(errorMessage, "error");
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(usuario.id_usuario); // ✅ Ahora el padre controla la eliminación
+    } else {
+      showAlert("No se pudo eliminar el usuario. Acción no disponible.", "error");
     }
   };
 
@@ -130,7 +107,7 @@ const UserRow = ({ usuario, onEdit, onDelete }) => {
           handleDelete();
         }}
         title="¡Alerta!"
-        message={`Esta accion deshabilitara a ${usuario.nombre} de la base de datos ¿Desea continuar?`}
+        message={`Esta acción deshabilitará a ${usuario.nombre} de la base de datos. ¿Desea continuar?`}
       />
 
       {/* Snackbar para mostrar alertas */}

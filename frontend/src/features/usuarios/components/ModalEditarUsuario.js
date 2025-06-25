@@ -17,7 +17,7 @@ const UserModal = ({ open, onClose, user, onSave }) => {
     if (user) {
       setFormData({
         nombre: user.nombre || "", apellido: user.apellido || "",
-        rol: ["Aprendiz", "Instructor"].includes(user.rol) ? user.rol : "Aprendiz",
+        rol: ["aprendiz", "Instructor"].includes(user.rol) ? user.rol : "aprendiz",
         tipo_documento: user.tipo_documento ? user.tipo_documento.toUpperCase() : "CC",
         numero_documento: user.numero_documento || "", telefono: user.telefono || "",
         correo_electronico: user.correo_electronico || "",
