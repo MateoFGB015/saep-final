@@ -27,20 +27,52 @@ const UserModal = ({ open, onClose, user, onSave }) => {
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
-  const handleSave = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await usersAPI.modificarUsuario({ ...user, ...formData }, token);
-      if (response && (response.success || response.updated)) {
-        showAlert("¡Usuario actualizado con éxito!", "success");
-        setTimeout(() => { onSave(); onClose(); }, 1500);
-      } else {
-        showAlert(response?.message || "Hubo un problema al guardar los cambios.", "error");
-      }
-    } catch (error) {
-      showAlert("Hubo un problema al guardar los cambios.", "error");
+const handleSave = async () => {
+  const { nombre, apellido, numero_documento, telefono, correo_electronico, rol, tipo_documento } = formData;
+
+  // Validar campos vacíos
+  if (!nombre || !apellido || !numero_documento || !telefono || !correo_electronico || !rol || !tipo_documento) {
+    showAlert("Por favor, completa todos los campos obligatorios.", "error");
+    return;
+  }
+
+  // Validar correo
+  const correoRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!correoRegex.test(correo_electronico)) {
+    showAlert("El correo electrónico no es válido.", "error");
+    return;
+  }
+
+  // Validar teléfono
+  if (!/^\d+$/.test(telefono)) {
+    showAlert("El teléfono solo debe contener números.", "error");
+    return;
+  }
+
+  // Validar documento (máximo 11 dígitos)
+  if (!/^\d{1,11}$/.test(numero_documento)) {
+    showAlert("El número de documento debe tener máximo 11 dígitos numéricos.", "error");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+    const response = await usersAPI.modificarUsuario({ ...user, ...formData }, token);
+
+    if (response && (response.success || response.updated)) {
+      showAlert("¡Usuario actualizado con éxito!", "success");
+      setTimeout(() => {
+        onSave();
+        onClose();
+      }, 1500);
+    } else {
+      showAlert(response?.message || "Hubo un problema al guardar los cambios.", "error");
     }
-  };
+  } catch (error) {
+    showAlert("Hubo un problema al guardar los cambios.", "error");
+  }
+};
+
 
   const inputStyles = {
     "& label": { color: "rgba(0,0,0,0.5)" },
