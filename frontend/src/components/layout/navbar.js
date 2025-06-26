@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios"; // ✅ Necesario
+import axios from "axios";
 import { useAuth } from "../../context/AuthProvider";
 import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
-import Badge from '@mui/material/Badge';
+import Badge from "@mui/material/Badge";
 import UserInfoModal from "../../components/ui/UserInfoModal";
 import { useAuthActions } from "../../api/useAuthActions";
 import Sena from "../../assets/imgs/logoSena.png";
@@ -41,7 +41,7 @@ const Navbar = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [mostrarNotificaciones, setMostrarNotificaciones] = useState(false);
   const [cantidadNoLeidas, setCantidadNoLeidas] = useState(0);
-  const { user, token } = useAuth(); // ✅ Traemos el token directamente aquí
+  const { user, token } = useAuth();
   const { logout } = useAuthActions();
   const theme = useTheme();
   const [selectedUser, setSelectedUser] = useState(null);
@@ -62,7 +62,6 @@ const Navbar = ({ children }) => {
     { text: "Seguimiento y control", icon: <EqualizerIcon />, route: "/seguimiento", roles: ["aprendiz"] },
   ];
 
-  // ✅ Solo obtenemos el conteo de notificaciones, no las notificaciones completas
   useEffect(() => {
     const obtenerCantidadNoLeidas = async () => {
       try {
@@ -92,13 +91,21 @@ const Navbar = ({ children }) => {
         }}
       >
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={toggleDrawer} sx={{ position: "relative", zIndex: theme.zIndex.drawer + 2 }}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={toggleDrawer}
+            aria-label="Abrir o cerrar menú lateral"
+            sx={{ position: "relative", zIndex: theme.zIndex.drawer + 2 }}
+          >
             <MenuIcon />
           </IconButton>
 
           <Box sx={{ display: "flex", alignItems: "center", ml: 4, flexGrow: 1, gap: 2 }}>
             <img src={Sena} alt="Logo SENA" style={{ height: 32 }} />
-            <Typography variant="h6" sx={{ fontSize: "1rem" }}>SISTEMA SAEP</Typography>
+            <Typography variant="h6" sx={{ fontSize: "1rem" }}>
+              SISTEMA SAEP
+            </Typography>
           </Box>
 
           <Typography
@@ -113,11 +120,15 @@ const Navbar = ({ children }) => {
             {user?.nombre || "Nombre de usuario"}
           </Typography>
 
-          <IconButton color="inherit" onClick={() => handleVerUsuario(user)}>
+          <IconButton color="inherit" onClick={() => handleVerUsuario(user)} aria-label="Ver información del usuario">
             <AccountCircleIcon />
           </IconButton>
 
-          <IconButton color="inherit" onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}>
+          <IconButton
+            color="inherit"
+            onClick={() => setMostrarNotificaciones(!mostrarNotificaciones)}
+            aria-label="Ver notificaciones"
+          >
             <Badge
               badgeContent={cantidadNoLeidas > 0 ? cantidadNoLeidas : null}
               color="error"
@@ -127,7 +138,7 @@ const Navbar = ({ children }) => {
             </Badge>
           </IconButton>
 
-          <IconButton color="inherit" onClick={logout}>
+          <IconButton color="inherit" onClick={logout} aria-label="Cerrar sesión">
             <LogoutIcon />
           </IconButton>
         </Toolbar>
@@ -135,7 +146,7 @@ const Navbar = ({ children }) => {
         {mostrarNotificaciones && (
           <NotificacionesFlotantes
             onClose={() => setMostrarNotificaciones(false)}
-            setCantidadNoLeidas={setCantidadNoLeidas} // ✅ Para actualizar el contador desde el flotante
+            setCantidadNoLeidas={setCantidadNoLeidas}
           />
         )}
       </AppBar>
@@ -169,7 +180,7 @@ const Navbar = ({ children }) => {
             px: 1,
           }}
         >
-          <IconButton onClick={toggleDrawer} sx={{ color: "white" }}>
+          <IconButton onClick={toggleDrawer} sx={{ color: "white" }} aria-label="Expandir o contraer menú lateral">
             <MenuIcon />
           </IconButton>
           {open && (
@@ -179,7 +190,7 @@ const Navbar = ({ children }) => {
           )}
         </Box>
 
-        <List sx={{ mt: 2 }}>
+        <List sx={{ mt: 2 }} role="navigation" aria-label="Menú principal de navegación">
           {menuItems
             .filter((item) => item.roles.includes(user?.rol))
             .map(({ text, icon, route }) => (
@@ -187,6 +198,7 @@ const Navbar = ({ children }) => {
                 key={text}
                 component={Link}
                 to={route}
+                aria-label={`Ir a ${text}`}
                 sx={{
                   justifyContent: open ? "initial" : "center",
                   px: 2.5,
