@@ -4,6 +4,8 @@ import {
   IconButton, Modal, Grid
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import usersAPI from "../../../api/UsersAPI";
 import ConfirmDialog from "../../../components/ui/ModalConfirmacion";
 import useAlert from "../hooks/UserAlert";
@@ -39,7 +41,6 @@ const validarContrasena = (valor) => {
   );
 };
 
-
 const ModalCrearUsuario = ({ onClose }) => {
   const { alerta, showAlert, closeAlert } = useAlert();
   const [formData, setFormData] = useState({
@@ -55,6 +56,7 @@ const ModalCrearUsuario = ({ onClose }) => {
 
   const [errorMessage, setErrorMessage] = useState("");
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +74,6 @@ const ModalCrearUsuario = ({ onClose }) => {
     if (name === "password") {
       if (!validarContrasena(value)) {
         setErrorMessage("La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas y un carácter especial (@, #, !, *, +). No puede contener letras repetidas.");
-
       } else {
         setErrorMessage("");
       }
@@ -227,7 +228,22 @@ const ModalCrearUsuario = ({ onClose }) => {
               </FormControl>
             </Grid>
             <Grid item xs={6}>
-              <TextField fullWidth label="Contraseña*" name="password" type="password" value={formData.password} onChange={handleInputChange} sx={textFieldStyle} />
+              <TextField
+                fullWidth
+                label="Contraseña*"
+                name="password"
+                type={mostrarPassword ? "text" : "password"}
+                value={formData.password}
+                onChange={handleInputChange}
+                sx={textFieldStyle}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton onClick={() => setMostrarPassword(!mostrarPassword)} edge="end">
+                      {mostrarPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  ),
+                }}
+              />
             </Grid>
           </Grid>
 
