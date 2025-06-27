@@ -32,6 +32,7 @@ const BitacoraDocumentosApp = () => {
   const [documentos, setDocumentos] = useState([]);
   const [currentBitacora, setCurrentBitacora] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [observaciones, setObservaciones] = useState([]);
   const [bitacorasRecientementeActualizadas, setBitacorasRecientementeActualizadas] = useState([]);
 
@@ -41,7 +42,6 @@ const BitacoraDocumentosApp = () => {
 
   // API URL base
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
   
   // Obtener token del almacenamiento local
   const getToken = () => localStorage.getItem('token');
@@ -60,11 +60,13 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
   // Cargar datos al iniciar el componente o cambiar tab
   useEffect(() => {
+    console.log("id_usuario recibido:", id_usuario);
     if (tab === 0) {
       fetchBitacoras();
     } else {
       fetchDocumentos();
     }
+
   }, [tab]);
   
 
@@ -422,107 +424,83 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
     setPreviewUrl(URL.createObjectURL(file));
   };
   
-  // Subir archivo al backend
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setError('Por favor seleccione un archivo');
+// Subir archivo al backend
+const handleUpload = async () => {
+  if (!selectedFile) {
+    setError('Por favor seleccione un archivo');
+    return;
+  }
+
+  const formData = new FormData();
+  setUploadStatus('Subiendo archivo.');
+
+  try {
+    let endpoint = '';
+
+    if (modalTipo === 'Subir Bitácora') {
+      endpoint = '/bitacora/subir';
+      formData.append('bitacora', selectedFile);
+    } else if (modalTipo === 'Subir Documento') {
+      endpoint = '/documentos/subir';
+      formData.append('documento', selectedFile);
+    } else if (modalTipo === 'Subir Firma') {
+      endpoint = '/firma/subir';
+      formData.append('firma', selectedFile);
+    }
+
+    if (!endpoint) {
+      setError('Tipo de archivo no reconocido');
       return;
     }
-  
-    const formData = new FormData();
-    setUploadStatus('Subiendo archivo...');
-    
-    try {
-      let endpoint = '';
-      
-      if (modalTipo === 'Subir Bitácora') {
-        endpoint = '/bitacora/subir';
-        formData.append('bitacora', selectedFile); // Nombre del campo debe coincidir con el esperado por multer en el backend
-      } else if (modalTipo === 'Subir Documento') {
-        endpoint = '/documentos/subir';
-        formData.append('documento', selectedFile); // Nombre del campo debe coincidir con el esperado por multer en el backend
-      } else if (modalTipo === 'Subir Firma') {
-        endpoint = '/firma/subir'; // Si tienes una ruta para subir firmas
-        formData.append('firma', selectedFile);
-      }
-      
-      // Si no hay endpoint válido, terminar
-      if (!endpoint) {
-        setError('Tipo de archivo no reconocido');
-        return;
-      }
-      
-      console.log(`Subiendo a: ${API_URL}${endpoint}`);
-      setLoading(true);
-      
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getToken()}`
-          // No incluir Content-Type con FormData, el navegador lo establece automáticamente con el boundary
-        },
-        body: formData
-      });
-      
-      // Log para depuración
-      console.log('Status de respuesta:', response.status);
-      
-      const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
-      
-      if (!response.ok) {
-        throw new Error(responseData.mensaje || `Error ${response.status}`);
-      }
-      
-      setUploadStatus('¡Archivo subido con éxito!');
-      // Recargar los datos después de subir
-      if (modalTipo === 'Subir Bitácora') {
-        fetchBitacoras();
-      } else if (modalTipo === 'Subir Documento') {
-        fetchDocumentos();
-      }
-      
-      // Cerrar modal después de un breve retraso
-      setTimeout(() => {
-        handleCloseModal();
-      }, 1500);
-      
-    } catch (error) {
-      console.error('Error en la subida:', error);
-      setError(`Error al subir el archivo: ${error.message}`);
-      setUploadStatus('');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Configurar scroll personalizado
-  useEffect(() => {
-    const handleWheel = (e) => {
-      if (contentRef.current) {
-        e.preventDefault();
-        contentRef.current.scrollTop += e.deltaY;
-      }
-    };
+    // ✅ Usar pathParam en lugar de query
+    const pathParam = (userRole === 'Administrador' && id_usuario) ? `/${id_usuario}` : '';
 
-    const content = contentRef.current;
-    if (content) {
-      content.addEventListener('wheel', handleWheel, { passive: false });
+    console.log(`Subiendo a: ${API_URL}${endpoint}${pathParam}`);
+    setLoading(true);
+
+    const response = await fetch(`${API_URL}${endpoint}${pathParam}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getToken()}`
+      },
+      body: formData
+    });
+
+    console.log('Status de respuesta:', response.status);
+    const responseData = await response.json();
+    console.log('Respuesta del servidor:', responseData);
+
+    if (!response.ok) {
+      throw new Error(responseData.mensaje || `Error ${response.status}`);
     }
 
-    return () => {
-      if (content) {
-        content.removeEventListener('wheel', handleWheel);
-      }
-    };
-  }, []);
+    setUploadStatus('¡Archivo subido con éxito!');
+    if (modalTipo === 'Subir Bitácora') {
+      fetchBitacoras();
+    } else if (modalTipo === 'Subir Documento') {
+      fetchDocumentos();
+    }
 
-  const actions = userRole === 'aprendiz' ? [
-    ...(tab === 0 ? [{ icon: <NoteAddIcon />, name: 'Subir Bitácora' }] : []),
-    ...(tab === 1 ? [{ icon: <UploadFileIcon />, name: 'Subir Documento' }] : []),
-  ] : [];
+    setTimeout(() => {
+      handleCloseModal();
+    }, 1500);
+
+  } catch (error) {
+    console.error('Error en la subida:', error);
+    setError(`Error al subir el archivo: ${error.message}`);
+    setUploadStatus('');
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+const actions = (userRole === 'aprendiz' || userRole === 'Administrador') ? [
+  ...(tab === 0 ? [{ icon: <NoteAddIcon />, name: 'Subir Bitácora' }] : []),
+  ...(tab === 1 ? [{ icon: <UploadFileIcon />, name: 'Subir Documento' }] : []),
+] : [];
   
-
   // Calcular datos para paginación
   const datos = tab === 0 ? bitacoras : documentos;
   const totalPaginas = Math.ceil(datos.length / datosPorPagina);
@@ -543,11 +521,14 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
     },
     msOverflowStyle: 'none',
     scrollbarWidth: 'none',
-    scrollBehavior: 'smooth',
   };
 
   return (
-    <Box sx={{ p: 3, minHeight: '100vh', overflow: 'hidden' }}>
+    <Box sx={{
+    p: { xs: 1, sm: 2, md: 3 },
+    minHeight: '100vh',
+    overflow: 'hidden',
+  }}>
       <Paper elevation={3} sx={{ borderRadius: 3, mb: 3, position: 'sticky', top: 0, zIndex: 10 }}>
         <Tabs value={tab} onChange={handleTabChange} variant="fullWidth" sx={{
           '.MuiTab-root': { fontWeight: 600 },
@@ -583,13 +564,18 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
               
               return (
                 <Paper
-                key={itemId}
-                elevation={3}
-                sx={{
-                  p: 3, my: 2, borderRadius: 3, display: 'flex',
-                  flexDirection: 'column', backgroundColor: 'white',
-                  gap: 1, borderLeft: '6px solid #8e24aa'
-                }}
+                 key={itemId}
+  elevation={3}
+  sx={{
+    p: { xs: 2, sm: 3 },
+    my: 2,
+    borderRadius: 3,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'white',
+    gap: 1,
+    borderLeft: '6px solid #8e24aa'
+  }}
               >
                 <Typography variant="h6" fontWeight={700} color="#6a1b9a">
                   {tab === 0 
@@ -651,7 +637,7 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
                 
                   
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
                   <Button 
           size="small" 
           variant="outlined" 
@@ -763,17 +749,20 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
           )}
 
           {datos.length > datosPorPagina && (
-            <Box sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: 2,
-              mt: 3,
-              position: 'sticky',
-              bottom: 0,
-              backgroundColor: 'white',
-              py: 2,
-              zIndex: 100
-            }}>
+            <Box  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', sm: 'row' },
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
+    mt: 3,
+    position: 'sticky',
+    bottom: 0,
+    backgroundColor: 'white',
+    py: 2,
+    px: 2,
+    zIndex: 100
+  }}>
               {paginaActual > 1 && (
                 <Button
                   variant="contained"
@@ -798,7 +787,7 @@ const API_URL = process.env.REACT_APP_BACKEND_API_URL;
       )}
 
       {/* SpeedDial con acciones */}
-      {userRole === 'aprendiz' && (
+      {(userRole === 'aprendiz' || userRole === 'Administrador') && (
   <SpeedDial
     ariaLabel="Acciones"
     sx={{
