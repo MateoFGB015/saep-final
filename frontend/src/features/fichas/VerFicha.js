@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import ModalDetalleAprendiz from '../../components/ui/Modaldetalleaprendiz';
+import UserInfoModal from '../../components/ui/UserInfoModal';
 import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -35,8 +35,6 @@ import {
   Chip
 } from '@mui/material';
 
-const API_URL = process.env.REACT_APP_BACKEND_API_URL;
-
 const FichaDetalle = () => {
   const { id } = useParams();
   const [fichas, setFicha] = useState(null);
@@ -60,12 +58,12 @@ const FichaDetalle = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-const handleVerUsuario = (usuario) => {
-  setSelectedUser(usuario);
-  setOpenUserModal(true);
-};
+  const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
-
+  const handleVerUsuario = (usuario) => {
+    setSelectedUser(usuario);
+    setOpenUserModal(true);
+  };
 
   const navigate = useNavigate();
 
@@ -102,76 +100,119 @@ const handleVerUsuario = (usuario) => {
       correo_electronico: '',
       telefono: ''
     });
+     setPassword('');
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoAprendiz({
-      ...nuevoAprendiz,
-      [name]: value
-    });
-  };
+  const formatearTextoNombre = (texto) => {
+  return texto
+    .toLowerCase()
+    .replace(/\b\w/g, (letra) => letra.toUpperCase())  // primera letra de cada palabra en mayúscula
+    .replace(/[^a-zA-ZÀ-ÿ\s]/g, ''); // quitar caracteres especiales y números
+};
 
-  const handleRegistrarAprendiz = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true);
-      
-      // Validación adicional antes de enviar
-      if (nuevoAprendiz.numero_documento.length > 11) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Número de documento inválido',
-          text: 'El número de documento no puede exceder los 11 dígitos.',
-          confirmButtonColor: '#71277a'
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      
-      // Paso 1: Registrar el aprendiz
-      const response = await axios.post(`${API_URL}/usuarios/registroAprendiz`, {
-        ...nuevoAprendiz,
-        password: password || nuevoAprendiz.numero_documento,
-        rol: 'aprendiz',
-        numero_ficha: fichas.numero_ficha 
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+
+  const camposConFormato = ['nombre', 'apellido'];
+  const nuevoValor = camposConFormato.includes(name)
+    ? formatearTextoNombre(value)
+    : value;
+
+  setNuevoAprendiz((prev) => ({
+    ...prev,
+    [name]: nuevoValor,
+  }));
+};
+
+const esContrasenaSegura = (password) => {
+  const longitudValida = password.length >= 8 && password.length <= 15;
+  const tieneMayuscula = /[A-Z]/.test(password);
+  const tieneMinuscula = /[a-z]/.test(password);
+  const tieneCaracterEspecial = /[\W_]/.test(password);
+  const numeros = password.match(/\d/g); // encuentra todos los dígitos
+  const tieneMinimoDosNumeros = numeros && numeros.length >= 2;
+
+  return (
+    longitudValida &&
+    tieneMayuscula &&
+    tieneMinuscula &&
+    tieneCaracterEspecial &&
+    tieneMinimoDosNumeros
+  );
+};
+
+
+const handleRegistrarAprendiz = async (e) => {
+  e.preventDefault();
+  try {
+    setIsLoading(true);
+
+    // Validar longitud del documento
+   if (nuevoAprendiz.numero_documento.length > 11 || nuevoAprendiz.numero_documento.length < 5) {
+ 
+      Swal.fire({
+        icon: 'warning',
+        title: 'Número de documento inválido',
+        text: 'El número de documento no puede exceder los 11 dígitos.',
+        confirmButtonColor: '#71277a'
       });
-      
-      if (response.data && response.data.aprendiz) {
-        const aprendizRegistrado = response.data.aprendiz;
-        
-        // Actualizar la lista de aprendices en la UI
-        setAprendices([...aprendices, aprendizRegistrado]);
-        
-        // Mostrar mensaje de éxito con las credenciales
-        Swal.fire({
-          icon: 'success',
-          title: '¡Registro exitoso!',
-          text: `Aprendiz registrado exitosamente`,
-          confirmButtonColor: '#71277a'
-        });
-        
-        handleCloseRegistroModal();
-      }
-    } catch (error) {
-      console.error('❌ Error al registrar el aprendiz:', error);
-      console.error('Detalles del error:', error.response?.data || error.message);
-    Swal.fire({
-  icon: 'error',
-  title: 'Error al registrar',
-  text: error.response?.data?.mensaje || error.message,
-  confirmButtonColor: '#71277a',
-  didOpen: () => {
-    const swalContainer = document.querySelector('.swal2-container');
-    if (swalContainer) swalContainer.style.zIndex = '14000';
-  }
-});
-
-    } finally {
       setIsLoading(false);
+      return;
     }
-  };
+
+    // Validar seguridad de la contraseña
+    if (!esContrasenaSegura(password)) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Contraseña insegura',
+        text: 'La contraseña debe tener entre 8 y 15 caracteres, incluir una mayúscula, una minúscula, al menos 2 números y un carácter especial.',
+        confirmButtonColor: '#71277a'
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    // Registrar el aprendiz
+    const response = await axios.post(`${API_URL}/usuarios/registroAprendiz`, {
+      ...nuevoAprendiz,
+      password: password || nuevoAprendiz.numero_documento,
+      rol: 'aprendiz',
+      numero_ficha: fichas.numero_ficha 
+    });
+
+    if (response.data && response.data.aprendiz) {
+      const aprendizRegistrado = response.data.aprendiz;
+
+      setAprendices([...aprendices, aprendizRegistrado]);
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Registro exitoso!',
+        text: `Aprendiz registrado exitosamente`,
+        confirmButtonColor: '#71277a'
+      });
+
+      handleCloseRegistroModal();
+    }
+  } catch (error) {
+    console.error('❌ Error al registrar el aprendiz:', error);
+    console.error('Detalles del error:', error.response?.data || error.message);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al registrar',
+      text: error.response?.data?.mensaje || error.message,
+      confirmButtonColor: '#71277a',
+      didOpen: () => {
+        const swalContainer = document.querySelector('.swal2-container');
+        if (swalContainer) swalContainer.style.zIndex = '14000';
+      }
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
     const obtenerFicha = async () => {
@@ -794,10 +835,12 @@ const handleVerUsuario = (usuario) => {
           )}
         </Box>
         {/* Modal Info Usuario */}
-        <ModalDetalleAprendiz
+        <UserInfoModal
          open={openUserModal}
          onClose={() => setOpenUserModal(false)}
-         aprendiz={selectedUser}
+         user={selectedUser}
+         onGenerarGFPI={() => console.log("Generar reporte GFPI de", selectedUser)}
+         mostrarBotonGFPI={true}
         />
 
         {/* Modal Confirmación */}
