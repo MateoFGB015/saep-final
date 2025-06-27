@@ -16,10 +16,17 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import backgroundImage from "../../assets/imgs/confeccion.jpg";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { InputAdornment, IconButton } from "@mui/material";
+
+
 
 function FormularioAprendiz() {
   const navigate = useNavigate();
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [errors, setErrors] = useState({});
   const [fichas, setFichas] = useState([]);
   const [form, setForm] = useState({
@@ -34,7 +41,7 @@ function FormularioAprendiz() {
     confirmarContrasena: ""
   });
 
-     // API URL base
+    // API URL base
 const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
   const purpleFocusStyle = {
@@ -325,10 +332,10 @@ const validarContrasena = (valor) => {
             required
             sx={{ mb: 2, ...purpleFocusStyle }}
           />
-        <TextField
+       <TextField
         label="Contraseña"
         name="password"
-        type="password"
+        type={mostrarPassword ? "text" : "password"}
         value={form.password}
         onChange={handleChange}
         fullWidth
@@ -336,18 +343,36 @@ const validarContrasena = (valor) => {
         error={Boolean(errors.password)}
         helperText={errors.password}
         sx={{ mb: 2, ...purpleFocusStyle }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton onClick={() => setMostrarPassword(!mostrarPassword)} edge="end">
+                {mostrarPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
       />
 
-          <TextField
-            label="Confirmar contraseña"
-            name="confirmarContrasena"
-            type="password"
-            value={form.confirmarContrasena}
-            onChange={handleChange}
-            fullWidth
-            required
-            sx={{ mb: 2, ...purpleFocusStyle }}
-          />
+      <TextField
+        label="Confirmar contraseña"
+        name="confirmarContrasena"
+        type={mostrarConfirmacion ? "text" : "password"}
+        value={form.confirmarContrasena}
+        onChange={handleChange}
+        fullWidth
+        required
+        sx={{ mb: 2, ...purpleFocusStyle }}
+        InputProps={{
+          endAdornment: (
+            <InputAdornment position="end">
+              <IconButton onClick={() => setMostrarConfirmacion(!mostrarConfirmacion)} edge="end">
+                {mostrarConfirmacion ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
 
           <Button
             type="submit"
