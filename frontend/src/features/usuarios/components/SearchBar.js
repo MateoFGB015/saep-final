@@ -1,11 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { TextField, InputAdornment, MenuItem, Box, Typography } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 const SearchBar = ({ searchTerm, setSearchTerm, filterType, setFilterType, onSearch }) => {
+  useEffect(() => {
+    onSearch(searchTerm); 
+  }, [searchTerm]);
+
   return (
     <>
-      {/* 🔥 Título de la lista de usuarios */}
       <Typography
         variant="h4"
         sx={{
@@ -18,26 +21,12 @@ const SearchBar = ({ searchTerm, setSearchTerm, filterType, setFilterType, onSea
         Lista de Usuarios
       </Typography>
 
-      {/* Barra de búsqueda con filtros */}
-      <Box
-        display="flex"
-        justifyContent="center"    // 👈 Centra horizontalmente
-        mb={2}
-        flexWrap="wrap"
-        width="100%"               // 👈 Asegura que ocupe todo el ancho del contenedor padre
-      >
-        <Box
-          display="flex"
-          gap={2}
-          maxWidth={800}
-          width="100%"
-          flexWrap="wrap"
-          justifyContent="center" // 👈 Para que el input y el filtro estén centrados entre sí
-        >
-          {/* Input de Búsqueda */}
+      <Box display="flex" justifyContent="center" mb={2} flexWrap="wrap" width="100%">
+        <Box display="flex" gap={2} maxWidth={800} width="100%" flexWrap="wrap" justifyContent="center">
           <TextField
             variant="outlined"
             placeholder="Buscar usuario..."
+            aria-label="Buscar usuario"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{
@@ -51,18 +40,13 @@ const SearchBar = ({ searchTerm, setSearchTerm, filterType, setFilterType, onSea
             }}
             InputProps={{
               endAdornment: (
-                <InputAdornment
-                  position="end"
-                  sx={{ cursor: "pointer" }}
-                  onClick={onSearch}
-                >
+                <InputAdornment position="end" sx={{ cursor: "pointer" }}>
                   <SearchIcon sx={{ color: "gray" }} />
                 </InputAdornment>
               ),
             }}
           />
 
-          {/* Select de Filtros */}
           <TextField
             select
             label="Filtrar por"
@@ -70,7 +54,7 @@ const SearchBar = ({ searchTerm, setSearchTerm, filterType, setFilterType, onSea
             onChange={(e) => setFilterType(e.target.value)}
             variant="outlined"
             sx={{
-              minWidth: 150,
+              minWidth: 180,
               backgroundColor: "white",
               borderRadius: "10px",
               "& .MuiOutlinedInput-root": {
