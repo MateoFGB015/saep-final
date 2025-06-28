@@ -65,6 +65,7 @@ const SearchBarFichas = ({ searchTerm, setSearchTerm, filterType, setFilterType,
             <MenuItem value="numero_ficha">Número de Ficha</MenuItem>
             <MenuItem value="nombre_programa">Nombre del Programa</MenuItem>
             <MenuItem value="termino_programa">Término del Programa</MenuItem>
+            <MenuItem value="archivadas">Fichas Archivadas</MenuItem>
           </TextField>
         </Box>
       </Box>
