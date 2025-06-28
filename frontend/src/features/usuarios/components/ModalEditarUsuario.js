@@ -34,8 +34,17 @@ const UserModal = ({ open, onClose, user, onSave }) => {
     }
   }, [user]);
 
-  const handleChange = (e) =>
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  let newValue = value;
+
+  if (name === "telefono") {
+    newValue = value.replace(/\\D/g, "").slice(0, 10);
+  }
+
+  setFormData((prev) => ({ ...prev, [name]: newValue }));
+};
+
 
   const handleSave = async () => {
     const {
