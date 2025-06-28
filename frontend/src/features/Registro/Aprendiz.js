@@ -116,6 +116,10 @@ const validarContrasena = (valor) => {
       }));
     }
   }
+  if (name === "telefono") {
+  const soloNumeros = value.replace(/\\D/g, "").slice(0, 10);
+  nuevoValor = soloNumeros;
+}
 
   if (name === "password") {
     if (!validarContrasena(value)) {
