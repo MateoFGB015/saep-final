@@ -49,8 +49,15 @@ const FichasTable = () => {
     }
   }, [user]);
   
-  useEffect(() => {
+useEffect(() => {
     const term = searchTerm.trim().toLowerCase();
+
+    if (filterType === "archivadas") {
+        const archivadas = fichas.filter(f => f.archivar === true);
+        setFilteredFichas(archivadas);
+        setCurrentPage(0);
+        return;
+    }
 
     if (term === "") {
       setFilteredFichas([]);
@@ -64,7 +71,8 @@ const FichasTable = () => {
 
     setFilteredFichas(filtradas);
     setCurrentPage(0);
-  }, [searchTerm, filterType, fichas]);
+}, [searchTerm, filterType, fichas]);
+
 
   const fetchFichas = async () => {
     try {
@@ -127,29 +135,35 @@ const FichasTable = () => {
     }
   };
 
-  const handleOpenModal = (ficha = null) => {
-    setIsEditing(!!ficha);
-    setFormData(
-      ficha || {
-        numero_ficha: "",
-        nombre_programa: "",
-        termino_programa: "",
-        archivar: "no",
-        inicio_etapa_productiva: "",
-        fin_etapa_productiva: "",
-        id_instructor: "",
-      }
-    );
-    setIsModalVisible(true);
-  };
+const handleOpenModal = (ficha = null) => {
+  setIsEditing(!!ficha);
+  setFormData(
+    ficha || {
+      numero_ficha: "",
+      nombre_programa: "",
+      termino_programa: "",
+      archivar: "no",
+      inicio_etapa_productiva: "",
+      fin_etapa_productiva: "",
+      id_instructor: "",
+    }
+  );
+  setIsModalVisible(true);
+};
+
 
   const handleCloseModal = () => {
     setIsModalVisible(false);
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  setFormData({
+    ...formData,
+    [name]: name === "archivar" ? value === "true" || value === true : value
+  });
+};
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -174,6 +188,12 @@ const handleSubmit = async (e) => {
   try {
     if (isEditing) {
       await axios.put(`${API_URL}/fichas/modificar/${formData.id_ficha}`, formData);
+
+      // ✅ Si seleccionó archivar, llamar endpoint de archivado
+      if (formData.archivar === true || formData.archivar === "si") {
+        await axios.put(`${API_URL}/fichas/${formData.id_ficha}/archivar`);
+      }
+
     } else {
       await axios.post(`${API_URL}/fichas`, formData);
     }
@@ -192,6 +212,7 @@ const handleSubmit = async (e) => {
     });
   }
 };
+
 
 
   const [instructores, setInstructores] = useState([]);
@@ -563,8 +584,8 @@ const handleSubmit = async (e) => {
             }}
           >
             <MenuItem value="" disabled>¿Archivar?</MenuItem>
-            <MenuItem value="no" sx={{ color: "#9c27b0", fontWeight: "bold" }}>No</MenuItem>
-            <MenuItem value="si" sx={{ color: "#9c27b0", fontWeight: "bold" }}>Sí</MenuItem>
+            <MenuItem value={false} sx={{ color: "#9c27b0", fontWeight: "bold" }}>No</MenuItem>
+            <MenuItem value={true} sx={{ color: "#9c27b0", fontWeight: "bold" }}>Sí</MenuItem>
           </Select>
 
           <TextField 
