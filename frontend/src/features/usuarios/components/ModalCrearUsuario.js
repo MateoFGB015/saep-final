@@ -58,32 +58,38 @@ const ModalCrearUsuario = ({ onClose }) => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [mostrarPassword, setMostrarPassword] = useState(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    let nuevoValor = value;
+const handleInputChange = (e) => {
+  const { name, value } = e.target;
+  let nuevoValor = value;
 
-    if (name === "nombre" || name === "apellido") {
-      if (contieneMayusculasInternas(value)) {
-        setErrorMessage("Cada palabra debe comenzar con mayúscula y seguir en minúscula.");
-      } else {
-        setErrorMessage("");
-      }
-      nuevoValor = validarNombre(value);
+  if (name === "nombre" || name === "apellido") {
+    if (contieneMayusculasInternas(value)) {
+      setErrorMessage("Cada palabra debe comenzar con mayúscula y seguir en minúscula.");
+    } else {
+      setErrorMessage("");
     }
+    nuevoValor = validarNombre(value);
+  }
 
-    if (name === "password") {
-      if (!validarContrasena(value)) {
-        setErrorMessage("La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas y un carácter especial (@, #, !, *, +). No puede contener letras repetidas.");
-      } else {
-        setErrorMessage("");
-      }
+  if (name === "password") {
+    if (!validarContrasena(value)) {
+      setErrorMessage("La contraseña debe tener entre 8 y 15 caracteres, incluir mayúsculas, minúsculas y un carácter especial (@, #, !, *, +). No puede contener letras repetidas.");
+    } else {
+      setErrorMessage("");
     }
+  }
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: nuevoValor,
-    }));
-  };
+  if (name === "telefono") {
+    const soloNumeros = value.replace(/\\D/g, "").slice(0, 10);
+    nuevoValor = soloNumeros;
+  }
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: nuevoValor,
+  }));
+};
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
