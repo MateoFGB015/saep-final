@@ -4,7 +4,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthProvider";
 import NotificacionesFlotantes from "../notificaciones/NotificacionesFlotantes";
 import Badge from "@mui/material/Badge";
-import UserInfoModal from "../../components/ui/UserInfoModal";
+import UserModificarModal from "../../components/ui/UserModificarModal";
 import { useAuthActions } from "../../api/useAuthActions";
 import Sena from "../../assets/imgs/logoSena.png";
 import {
@@ -237,7 +237,7 @@ const Navbar = ({ children }) => {
         {children}
       </Box>
 
-      <UserInfoModal open={openUserModal} onClose={() => setOpenUserModal(false)} user={selectedUser} />
+      <UserModificarModal open={openUserModal} onClose={() => setOpenUserModal(false)} user={selectedUser} />
     </Box>
   );
 };
