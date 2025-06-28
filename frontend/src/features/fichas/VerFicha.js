@@ -1006,15 +1006,23 @@ const handleRegistrarAprendiz = async (e) => {
               }}
             />
               <TextField
-                fullWidth
-                margin="normal"
-                label="Teléfono"
-                name="telefono"
-                value={nuevoAprendiz.telefono}
-                onChange={handleInputChange}
-                variant="outlined"
-                size="small"
-              />
+  fullWidth
+  margin="normal"
+  label="Teléfono"
+  name="telefono"
+  value={nuevoAprendiz.telefono}
+  onChange={(e) => {
+    const value = e.target.value.replace(/\\D/g, '').slice(0, 10);
+    setNuevoAprendiz((prev) => ({
+      ...prev,
+      telefono: value,
+    }));
+  }}
+  variant="outlined"
+  size="small"
+  helperText="Máximo 10 dígitos numéricos"
+/>
+
               <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
                 <Button 
                   onClick={handleCloseRegistroModal} 
