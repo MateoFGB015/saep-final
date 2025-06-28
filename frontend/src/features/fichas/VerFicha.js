@@ -4,6 +4,7 @@ import UserInfoModal from '../../components/ui/UserInfoModal';
 import ConfirmDialog from '../../components/ui/ModalConfirmacion';
 import ContentCutIcon from '@mui/icons-material/ContentCut';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import usersAPI from '../../api/UsersAPI';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DescriptionIcon from '@mui/icons-material/Description';
 import Swal from 'sweetalert2';
@@ -60,10 +61,16 @@ const FichaDetalle = () => {
 
   const API_URL = process.env.REACT_APP_BACKEND_API_URL;
 
-  const handleVerUsuario = (usuario) => {
-    setSelectedUser(usuario);
-    setOpenUserModal(true);
-  };
+const handleVerUsuario = async (usuario) => {
+    try {
+        const token = localStorage.getItem('token'); // o desde useAuth si manejas contexto
+        const usuarioCompleto = await usersAPI.getUserById(usuario.id_usuario, token);
+        setSelectedUser(usuarioCompleto);
+        setOpenUserModal(true);
+    } catch (error) {
+        console.error('Error al obtener usuario completo:', error);
+    }
+};
 
   const navigate = useNavigate();
 
@@ -109,6 +116,7 @@ const FichaDetalle = () => {
     .replace(/\b\w/g, (letra) => letra.toUpperCase())  // primera letra de cada palabra en mayúscula
     .replace(/[^a-zA-ZÀ-ÿ\s]/g, ''); // quitar caracteres especiales y números
 };
+
 
 const handleInputChange = (e) => {
   const { name, value } = e.target;
